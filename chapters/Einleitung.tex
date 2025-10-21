@@ -1,0 +1,42 @@
+\chapter{Einleitung}
+\label{ch:intro}
+Diese Arbeit wurde in Rahmen des Dualen Studiums der Informatik an der Hochschule Darmstadt in Kooperation mit der \ac{DFS} erstellt.
+Die Inhalte dieser Arbeit basieren zu Teil auf den Anforderungen, Erfahrungen und Erkenntnissen, die im Rahmen Praxisprojekts der dritten Praxisphase in dem Team 
+TI/TD der \ac{DFS} gesammelt wurden.
+
+%
+% Section: Motivation
+%
+\section{Motivation}
+\label{sec:intro:motivation}
+Das Team TI/TD der \ac{DFS} entwickelt Simulationsumgebungen, die in der Ausbildung von Fluglotsen eingesetzt werden. 
+Während der Simulatorübungen werden Trainee-Lotsen von Adjazenlotsen unterstützt, die eine Vielzahl von Aufgaben gleichzeitig bewältigen müssen. 
+Dies führt zu einer hohen kognitiven Belastung.
+\\
+
+Adjazenlotsen steuern nicht nur den Simulator, sondern übernehmen auch Kommunikationsaufgaben und unterstützen bei der Überwachung des Flugverkehrs in angrenzenden Sektoren. 
+Diese Aufgaben erfordern ständige Aufmerksamkeit und schnelle Reaktionen.
+\\
+
+Um die kognitive Belastung zu reduzieren und die Effizienz der Adjazenlotsen zu steigern, untersucht diese Arbeit die Konzeption und Evaluation eines \ac{RL}-basierten Systems, 
+das die Adjazenlotsen bei ihren Aufgaben unterstützt.
+%
+% Section: Ziele
+%
+\section{Ziel der Arbeit}
+\label{sec:intro:goal}
+Ziel dieser Arbeit ist die Konzeption und Evaluation eines \ac{RL}-Systems, das die konfliktfreie Steuerung des Flugverkehrs in den umliegenden Sektoren der Trainees übernimmt. 
+Das System soll Pilot Commands generieren, um Flugkonflikte zu vermeiden und den Verkehr effizient zu steuern. 
+Dabei werden die Realisierbarkeit der Anweisungen, physikalische Limitierungen und die Anweisungsfrequenz berücksichtigt. 
+Die Evaluation soll die Funktionalität und Effizienz des Systems überprüfen und mögliche Verbesserungspotenziale aufzeigen.
+
+%
+% Section: Struktur der Arbeit
+%
+\section{Gliederung}
+\label{sec:intro:structure}
+Zu Beginn der Arbeit wird in Kapitel \ref{ch:fs_grundlagen} die Grundlagen der Problemdomäne Flugverkehrssteuerung und die Rolle der Adjazenlotsen in der Ausbildung von Fluglotsen am Simulator erläutert.
+Anschließend werden in Kapitel \ref{ch:rl_grundlagen} die theoretischen Grundlagen der Lösungsdomäne (\ac{RL}) und relevanten Algorithmen vorgestellt.
+Im Kapitel \ref{ch:konzeption} werden die Definition von Zustands- und Aktionsräumen sowie der Belohnungsfunktion behandelt, sowie deren Zusammenhang mit verschienenen Konfliktlösungsmaßnahmen erläutert.
+Kapitel \ref{ch:evaluation} widmet sich der Evaluation des \ac{RL}-Systems, in dem die durchgeführten Experimente und deren Ergebnisse präsentiert und analysiert werden.
+Abschließend werden in Kapitel \ref{ch:zusammenfassung} die Ergebnisse der Arbeit zusammengefasst und ein Ausblick auf mögliche zukünftige Arbeiten gegeben.
