@@ -43,6 +43,11 @@
 %*************************************************************************
 \input{hdathesis-config}
 \input{classicthesis-config}
+\usepackage{algorithm}      % Für \begin{algorithm} … \end{algorithm}
+\usepackage{algpseudocode}  % Für \begin{algorithmic} … \end{algorithmic}
+\usepackage{hyphenat}
+
+\setlength{\parindent}{0pt}
 
 %*************************************************************************
 % Bibliographies
@@ -74,10 +79,13 @@
 %\cleardoublepage\include{frontbackmatter/Foreword}
 \cleardoublepage\include{frontbackmatter/Declaration}
 %\condLOCK{\cleardoublepage\include{frontbackmatter/BlockingNotice}}
+
 \cleardoublepage\include{frontbackmatter/AbstractEN}
 \cleardoublepage\include{frontbackmatter/AbstractDE}
+
 %\cleardoublepage\include{frontbackmatter/Publications}
 %\cleardoublepage\include{frontbackmatter/Acknowledgments}
+
 \cleardoublepage\include{frontbackmatter/Contents}
 \cleardoublepage\include{frontbackmatter/Figures}
 \cleardoublepage\include{frontbackmatter/Tables}
@@ -95,6 +103,7 @@
 \include{chapters/Einleitung}
 \include{chapters/fs_grundlagen}
 \include{chapters/rl_grundlagen}
+\include{chapters/statistik_grundlagen}
 \include{chapters/konzeption}
 \include{chapters/evaluation}
 \include{chapters/zusammenfassung}
@@ -113,7 +122,7 @@
 %\renewcommand{\thechapter}{\alph{chapter}}
 \cleardoublepage
 \part{Appendix}
-%\include{chapters/examples/appendix01}
+\include{chapters/anhang_code}
 %\include{chapters/examples/appendix02}
 %*************************************************************************
 % Other Stuff in the Back

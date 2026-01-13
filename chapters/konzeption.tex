@@ -1,23 +1,215 @@
 \chapter{Konzeption}
 \label{ch:konzeption}
 
-\section{Definition des Gyms}
-\subsection{Konfiktlösung mittel Headingänderung}
-\subsubsection{Zustandsraum}
-\subsubsection{Aktionsraum}
-\subsubsection{Belohnungsfunktion}
+In diesem Kapitel wird die Konzeption des \ac{RL}-Systems vorgestellt, das zur konfliktfreien Steuerung des Flugverkehrs in den umliegenden Sektoren der Trainees entwickelt wurde.
+Es werden die Definitionen der Zustands- und Aktionsräume sowie der Belohnungsfunktion erläutert, die für das Training des \ac{RL}-Agenten verwendet wurden.
+Darüber hinaus wird die Trainings- und Evaluationsumgebung beschrieben, einschließlich der Integration des Simulators in das \ac{RL}-Gym.
 
-\subsection{Konfiktlösung mittel Headingänderung und Speedänderung}
-\subsubsection{Zustandsraum}
-\subsubsection{Aktionsraum}
-\subsubsection{Belohnungsfunktion}
+Ziel dieser Arbeit ist es zwei unterschiedliche Umgebungen zu konzipieren und zu evaluieren.
+Die erste Umgebung verwendet einen diskreten Aktionsraum, in dem der Agent aus einer festen Menge von Headingänderungen wählen kann.
+Die zweite Umgebung verwendet einen gemischten Aktionsraum, der sowohl diskrete als auch kontinuierliche Aktionen umfasst.
+Der Agent kann in diesem Fall entscheiden, ob er eine Headingänderung vornimmt oder keine Aktion (Noop) ausführt.
+Falls er sich für eine Headingänderung entscheidet, wird der genaue Wert der Änderung als kontinuierliche Aktion festgelegt.
 
-\subsection{Konfiktlösung mittel Headingänderung, Speedänderung und Leveländerung}
-\subsubsection{Zustandsraum}
-\subsubsection{Aktionsraum}
-\subsubsection{Belohnungsfunktion}
+\section{Anforderungen aus der Problemdomäne}
+Bevor die Konzeption des \ac{RL}-Systems im Detail beschrieben wird, ist es wichtig, die Anforderungen aus der Problemdomäne der Flugverkehrssteuerung zu verstehen.
+Der Adjazenlotse muss in der Lage sein, Flugkonflikte zu erkennen und zu lösen, während er gleichzeitig den Verkehrsfluss effizient gestaltet.
+Effizienz bedeutet in diesem Kontext, einerseits moglicht direkte Routen zu ermöglichen, andererseits aber auch dass der Agent nicht ständig den Kursändert.
+Kursänderungn beduten in der Praxis, dass der Lotse dem Piloten über Funk Anweisungen geben muss, was die Arbeitsbelastung erhöht und die Kommunikation verkompliziert.
+Der \ac{RL}-Agent soll daher lernen, Konflikte zu lösen, ohne unnötige Kursänderungen vorzunehmen, um ein realistisches Lotsenverhalten zu simulieren.
 
-\section{Trainingsumgebung}
-\section{Evaluationsumgebung}
+\section{Beschreibung der Gym-Funktionen}
+Das Gym bildet die Schnittstelle zwischen dem \ac{RL}-Agenten und der Simulationsumgebung.
+Es definiert den Zustandsraum, den Aktionsraum und die Belohnungsfunktion, die für das Training des Agenten verwendet werden.
+Dieses Gym sollte der Struktur von OpenAI Gym \cite{OpenAI-Gym} folgen, um die Kompatibilität mit gängigen \ac{RL}-Bibliotheken wie Stable Baselines3 \cite{sb3} zu gewährleisten.
+
+\subsubsection{Zustandsraum}
+Bei der Entwicklung des Zustandsraums muss sichergestellt werden, dass alle relevanten Informationen für die Konflikterkennung und
+\hyp{}lösung enthalten sind. Gleichzeitig sollte der Zustandsraum so gestaltet werden, dass der Agent in der Lage ist, Situationen
+zu generalisieren. Dadurch wird verhindert, dass der Agent nur in den Trainingsszenarien funktioniert und in unbekannten Situationen 
+schlechte Entscheidungen trifft. 
+
+Ein Negativbeispiel wäre die Verwendung absoluter Positionsdaten der Flugzeuge, da diese stark szenariospezifisch sind und die 
+Generalisierung erschweren. Besser geeignet sind relative Positionsdaten zwischen den Flugzeugen.
+
+Ein weiterer Aspekt ist die Nutzung gut differenzierbarer Merkmale. Ein Problem entsteht beispielsweise 
+bei der direkten Verwendung von Winkeln: Ein Winkel von 0° und 360° ist inhaltlich identisch, liegt numerisch jedoch weit 
+auseinander. Das erschwert dem Agenten das Erkennen ähnlicher Zustände. Eine robustere Alternative ist die Repräsentation 
+von Winkeln über Sinus- und Kosinuswerte.
+
+Zusätzlich muss die Dimension des Zustandsraums unabhängig von der Anzahl der Flugzeuge im Sektor konstant bleiben, 
+da viele RL-Algorithmen eine feste Zustandsdimension voraussetzen. Dies kann durch Padding und die Festlegung einer 
+maximalen Anzahl zu berücksichtigender Flugzeuge erreicht werden. Das Padding sollte konsistent verwendet werden und 
+so gewählt sein, dass es keinen Einfluss auf die Entscheidungsfindung des Agenten hat.
+
+Bei der Begrenzung der Flugzeuganzahl ist darauf zu achten, dass die gewählte maximale Zahl die meisten Szenarien
+abdeckt und dass die relevanten Flugzeuge – etwa die nächstgelegenen oder konfliktträchtigsten – priorisiert werden. 
+Das Auswahlkriterium muss dabei durchgängig konsistent bleiben. Wenn kein Flugzeug die Priorisierungskriterien erfüllt, 
+sollten Platzhalterwerte eingesetzt werden, um die Konsistenz der Eingabe sicherzustellen. Dies ist entscheidend, da der 
+Agent im Training jeder Position im Zustandsraum eine Bedeutung zuordnet.
+\\
+
+Folgende Merkmale wurden im Zustandsraum beider Umgebungen berücksichtigt:
+\begin{itemize}
+    \item Das eigene absolute Heading in Sinus- und Kosinusform
+    \item Die eigene Geschwindigkeit
+    \item Die Heading\hyp{}Abweichung vom direktem Kurs zum nächsten Wegpunkt
+    \item Die Distanz zum nächsten Wegpunkt
+    \item Die letzte nicht Noop\hyp{}Aktion des Agenten
+    \item Das Alter der letzten Aktion in Zeitschritten
+    \item Die aktuelle turning rate (Grad pro Sekunde) des eigenen Flugzeugs
+    \item Ausgehen von meheren Headingoffsets (z.B. -15°, 0°, +15°) die Zeit bis zum nächsten Konflikt bei konstantem Kurs
+    \item Ausehend von dem direkten Kurs zum nächsten Wegpunkt die Zeit bis zum nächsten Konflikt bei konstantem Kurs
+    \item Flieger mit Konfliktpotential (geordent nach Kritikalität) mit folgenden Merkmalen:
+    \begin{itemize}
+        \item Der relative Positionsvektor
+        \item Die Distanz zwischen Agent und Flugzeug
+        \item Der relative Winkel zum Flugzeug in Sinus- und Kosinusform
+        \item Die Geschwindigkeit des Flugzeugs
+        \item Die Annäherungsrate (closing rate) zwischen Agent und Flugzeug
+        \item Der minimale Abstand bei konstantem Kurs (CPA-Distance)
+        \item Die Zeit bis zum minimalen Abstand (Time to CPA)
+    \end{itemize}
+    \item Die 4 nächsten Flugzeuge mit folgenen Merkmalen:
+    \begin{itemize}
+        \item Das eigene absolute Heading in Sinus- und Kosinusform
+        \item Die eigene Geschwindigkeit
+        \item Die Heading\hyp{}Abweichung vom direktem Kurs zum nächsten Wegpunkt
+        \item Die Distanz zum nächsten Wegpunkt
+    \end{itemize}
+\end{itemize}
+
+Die zukünftigen Konfliktpunkte werden mit dem \ac{CPA}\hyp{}Verfahren\cite{CPA} berechnet.
+Die Zeit bis zum Konflikt ist dabei der Faktor der die Kritikalität eines Flugzeugs bestimmt.
+
+\subsubsection{Aktionsraum}
+\label{sc:aktionsraum}
+Das implementierete Gym konzentriert sich auf die Konfliktlösung durch Headingänderungen.
+Dies dient zur reduktion der Komplexität des Agenten. In der Praxis können Adjazenlotsen jedoch auch andere Maßnahmen zur Konfliktlösung ergreifen, wie z.B. Geschwindigkeitsänderungen oder Höhenänderungen.
+Diese erweiterten Maßnahmen sollten in zukünftigen Arbeiten untersucht, da diese die Ausweichmöglichkeiten des Agenten erweitern und möglicherweise zu besseren Konfliktlösungen führen können.
+
+Eine einfache implementierung eines kontinuierlichen Aktionsraums ist ohne Clipping mit den gegebenen Anforderungen nicht möglich, da der Agent sonst keine Möglichkeit hat eine Noop-Aktion auzuführen.
+Eine Noop ist ist jedoch wichtig, da das einfache gradeaus fliegen nicht das selbe ist. Wenn der Agent im letzten Zeitschritt eine große Headingänderung durchgeführt hat, ist diese eventuell zum nächten 
+Zeitschritt noch nicht vollständig umgesetzt. Der Agent soll im Training lernen nicht ständig winzige korrekturen durchzuführen. Der Agent soll optimalerweise 2 Headingänderungen durchführen: Eine um den Konflikt zu lösen und eine um wieder auf den direkten Kurs zum nächsten Wegpunkt zurückzukehren.
+
+Der Aktionsraum wurde in zwei Varianten konzipiert:
+\begin{itemize}
+    \item \textbf{Diskreter Aktionsraum:} Der Agent kann aus einer festen Menge von Headingänderungen wählen (z.B. -15°, -10°, -5°, 0°, +5°, +10°, +15°, Noop, direkt Route).
+    \item \textbf{Gemischter Aktionsraum:} Der Agent wählt einen diskreten Aktionstyp und einen kontinuierlichen Steuerwert:
+    \begin{itemize}
+        \item \textbf{Headingänderung:} Der Agent wählt eine Headingänderung, die als kontinuierlicher Wert im Bereich von -180° bis +180° interpretiert wird.
+        \item \textbf{Noop:} Der Agent entscheidet sich, keine Aktion auszuführen.
+        \item \textbf{Direkt Route:} Der Agent wählt eine direkte Kursänderung zum nächsten Wegpunkt.
+    \end{itemize}
+\end{itemize}
+
+Der Aufbau des gemischten Aktionsraum hat aber einige Herausforderungen mit sich gebracht.
+Standart \ac{RL}-Bibliotheken unterstützen gemischte Aktionsräume nicht direkt, es gibt jedoch Ansätze, um dieses Problem zu lösen.
+Ein weiteres Problem ist dass RL-Algorithmen üblicherweise von unabhängigen Aktionen ausgehen.
+Das bedeutet, dass die Auswahl einer Aktion keinen Einfluss auf die Wahrscheinlichkeitsverteilung der anderen Aktionen hat.
+In unserem Fall ist dies jedoch nicht gegeben, da die kontinuierliche Aktion nur relevant ist, wenn der Agent sich für die Headingänderung entscheidet.
+Um dieses Problem zu lösen, wurde ein aktionsabhängiges Gradient-Gating implementiert.
+
+Das Gradientgating sorgt dafür, dass die Gradienten der kontinuierlichen Aktion nur dann berechnet und angewendet werden, wenn der Agent die Headingänderung auswählt.
+Dies verhindert ungewollte updates der Policy durch den Kontinuierlichen Aktionswert, wenn dieser nicht relevant ist.
+
+
+\subsubsection{Belohnungsfunktion}
+Bei der Gestaltung der Belohnungsfunktion ist es wichtig, ein Gleichgewicht zwischen Konfliktvermeidung und Effizienz zu finden.
+Desweiteren sollte die Menge der Einflussfaktoren möglichst gering gehalten werden, um die Komplexität des Lernprozesses zu reduzieren.
+Zu viele Einflussfaktoren können dazu führen, dass der Agent Schwierigkeiten hat, die relevanten Zusammenhänge zu erkennen und zu lernen.
+Die Belohnungsfunktion wurde so konzipiert (in Pseudocode):
+
+\begin{itemize}
+    \item \textbf{Drift-Reward:} Belohnung abhängig von der Heading-Abweichung vom direkten Kurs zum nächsten Wegpunkt. Je kleiner die Abweichung, desto höher die Belohnung (quadatisch).
+    \item \textbf{Action-Age-Reward:} Belohnung basierend auf dem Alter der letzten Aktion. Je länger der Agent keine Aktion ausgeführt hat, desto höher die Belohnung.
+    \item \textbf{Noop-Reward:} Fester Bonus, wenn der Agent keine Aktion (Noop) ausführt.
+    \item \textbf{Collision-Avoidance-Reward:} Strafe basierend auf der Kritikalität des aktuellen Kurses. Je näher ein Konflikt ist und je geringer der minimale Abstand, desto höher die Strafe.
+    \item \textbf{Waypoint-Bonus:} Fester Bonus, wenn der Agent den nächsten Wegpunkt erreicht.
+    \item \textbf{Collision-Penalty:} Hohe Strafe für jeden verursachten Konflikt durch die letzte Aktion.
+\end{itemize}
+
+Bei der Gestaltung wurde darauf geachtet möglichst sogenannte Dense Rewards zu verwenden, also Belohnungen die in jedem Zeitschritt gegeben werden.
+Dies erleichtert dem Agenten das Lernen, da er kontinuierliches Feedback zu seinem Verhalten erhält.
+
+\section{Scenarien}
+Die Scenarien sind so konzipiert, dass der Agent mit unterschiedlichen Verkehrssituationen konfrontiert wird, um die Generalisierungsfähigkeit des \ac{RL}-Agenten zu fördern.
+Es die Szenarien werden zufällig aber nach bestimmten Mustern generiert, um sicherzustellen, dass der Agent mit unterschiedlichen Verkehrssituationen konfrontiert wird.
+Es gibt 4 Szenarien typen die im Training verwendet werden:
+\begin{itemize}
+    \item \textbf{Crossing:} Flugzeuge spawnen in kreuzenden Routen, um Konflikte zu erzwingen.
+    \item \textbf{Merging:} Flugzeuge spawnen auf Kollisionskursen, um Merging-Szenarien zu simulieren.
+    \item \textbf{Diverging:} Flugzeuge spawnen auf sich entfernenden Kursen, um Diverging-Szenarien zu simulieren.
+    \item \textbf{Scenariofiles:} Szenarien aus externen Dateien, um spezifische Szenarien zu simulieren. Die Daten stammen aus Übungen die Fluglotsen in ihrer Ausbildung verwenden. Diese Scenarien müssen allerdings stark vereinfacht werden, da diese davon ausgehen dass der Lotse auch die Höhen- und Geschwindigkeitskontrolle übernimmt.
+\end{itemize}
+
+Der Scenario-Typ wird zufällig ausgewählt, wobei Crossing- und Merging-Szenarien häufiger vorkommen, da diese typischerweise komplexere Konfliktlösungen erfordern.
+
 
 \section{Simulatorintegration in das RL-Gym}
+Die Simulation selber wird von Bluesky \cite{bluesky} durchgeführt, welches eine offene Flugsimulationsplattform ist.
+Bluesky bietet eine realistische Simulation der Flugzeugdynamik und ermöglicht die Integration von externen Steuerungssystemen wie dem \ac{RL}-Agenten.
+Die Kommunikation zwischen dem Gym und Bluesky erfolgt über eine Adapter-Schicht, die die Aktionen des Agenten in Steuerbefehle für den Simulator übersetzt und die Zustandsinformationen aus dem Simulator extrahiert.
+Diese Adapter-Schicht sorgt für eine nahtlose Integration und ermöglicht es den Simulator leicht auszutauschen, falls in Zukunft eine andere Simulationsplattform verwendet werden soll. 
+Dies ist wichtig, da Bluesky in Zukunft vermutlich durch den DFS eigenen Simulator NewSim ersetzt werden soll. Blusky wurde verwendet, da dieser Open-Source ist und eine schnelle Prototypenentwicklung ermöglicht.
+Hinzu kam dass es bereits Blusky-Gym gibt. \cite{bluesky-gym}, welches als Grundlage für die Entwicklung des eigenen Gyms diente.
+
+\section{Visualisierung}
+Zur Überprüfung und Analyse des Verhaltens des \ac{RL}-Agenten wurde eine Visualisierung entwickelt, die es ermöglicht, die Flugbewegungen und Entscheidungen des Agenten in Echtzeit zu verfolgen.
+Die Visualisierung stellt alle Flugzeuge dar und liefert zusätzlich hilfreiche Debuginformationen wie z.B. die nächsten Konfliktpunkte, die aktuellen Aktionen des Agenten und relevante Zustandsmerkmale.
+Die Darstellung wurde mittels Pygame umgesetzt, da diese Bibliothek eine einfache und flexible Möglichkeit bietet, 2D-Grafiken in Python zu erstellen. Hinzu kommt dass Pygame plattformunabhängig und open-Source ist,
+was die Integration in das bestehende Python-basierte \ac{RL}-Gym erleichtert.
+
+\section{Metriken der Umgebung}
+
+\section{Rl-Algorithmus Auswahl}
+Für die Implementierung des \ac{RL}-Agenten wurde der Proximal Policy Optimization (PPO) Algorithmus ausgewählt.
+PPO ist ein moderner und weit verbreiteter \ac{RL}-Algorithmus, der zur Familie der Policy\hyp{}Gradient\hyp{}Methoden gehört.
+PPO hat das umfangreiste Featureset in der Stable Baselines3 Bibliothek \cite{sb3} und ist bekannt für seine Stabilität und Effizienz im Lernprozess.
+Dazu ist PPO gut parrellelisierbar, was die Trainingszeit erheblich verkürzt. Andere Algorithmen wie SAC und DQN wurden ebenfalls evaluiert, 
+jedoch zeigte PPO in den durchgeführten Experimenten die besten Ergebnisse hinsichtlich Lernstabilität und Performance.
+Desweiteren erlaubt PPO standartmäßig die Verwendung von kontinuierlichen und diskreten Aktionsräumen, was für die konzipierten Umgebungen von Vorteil ist.
+Ein bekannter Nachteil von PPO ist die niedrigere Sample-Effizienz im Vergleich zu off Policy-Methoden wie SAC.
+Da in dieser Arbeit jedoch die Trainingszeit durch Parallele Umgebungen und eine schnelle Simulatorintegration minimiert wurde,
+war dies kein entscheidender Faktor bei der Auswahl des Algorithmus.
+
+Konkret wurde die Implementierung aus der Stable Baselines3\textunderscore Plus Bibliothek \cite{sb3_plus} verwendet,
+da diese eine erweiterte Version des PPO-Algorithmus bietet, welche einen gemischten Aktionsraum unterstützt. Stable Baselines3\textunderscore Plus
+basiert auf der Stable Baselines3 Bibliothek.
+
+\section{Anpassungen am PPO-Algorithmus}
+\label{sc:ppo_anpassung}
+
+Wie bereits in Abschnitt \ref{sc:aktionsraum} beschrieben, wurde ein gemischter Aktionsraum konzipiert, der sowohl diskrete als auch kontinuierliche Aktionen umfasst.
+Dies stellt eine Herausforderung für den PPO-Algorithmus dar, da dieser üblicherweise von unabhängigen Aktionen ausgeht.
+Eine zentrale Annahme im Training ist, dass alle Aktionen unabhängig voneinander sind und die Auswahl einer Aktion keinen Einfluss auf die Wahrscheinlichkeitsverteilung der anderen Aktionen hat.
+
+In dem hier betrachteten Szenario ist diese Annahme jedoch verletzt, da die kontinuierliche Aktion keinen Einfluss auf die Umgebung hat, wenn der Agent sich für \emph{Noop} oder \emph{Direct Route} entscheidet.
+Während des Trainings würde der kontinuierliche Aktionswert dennoch ausgewertet werden, was zu ungewollten Updates der Policy führen kann.
+Um dieses Problem zu vermeiden, wurde ein aktionsabhängiges Gradient-Gating implementiert.
+
+Die Lösung ist inspiriert von dem Ansatz aus \cite{mixed-action-rl}, der jedoch ein zustandsabhängiges Aktions-Gating verwendet.
+Dieser Ansatz konnte jedoch nicht übernommen werden, da zu dem Zeitpunkt, an dem das Gating durchgeführt wird, noch keine Aktion gesampelt wurde.
+Abhängigkeiten zwischen diskreten und kontinuierlichen Aktionen können auf diese Weise daher nicht modelliert werden
+, da erst das Sampling der diskreten Aktion bestimmt, ob die kontinuierliche Aktion relevant ist.
+
+In dieser Arbeit wird daher kein vollständiges Aktions-Gating durchgeführt, sondern ausschließlich ein Gradient-Gating.
+Beide Aktionen werden weiterhin gesampelt, jedoch wird verhindert, dass Gradienten für die kontinuierliche Aktion berechnet werden, wenn diese nicht relevant ist.
+Das eigentliche Aktions-Gating erfolgt anschließend in der Umgebung, indem die kontinuierliche Aktion ignoriert wird, wenn der Agent \emph{Noop} oder \emph{Direct Route} wählt.
+Damit wird sichergestellt, dass die kontinuierliche Aktion in diesen Fällen keinen Einfluss auf die Umgebung hat.
+
+Das Gradient-Gating wird durch mehere Anpassungen an der SB3\textunderscore Plus \cite{sb3_plus} Bibliotek realisiert.
+Hierfür müssen drei Komponenten des Algorithmus modifiziert werden:
+\begin{itemize}
+    \item \textbf{Distribution:} Die Aktionsverteilung wird so erweitert, dass logarithmische Wahrscheinlichkeit (\texttt{log\_prob()}) 
+    und Entropie (\texttt{entropy()}) getrennt für diskrete und kontinuierliche Aktionen ausgewertet werden können.
+    \item \textbf{Evaluation:} In diesem Schritt erfolgt das eigentliche Gradient-Gating, da beide Aktionen bereits gesampelt wurden, das Training (Backpropagation) jedoch noch nicht
+    begonnen hat.
+    Mithilfe einer Maske werden einzelne Tensoren ersetzt, sodass Gradienten für die kontinuierliche Aktion nur berechnet werden können, wenn diese auch ein Einfluss auf 
+    den Folgezustand haben werden.
+    Die Evaluation wird in Zeile 19 des beispielhaften PPO Algorithmus \ref{alg:ppo_training} aufgerufen.
+    Dazu wird \texttt{torch.Tensor.detach()} verwendet \cite{torch_detach}.
+    \item \textbf{Forward:} Auch im Forward-Pass muss das Gating auf die logarithmische Wahrscheinlichkeit angewendet werden, da diese hier initial berechnet und im Rollout-Buffer gespeichert wird.
+    Die Wahrscheinlichkeits-Tensoren müssen bereits an dieser Stelle angepasst werden, da sie später zur Berechnung von $\pi_{\text{old}}$ verwendet werden.
+    Andernfalls würden inkorrekte Werte entstehen, was zu fehlerhaften Probability Ratios führen würde.
+\end{itemize}

@@ -2,41 +2,55 @@
 \label{ch:intro}
 Diese Arbeit wurde in Rahmen des Dualen Studiums der Informatik an der Hochschule Darmstadt in Kooperation mit der \ac{DFS} erstellt.
 Die Inhalte dieser Arbeit basieren zu Teil auf den Anforderungen, Erfahrungen und Erkenntnissen, die im Rahmen Praxisprojekts der dritten Praxisphase in dem Team 
-TI/TD der \ac{DFS} gesammelt wurden.
+TI/TD der \ac{DFS} gesammelt wurden. Dieses Projekt baut auf einem vorherigen Bachelorarbeit\cite{dominikDiez} auf, die Reineforcmentlerning als Lösungsansatz für die teilautomatisierte Flugverkehrssteuerung in der Adjazent Position untersucht hat.
 
 %
 % Section: Motivation
 %
 \section{Motivation}
 \label{sec:intro:motivation}
-Das Team TI/TD der \ac{DFS} entwickelt Simulationsumgebungen, die in der Ausbildung von Fluglotsen eingesetzt werden. 
-Während der Simulatorübungen werden Trainee-Lotsen von Adjazenlotsen unterstützt, die eine Vielzahl von Aufgaben gleichzeitig bewältigen müssen. 
-Dies führt zu einer hohen kognitiven Belastung.
-\\
+Das Team TI/TD der \ac{DFS} entwickelt Simulatoren, die in der Aus- und Weiterbildung von Fluglotsen eingesetzt werden. 
+Während Simulatorübungen arbeiten die Trainees mit den Adjacentlotsen zusammen.
+//
 
-Adjazenlotsen steuern nicht nur den Simulator, sondern übernehmen auch Kommunikationsaufgaben und unterstützen bei der Überwachung des Flugverkehrs in angrenzenden Sektoren. 
-Diese Aufgaben erfordern ständige Aufmerksamkeit und schnelle Reaktionen.
-\\
-
-Um die kognitive Belastung zu reduzieren und die Effizienz der Adjazenlotsen zu steigern, untersucht diese Arbeit die Konzeption und Evaluation eines \ac{RL}-basierten Systems, 
-das die Adjazenlotsen bei ihren Aufgaben unterstützt.
+TI/TD supportet mehere Simulatoren, darunter auch NewSim Web. Eine Auspägung des NewSin En-Route Simulators welcher im Browser verwendet werden kann.
+Dieser soll es Lotsen ermöglichen von Zuhause selbstständig zu üben. Speziell in diesem Scenario währe ein KI-Adjacentlotsen eine denkbare und sinvolle Erweiterung,
+die zusätzlich neben den im vohineing speziell gebauten Szenarien, den Trainees zur bung zur Verfügung stehen könnte
 %
 % Section: Ziele
 %
 \section{Ziel der Arbeit}
 \label{sec:intro:goal}
+
 Ziel dieser Arbeit ist die Konzeption und Evaluation eines \ac{RL}-Systems, das die konfliktfreie Steuerung des Flugverkehrs in den umliegenden Sektoren der Trainees übernimmt. 
 Das System soll Pilot Commands generieren, um Flugkonflikte zu vermeiden und den Verkehr effizient zu steuern. 
 Dabei werden die Realisierbarkeit der Anweisungen, physikalische Limitierungen und die Anweisungsfrequenz berücksichtigt. 
-Die Evaluation soll die Funktionalität und Effizienz des Systems überprüfen und mögliche Verbesserungspotenziale aufzeigen.
+Die Arbeit soll folgende Fragestellung beantworten:
+\begin{itemize}
+    \item Wie lässt sich ein RL-Agent und dessen Trainingsumgebung gestalten um einerseits konfliktarmes, andererseits aber auch effizientes Lotsen durch den Agenten zu erreichen.
+\end{itemize}
+Als Subfragen lassen sich folgende Fragen formulieren:
+\begin{itemize}
+    \item Wie sollte speziell der Aktionsraum gestaltet werden um ein Bestmögliches Ergebnis zu erzielen?
+    \item Lässt sich ein RL-Agent mit diskreten und kontinuierlichen Aktionen so gestalten, dass Noop-Entscheidungen korrekt abgebildet werden und kontinuierliche Aktionen nur bei Bedarf trainiert werden?
+    \item Wie kann ein aktionsabhänigs Gradient-Gating implementiert werden, um nicht das Training durch die Aktionsmaskierung negativ zu beinträchtigen?
+    \item Überwiegen die Vorteile eines RL-Agent mit diskreten und kontinuierlichen Aktionen gegenüber einem klassischen (rein diskreten) Agenten?
+\end{itemize}
 
-%
+
+Diese Arbeit verfolgt nicht das Ziel, ein operativ einsetzbares System zur vollständigen Ablösung des Adjazenlotsen zu entwickeln. 
+Vielmehr wird ein Proof of Concept vorgestellt, der auf einem stark vereinfachten Szenario basiert und die grundlegende Machbarkeit sowie zentrale Herausforderungen der Anwendung von \ac{RL} im Flugverkehrsmanagement untersucht.
 % Section: Struktur der Arbeit
 %
 \section{Gliederung}
 \label{sec:intro:structure}
 Zu Beginn der Arbeit wird in Kapitel \ref{ch:fs_grundlagen} die Grundlagen der Problemdomäne Flugverkehrssteuerung und die Rolle der Adjazenlotsen in der Ausbildung von Fluglotsen am Simulator erläutert.
-Anschließend werden in Kapitel \ref{ch:rl_grundlagen} die theoretischen Grundlagen der Lösungsdomäne (\ac{RL}) und relevanten Algorithmen vorgestellt.
+Anschließend werden in Kapitel \ref{ch:rl_grundlagen} die theoretischen Grundlagen der Lösungsdomäne (\ac{RL}) und relevanten Algorithmen vorgestellt. 
+Dannach wird in Kapitel \ref{ch:Statistische_Auswertung} auf die statistischen Methoden zur Auswertung der Experimente eingegangen.
 Im Kapitel \ref{ch:konzeption} werden die Definition von Zustands- und Aktionsräumen sowie der Belohnungsfunktion behandelt, sowie deren Zusammenhang mit verschienenen Konfliktlösungsmaßnahmen erläutert.
 Kapitel \ref{ch:evaluation} widmet sich der Evaluation des \ac{RL}-Systems, in dem die durchgeführten Experimente und deren Ergebnisse präsentiert und analysiert werden.
 Abschließend werden in Kapitel \ref{ch:zusammenfassung} die Ergebnisse der Arbeit zusammengefasst und ein Ausblick auf mögliche zukünftige Arbeiten gegeben.
+
+% Auswertung in genauer beschreibem, Statistische segnifikanz, Wiederholbarkeit usw. Porblm aktuelle dass das projekt weniger Architektur usw ist soder n ehrr parametrisierung. Literaturrschersche. 
+%Genaueres Exposee in einem getrennten Dokument.Raschersche wie de performance von RL systemen in anderen arbeiten bwertet wird
+https://medium.com/@digitalconsumer777/evaluating-reinforcement-learning-algorithms-metrics-and-benchmarks-e796d03cb81c

@@ -1,0 +1,77 @@
+\chapter{Statistische Auswertung}
+\label{ch:Statistische_Auswertung}
+
+Dieses Kapitel beschreibt die statistischen Methoden, die zur Analyse der experimentellen Ergebnisse eingesetzt werden. 
+Aufgrund der stochastischen Natur von Reinforcement-Learning-Experimenten kann der Mittelwert einzelner Trainingsläufe stark variieren. 
+Daher ist die Angabe eines einfachen Mittelwerts häufig nicht ausreichend, um belastbare Aussagen über die Leistung einer Variante zu treffen. 
+Ziel ist es, die Unsicherheit der Messwerte quantitativ zu erfassen und zwei Varianten auf einer objektiven Basis vergleichbar zu machen.
+
+\section{Konfidenzintervalle}
+
+Ein \ac{KI} gibt an, in welchem Bereich der wahre Mittelwert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit liegt. 
+Beispielhaft bedeutet ein 95\%-Konfidenzintervall, dass bei wiederholter Durchführung des gesamten Experiments der wahre Mittelwert in 95\% der Fälle innerhalb dieses Intervalls liegen würde.  
+Konfidenzintervalle ermöglichen somit eine Abschätzung der statistischen Unsicherheit und dienen der quantitativen Bewertung von Unterschieden zwischen Varianten.
+
+\section{Bootstrap-Verfahren}
+
+Zur Abschätzung der Unsicherheit der Kennzahlen wird in dieser Arbeit das Bootstrap-Verfahren eingesetzt. 
+Hierbei handelt es sich um einen nicht-parametrischen, datengetriebenen Ansatz, der keine Annahmen über die zugrunde liegende Verteilung der Daten erfordert. 
+Das Verfahren ist insbesondere dann geeignet, wenn nur eine geringe Anzahl unabhängiger Trainingsläufe verfügbar ist oder die Verteilung der Ergebnisse nicht normal ist, wie es häufig bei Reinforcement-Learning-Experimenten der Fall ist.
+
+\subsection{Percentile Bootstrap}
+
+Das Percentile-Bootstrap-Verfahren lässt sich wie folgt zusammenfassen:
+
+\begin{enumerate}
+  \item Gegeben sind die Messwerte \(p_1, \dots, p_n\) aus \(n\) unabhängigen Trainingsläufen (Runs).
+  \item Es werden zahlreiche Bootstrap-Stichproben der Größe \(n\) durch Ziehen mit Zurücklegen aus den vorhandenen Werten erzeugt. Für jede Stichprobe wird die gewünschte Kennzahl, beispielsweise der Mittelwert, berechnet.
+  \item Aus der empirischen Verteilung dieser Kennzahlen werden die 2,5\%- und 97,5\%-Perzentile bestimmt, welche das 95\%-Konfidenzintervall definieren.
+\end{enumerate}
+
+Dieses Vorgehen erlaubt es, die Unsicherheit einer Kennzahl zu quantifizieren, ohne auf parametrisierte Annahmen zurückgreifen zu müssen. Durch die wiederholte Ziehung von Stichproben werden „virtuelle Mittelwerte“ erzeugt, die die Variabilität der Kennzahl realistisch widerspiegeln, selbst wenn nur wenige echte Trainingsläufe durchgeführt wurden.
+
+\section{Vergleich zweier Varianten im gepaarten Versuchsaufbau}
+
+Werden zwei Varianten (A und B) pro Seed unter identischen Bedingungen trainiert, lässt sich ein gepaarter Versuchsaufbau konstruieren.  
+Die Differenz der Ergebnisse für jeden Seed wird berechnet als:
+\[
+d_i = p_{A,i} - p_{B,i}.
+\]
+Ein Konfidenzintervall für den Mittelwert der Differenzen \(\mu_d\) ermöglicht die Beurteilung, ob die Abweichung statistisch signifikant von null ist. Liegt das Intervall vollständig über null, deutet dies auf eine signifikante Überlegenheit von Variante A hin.
+
+\subsection{Paired Bootstrap}
+
+Zur robusten Berechnung des Konfidenzintervalls für gepaarte Daten wird das Paired-Bootstrap-Verfahren angewendet:
+
+\begin{enumerate}
+  \item Die Differenzen \(d_i\) werden für alle Seeds berechnet.
+  \item Es werden zahlreiche Bootstrap-Stichproben der Größe \(n\) aus den Differenzen gezogen, jeweils mit Zurücklegen, und der Mittelwert jeder Stichprobe \(\bar d^{*(b)}\) wird berechnet.
+  \item Die 2,5\%- und 97,5\%-Perzentile der empirischen Verteilung der Mittelwerte definieren das 95\%-Konfidenzintervall für \(\mu_d\).
+\end{enumerate}
+
+Dieses Verfahren reduziert die Varianz durch Nutzung gepaarter Daten und ermöglicht eine robuste Einschätzung der statistischen Signifikanz, selbst bei wenigen Trainingsläufen.
+
+\section{Beispiel (Pseudocode)}
+
+\begin{verbatim}
+# pA[1..n], pB[1..n]
+d = pA - pB
+for b in 1..B:
+    sampel = sample_with_replacement(range(n), n)
+    boot_mean[b] = mean([d[i] for i in sampel])
+CI = percentile(boot_mean, [2.5, 97.5])
+\end{verbatim}
+
+Hierdurch werden aus wenigen Trainingsläufen zahlreiche virtuelle Mittelwerte erzeugt, aus denen die Unsicherheit zuverlässig abgeschätzt werden kann.
+
+\section{Zusammenfassung}
+
+Für eine belastbare statistische Bewertung der experimentellen Ergebnisse sind folgende Punkte zentral:
+
+\begin{enumerate}
+  \item Durchführung unabhängiger Runs mit unterschiedlichen Seeds.  
+  \item Berechnung aggregierter Kennzahlen pro Run (z.B. Mittelwert aus mehreren Evaluationsepisoden).  
+  \item Einsatz gepaarter Vergleiche bei identischen Seeds, um Varianz zu reduzieren.  
+  \item Nutzung von Bootstrap-Konfidenzintervallen zur robusten Quantifizierung der Unsicherheit, insbesondere bei wenigen Runs oder asymmetrischen Verteilungen.  
+  \item Vollständige Dokumentation aller relevanten Parameter (Seeds, Evaluationsumfang, Hyperparameter, Software-Versionen).
+\end{enumerate}

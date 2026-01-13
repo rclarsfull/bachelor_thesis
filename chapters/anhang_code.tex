@@ -1,0 +1,82 @@
+\chapter{Code}
+
+\section{PPO-Anpassungen}
+
+\begin{lstlisting}[language=Python, caption={Maskierung in der Aktionsauswertung}, label=lst:evaluate_actions]
+def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
+        """
+        Evaluate actions according to the current policy,
+        given the observations.
+        :param obs:
+        :param actions:
+        :return: estimated value, log likelihood of taking those actions
+            and entropy of the action distribution.
+        """
+        # Preprocess the observation if needed
+        features = self.extract_features(obs)
+        if self.share_features_extractor:
+            latent_pi, latent_vf = self.mlp_extractor(features)
+        else:
+            pi_features, vf_features = features
+            latent_pi = self.mlp_extractor.forward_actor(pi_features)
+            latent_vf = self.mlp_extractor.forward_critic(vf_features)
+            
+        distribution = self._get_action_dist_from_latent(latent_pi)
+
+        # Masking logic
+        assert(isinstance(distribution, Masked_MultiOutputDistribution), "This should be a Masked Distribution")
+        type_action = actions[:, 0]
+        steer_action = actions[:, 1]
+        mask = (type_action == STEER_INDEX).bool()
+        
+        stack_log_prob = distribution.stack_log_prob(actions)
+        action_type_log_prob = stack_log_prob[:,0]
+        steer_log_prob = th.where(mask, stack_log_prob[:,1], stack_log_prob[:,1].detach())
+        masked_log_prob = action_type_log_prob + steer_log_prob
+        
+        values = self.value_net(latent_vf)
+        
+        stack_entropy = distribution.stack_entropy()
+        action_type_entropy = stack_entropy[:,0]
+        steer_entropy = th.where(mask, stack_entropy[:,1], stack_entropy[:,1].detach())
+        masked_entropy = action_type_entropy + steer_entropy
+        
+        return values, masked_log_prob, masked_entropy
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Maskierung im Forwardschritt}, label=lst:forward]
+def forward(self, obs: th.Tensor, deterministic: bool = False) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
+        """
+        Forward pass in all the networks (actor and critic)
+        :param obs: Observation
+        :param deterministic: Whether to sample or use deterministic actions
+        :return: action, value and log probability of the action
+        """
+        # Preprocess the observation if needed
+        features = self.extract_features(obs)
+        if self.share_features_extractor:
+            latent_pi, latent_vf = self.mlp_extractor(features)
+        else:
+            pi_features, vf_features = features
+            latent_pi = self.mlp_extractor.forward_actor(pi_features)
+            latent_vf = self.mlp_extractor.forward_critic(vf_features)
+        # Evaluate the values for the given observations
+        values = self.value_net(latent_vf)
+        distribution = self._get_action_dist_from_latent(latent_pi)
+        actions = distribution.get_actions(deterministic=deterministic)
+        log_prob = distribution.log_prob(actions)
+        
+        # Masking logic
+        assert(isinstance(distribution, Masked_MultiOutputDistribution), "This should be a Masked Distribution")
+        type_action = actions[:, 0]
+        steer_action = actions[:, 1]
+        mask = (type_action == STEER_INDEX).bool()
+        
+        stack_log_prob = distribution.stack_log_prob(actions)
+        action_type_log_prob = stack_log_prob[:,0]
+        steer_log_prob = th.where(mask, stack_log_prob[:,1], stack_log_prob[:,1].detach())
+        masked_log_prob = action_type_log_prob + steer_log_prob
+        
+        actions = actions.reshape((-1, *get_action_shape(self.action_space)))
+        return actions, values, masked_log_prob
+\end{lstlisting}
