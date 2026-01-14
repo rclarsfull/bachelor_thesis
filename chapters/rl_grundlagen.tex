@@ -4,7 +4,7 @@
 \section{Einführung in Reinforcement Learning}
 
 
-\ac{RL} ist ein Teilgebiet des maschinellen Lernens. Eins der Standartwerke im Bereich \cite{sutton2018rl} definiert \ac{RL} wiefolgt: 
+\ac{RL} ist ein Teilgebiet des maschinellen Lernens. Eines der Standardwerke \cite{sutton2018rl} definiert \ac{RL} wie folgt: 
 \\
 
 \textit{"Beim verstärkenden Lernen geht es darum, zu lernen, was zu tun ist – wie Situationen auf Handlungen abgebildet werden können –, um
@@ -12,14 +12,13 @@ ein numerisches Belohnungssignal zu maximieren. Dem Lernenden wird nicht gesagt,
 sondern er muss durch Ausprobieren herausfinden, welche Handlungen die größte Belohnung bringen."}
 \\
 
-Im \ac{RL} werden also Agenten bzw. Policys durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
-Dies untecheidet \ac{RL} von überwachten Lernverfahren, bei denen Modelle anhand von gekennzeichneten Beispieldaten trainiert werden.
-Um einen \ac{RL}-Agenten zu trainieren, muss eine Umgebung definiert werden in der der Agent Erfahrungen sammeln kann. 
+Im \ac{RL} werden also Agenten bzw. Policies durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
+Dies unterscheidet \ac{RL} von überwachten Lernverfahren, bei denen Modelle anhand von gekennzeichneten Beispieldaten trainiert werden.
+Um einen \ac{RL}\hyp{}Agenten zu trainieren, muss eine Umgebung definiert werden, in der der Agent Erfahrungen sammeln kann. 
 
-
-\section{Markov-Entscheidungsprozesse}
+\section{Markov\hyp{}Entscheidungsprozesse}
 Ein \ac{MDP} ist ein mathematisches Modell zur Beschreibung von Entscheidungsproblemen, bei denen ein Agent in einer Umgebung agiert, um eine maximale Belohnung zu erzielen.
-Ein \ac{MDP} wird durch die folgende 4-Tupel definiert:
+Ein \ac{MDP} wird durch das folgende 4\hyp{}Tupel definiert:
 \\
 
 \((S, A, P, R)\)
@@ -48,7 +47,7 @@ wobei:
 Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy \(\pi\) aus,
 führt die Aktion aus und erhält eine Belohnung \(r_t = R(s_t, a_t)\). Die Umgebung wechselt dann in einen neuen Zustand \(s_{t+1}\) basierend auf der Übergangswahrscheinlichkeit \(P(s_{t+1}|s_t, a_t)\).
 Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.B. eine maximale Anzahl von Schritten oder das Erreichen eines Zielzustands).
-Beim durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als \textbf{Trajektorie} bezeichnet wird:
+Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als \textbf{Trajektorie} bezeichnet wird:
 \\
 
 \((s_0, a_0, r_0, s_1, a_1, r_1, s_2, a_2, r_2, ...)\)
@@ -57,45 +56,62 @@ Beim durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und
 Diese Trajektorie repräsentiert die Erfahrung des Agenten in der Umgebung und wird verwendet, um die Policy zu verbessern und den Agenten zu trainieren.
 \\
 
-\section{Gym-API}
-
-Im \ac{RL} wird meist ein standadisiertes Interface verwendet, um die Interaktion zwischen dem Agenten und der Umgebung zu ermöglichen.
+\section{Interface zwischen Agent und Umgebung}
+Im \ac{RL} wird meist ein standardisiertes Interface verwendet, um die Interaktion zwischen dem Agenten und der Umgebung zu ermöglichen.
 Dieses Interface definiert die grundlegenden Methoden, die der Agent verwenden kann, um mit der Umgebung zu interagieren.
 Die wichtigsten Methoden sind:
 \begin{itemize}
     \item \textbf{reset()}: Diese Methode wird verwendet, um die Umgebung in ihren Anfangszustand zurückzusetzen. Sie gibt den initialen Zustand der Umgebung zurück.
     \item \textbf{step(action)}: Diese Methode wird verwendet, um eine Aktion in der Umgebung auszuführen. Sie nimmt eine Aktion als Eingabe und gibt ein Tupel zurück, das den neuen Zustand, 
-    die erhaltene Belohnung, einen Abbruchindikator (ob die Episode beendet ist) und zusätzliche Informationen enthält. Jeder Aufruf dieser Funtion resultiert in einem einmaligen Durchlaufen
-    des Zykluses welcher in \ref{fig:rl_agent_environment} dargestellt ist.
+    die erhaltene Belohnung, einen Abbruchindikator (ob die Episode beendet ist) und zusätzliche Informationen enthält. Jeder Aufruf dieser Funktion resultiert in einem einmaligen Durchlaufen
+    des Zyklus, welcher in \ref{fig:rl_agent_environment} dargestellt ist.
     \item \textbf{render()}: Diese Methode wird verwendet, um die aktuelle Darstellung der Umgebung anzuzeigen. Dies kann nützlich sein, um den Fortschritt des Agenten visuell zu verfolgen.
     \item \textbf{close()}: Diese Methode wird verwendet, um die Umgebung zu schließen und Ressourcen freizugeben.
 \end{itemize}
 
-Dies Interface wurde populär durch die OpenAI Gym Bibliothek \cite{OpenAI-Gym} und wird von vielen \ac{RL}-Bibliotheken unterstützt.
+Dieses Interface wurde populär durch die OpenAI Gym Bibliothek \cite{OpenAI-Gym} und wird von vielen \ac{RL}\hyp{}Bibliotheken unterstützt.
 
-\section{Reinforcement Learning Algorithmen}
+\section{Differenzierung verschiedener Aktionsraumklassen}
+\label{sc:Aktionsraumklassen}
+Ein zentrales Merkmal von \ac{RL}\hyp{}Problemen ist die Natur des Aktionsraums, der die möglichen Handlungen eines Agenten definiert.
+Je nach Anwendungsfall können Aktionsräume diskret, kontinuierlich oder eine Kombination aus beiden sein.
+Die Wahl der Aktionsraumklasse hat erhebliche Auswirkungen auf die Architektur des Agenten und die Trainingsstrategie.
+\begin{itemize}
+    \item \textbf{Diskrete Aktionsräume:} In diskreten Aktionsräumen ist die Menge der möglichen Aktionen endlich und zählbar.
+    Beispiele hierfür sind Brettspiele wie Schach oder Go, bei denen der Agent aus einer begrenzten Anzahl von Zügen wählen muss.
+Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy\hyp{}Gradient}\hyp{}Methoden inhärent besser für kontinuierliche oder die in Abschnitt \ref{sc:Aktionsraumklassen} beschriebenen hybriden Aktionsräume 
+geeignet sind und eine direktere Optimierung des angestrebten Verhaltens erlauben.ines Roboters oder eines Fahrzeugs, bei denen die Aktionen als reelle Zahlen dargestellt werden.
+    \item \textbf{Hybride Aktionsräume:} Hybride Aktionsräume kombinieren diskrete und kontinuierliche Elemente.
+    Ein Beispiel hierfür ist ein autonomes Fahrzeug, das sowohl diskrete Entscheidungen (z.B. Spurwechsel) als auch kontinuierliche Steuerbefehle (z.B. Gas- und Bremssteuerung) treffen muss.
+\end{itemize}
+Die Handhabung verschiedener Aktionsraumklassen erfordert eine angepasste Netzwerkarchitektur.
+In dieser Arbeit wird ein besonderer Fokus auf die Implementierung eines \textit{Gradient Masking} gelegt, um die Herausforderungen bei der Arbeit mit hybriden Aktionsräumen zu adressieren.
+
+\section{Differenzierung verschiedener RL\hyp{}Algorithmen}
 
 Algorithmen des \ac{RL} lassen sich grundlegend in modellbasierte und modellfreie Ansätze unterteilen. 
 Während modellbasierte Verfahren ein internes Abbild der Systemdynamik (\textit{Transition Model}) erlernen, 
 operieren modellfreie Algorithmen ausschließlich auf Basis der durch Interaktion gesammelten Erfahrungen. Da die Modellierung 
 komplexer Umgebungen wie der Flugverkehrssteuerung oft mit hohen Unsicherheiten behaftet ist, fokussiert sich diese Arbeit auf modellfreie Ansätze.
+\vspace{\baselineskip}
 
-Innerhalb der modellfreien Algorithmen wird primär zwischen wertbasierten Methoden (z.\,B. Q-Learning) und \textit{Policy-Gradient}-Methoden unterschieden. 
-Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy-Gradient}-Methoden inhärent besser für kontinuierliche oder hochdimensionale Aktionsräume 
+Innerhalb der modellfreien Algorithmen wird primär zwischen wertbasierten Methoden (z.\,B. Q\hyp{}Learning) und \textit{Policy\hyp{}Gradient}\hyp{}Methoden unterschieden. 
+Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy\hyp{}Gradient}\hyp{}Methoden inhärent besser für kontinuierliche oder hochdimensionale Aktionsräume 
 geeignet sind und eine direktere Optimierung des angestrebten Verhaltens erlauben.
 
-\subsection{Policy-Gradient-Methoden}
-Im Gegensatz zu wertbasierten Ansätzen optimieren \textit{Policy-Gradient}-Methoden die Strategie $\pi_\theta$ des Agenten unmittelbar. 
+\subsection{Policy\hyp{}Gradient\hyp{}Methoden}
+Im Gegensatz zu wertbasierten Ansätzen optimieren \textit{Policy\hyp{}Gradient}\hyp{}Methoden die Strategie $\pi_\theta$ des Agenten unmittelbar. 
 Die Policy wird dabei als differenzierbares, parametrisiertes Modell — in der Regel ein künstliches neuronales Netzwerk — aufgefasst, 
 das für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das Aktionsspektrum ausgibt.
+\vspace{\baselineskip}
 
 Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Die Anpassung der Parameter $\theta$ erfolgt durch den 
 Aufstieg entlang des Gradienten $\nabla_\theta J(\theta)$, wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
 führen, systematisch erhöht wird.
 
-\subsection{Actor-Critic-Architektur}
-Moderne Implementierungen von Gradientenverfahren nutzen häufig eine \textit{Actor-Critic}-Architektur. Diese kombiniert die Vorteile 
-von Policy-Methoden mit wertbasierten Ansätzen:
+\subsection{Actor\hyp{}Critic\hyp{}Architektur}
+Moderne Implementierungen von Gradientenverfahren nutzen häufig eine \textit{Actor\hyp{}Critic}\hyp{}Architektur. Diese kombiniert die Vorteile 
+von Policy\hyp{}Methoden mit wertbasierten Ansätzen:
 \begin{itemize}
     \item Der \textbf{Actor} (die Policy) ist für die Auswahl der Aktionen verantwortlich.
     \item Der \textbf{Critic} (die Wertfunktion $V_\phi$) schätzt den Erwartungswert der zukünftigen Belohnungen ab einem Zustand.
@@ -105,25 +121,27 @@ Dieser gibt an, um wie viel besser eine gewählte Aktion im Vergleich zum Durchs
 dient als rauscharmes Signal für das Update des Actors und reduziert die Varianz des Gradienten signifikant.
 
 
-\subsection{Proximal Policy Optimization (PPO)}
-Der \textit{Proximal Policy Optimization} (PPO) Algorithmus stellt eine Weiterentwicklung innerhalb der \textit{Policy-Optimization}-Verfahren 
-dar \cite{OriginalPPO}. PPO adressiert die Instabilität klassischer Gradientenverfahren, bei denen zu große Aktualisierungsschritte die Policy in 
+\section{Proximal Policy Optimization}
+Der \textit{Proximal Policy Optimization} (PPO) Algorithmus stellt eine Weiterentwicklung innerhalb der \textit{Policy\hyp{}Optimization}\hyp{}Verfahren 
+dar \cite{OriginalPPO}. PPO setzt auf eine Actor\hyp{}Critic\hyp{}Architektur und adressiert die Instabilität klassischer Gradientenverfahren, bei denen zu große Aktualisierungsschritte die Policy in 
 Regionen des Parameterraums treiben können, aus denen eine Erholung kaum möglich ist.
+\vspace{\baselineskip}
 
-Der Kern von PPO ist das \textit{Clipped Surrogate Objective}. Durch diese Zielfunktion wird die Änderung der Policy pro Update-Schritt begrenzt (Clipping).
+Der Kern von PPO ist das \textit{Clipped Surrogate Objective}. Durch diese Zielfunktion wird die Änderung der Policy pro Update\hyp{}Schritt begrenzt (Clipping).
 PPO bietet gegenüber verwandten Methoden wie TRPO (\textit{Trust Region Policy Optimization}) eine vergleichbare Stabilität bei deutlich geringerer mathematischer
 Komplexität und höherer Recheneffizienz.
+\vspace{\baselineskip}
 
 Die Wahl von PPO für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
-diskret-kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \textit{Stable Baselines3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
+diskret\hyp{}kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \textit{Stable Baselines3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
 was für das in dieser Arbeit vorgestellte \textit{Gradient Masking} essentiell ist.
 
-\subsubsection{PPO Trainingsablauf}
-Der PPO-Algorithmus operiert in zwei Hauptphasen: der \textbf{Rollout-Phase} und der \textbf{Optimierungsphase}. In der Rollout-Phase interagiert der Agent
-mit der Umgebung, sammelt Trajektorien (\ref{sc:agent_environment_interaction}). 
-Diese Daten werden in einem sogenannten \textit{Rollout-Buffer} gespeichert.
+\subsection{Trainingsablauf}
+Der PPO\hyp{}Algorithmus operiert in zwei Hauptphasen: der \textbf{Rollout\hyp{}Phase} und der \textbf{Optimierungsphase}. In der Rollout\hyp{}Phase interagiert der Agent
+mit der Umgebung, sammelt Trajektorien (siehe \ref{sc:agent_environment_interaction}). 
+Diese Daten werden in einem sogenannten \textit{Rollout\hyp{}Buffer} gespeichert.
 In der Optimierungsphase wird die Policy anhand der gesammelten Daten aktualisiert. Hierbei wird das \textit{Clipped Surrogate Objective} verwendet,
-um die Policy-Parameter $\theta$ so anzupassen, dass die erwartete kumulative Belohnung maximiert wird, ohne dabei zu große Änderungen an der Policy vorzunehmen.
+um die Policy\hyp{}Parameter $\theta$ so anzupassen, dass die erwartete kumulative Belohnung maximiert wird, ohne dabei zu große Änderungen an der Policy vorzunehmen.
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
@@ -140,13 +158,13 @@ um die Policy-Parameter $\theta$ so anzupassen, dass die erwartete kumulative Be
         \State $t \gets t+1$
     \EndWhile
     \State Rewards aufsummieren und mit $\gamma$ gewichten
-    \State Value-Schätzungen berechnen
+    \State Value\hyp{}Schätzungen berechnen
     \State Advantages berechnen
     \State Alte Policy speichern
     \For{$epoch = 1 \dots n\_epochs$}
         \For{each $minibatch$ in $data$}
             \State Berechne Logarithmische Wahrscheinlichkeit und Entropie
-            \State Berechne Wahrscheinlichkeits-Verhältnis ($r_t(\theta)$)
+            \State Berechne Wahrscheinlichkeits\hyp{}Verhältnis ($r_t(\theta)$)
             \State Berechne Clipped Surrogate Objective ($L^{\text{CLIP}}(\theta)$)
             \State Policy ($\pi_\theta$) aktualisieren
             \State Value Function ($V_\phi$) aktualisieren
@@ -154,20 +172,19 @@ um die Policy-Parameter $\theta$ so anzupassen, dass die erwartete kumulative Be
     \EndFor
 \EndWhile
 \end{algorithmic}
-\caption{Beispielhaft vereinfachter PPO Trainingsablauf}
+\caption{Beispielhaft vereinfachter PPO-Trainingsablauf}
 \label{alg:ppo_training}
 \end{algorithm}
 
-\subsubsection{Implementierung und mathematische Komponenten}
 
 Der in Algorithmus \ref{alg:ppo_training} dargestellte Ablauf verdeutlicht die Trennung zwischen Datenerhebung und Optimierung. 
-Während der Rollout-Phase (Zeilen 3--12) wird die \textit{logarithmische Wahrscheinlichkeit} der gewählten Aktionen direkt im Buffer gespeichert. 
+Während der Rollout\hyp{}Phase (Zeilen 3--12) wird die \textit{logarithmische Wahrscheinlichkeit} der gewählten Aktionen direkt im Buffer gespeichert. 
 Dies ist essenziell, da diese Werte im späteren Verlauf als Referenz für die \textit{Alte Policy} ($\pi_{\text{old}}$) dienen.
 \\
 
 In der Optimierungsphase (Zeilen 13--25) findet die eigentliche Anpassung der Netzwerkgewichte statt. Hierbei werden die im Vorfeld berechneten 
-Advantage-Werte genutzt, um das \textit{Clipped Surrogate Objective} zu berechnen. In dieser Arbeit wird sich später im Abschnitt \ref{sc:ppo_anpassung}
-auf diese Phase konzentriert, da hier das \textit{Gradient Masking} implementiert wird.
+Advantage\hyp{}Werte genutzt, um das \textit{Clipped Surrogate Objective} zu berechnen. In dieser Arbeit wird der Fokus im Abschnitt \ref{sc:ppo_anpassung}
+auf diese Phase gelegt, da hier das \textit{Gradient Masking} implementiert wird.
 \\
 
 Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und deren spezifische Bedeutung innerhalb dieses Prozesses zusammen, 
@@ -177,7 +194,7 @@ um die Grundlage für die detaillierte Herleitung der Verlustfunktion zu bilden.
 \centering
 \begin{tabular}{|p{2cm}|p{3cm}|p{7cm}|} 
 \hline
-\textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im PPO-Algorithmus} \\
+\textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im PPO\hyp{}Algorithmus} \\
 \hline
 $\pi_\theta$      & Policy & Liefert Wahrscheinlichkeiten über Aktionen; Parameter $\theta$ werden trainiert \\
 $V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Reward ab einem Zustand; Parameter $\phi$ werden trainiert \\
@@ -185,20 +202,19 @@ $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
 $A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$ \\
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde; dient zur Berechnung des Probability Ratio \\
 $r_t(\theta)$       & Probability Ratio & Verhältnis zwischen aktueller und alter Policy: $\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ \\
-$L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy-Updates zu vermeiden \\
+$L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy\hyp{}Updates zu vermeiden \\
 $L_t^{VF}(\phi)$  & Value Function Loss & Der quadratische Fehler (MSE) zwischen der Schätzung des Critics $V_\phi$ und dem realisierten Return $R_t$. \\
-$S[\pi_\theta]$   & Entropie-Bonus & Ein Maß für die Unvorhersehbarkeit der Policy; verhindert eine zu frühe Konvergenz auf ein lokales Optimum. \\
-$\epsilon$         & Clipping-Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
-$n\_epochs$       & Anzahl der Trainings-Epochen & Gibt an, wie oft die Policy und Wertfunktion pro Rollout aktualisiert werden \\
+$S[\pi_\theta]$   & Entropie\hyp{}Bonus & Ein Maß für die Unvorhersehbarkeit der Policy; verhindert eine zu frühe Konvergenz auf ein lokales Optimum. \\
+$\epsilon$         & Clipping\hyp{}Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
+$n\_epochs$       & Anzahl der Trainings\hyp{}Epochen & Gibt an, wie oft die Policy und Wertfunktion pro Rollout aktualisiert werden \\
 \hline
 \end{tabular}
 
-\caption{Übersicht der wichtigsten Variablen im PPO-Algorithmus}
+\caption{Übersicht der wichtigsten Variablen im PPO\hyp{}Algorithmus}
 \label{tab:ppo_vars}
 \end{table}
 
-\section{Die kombinierte Verlustfunktion}
-
+\subsection{Die kombinierte Verlustfunktion}
 In der praktischen Implementierung von PPO werden die Parameter des Actors ($\theta$) und des Critics ($\phi$) simultan über eine kombinierte Verlustfunktion optimiert. Da Frameworks wie PyTorch auf die Minimierung einer Zielfunktion ausgelegt sind, wird das Maximierungsproblem des Actors durch Negation in ein Minimierungsproblem überführt. Die totale Verlustfunktion ergibt sich als gewichtete Summe:
 
 \begin{equation}
@@ -208,43 +224,43 @@ In der praktischen Implementierung von PPO werden die Parameter des Actors ($\th
 Dabei setzen sich die Komponenten wie folgt zusammen:
 
 \begin{itemize}
-    \item \textbf{Actor-Loss} ($-L_t^{CLIP}$): Das \textit{Clipped Surrogate Objective} begrenzt die Änderung der Policy. Da PPO den Vorteil $A_t$ maximieren möchte, wird dieser Term für den Gradientenabstieg negiert:
+    \item \textbf{Actor\hyp{}Loss} ($-L_t^{CLIP}$): Das \textit{Clipped Surrogate Objective} begrenzt die Änderung der Policy. Da PPO den Vorteil $A_t$ maximieren möchte, wird dieser Term für den Gradientenabstieg negiert:
     \begin{equation}
         L_t^{CLIP}(\theta) = \min \big( r_t(\theta) A_t, \text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon) A_t \big)
     \end{equation}
     
-    \item \textbf{Critic-Loss} ($L_t^{VF}$): Der \textit{Value Function Loss} beschreibt den quadratischen Fehler zwischen der Vorhersage des Critics und dem tatsächlichen Return $R_t$:
+    \item \textbf{Critic\hyp{}Loss} ($L_t^{VF}$): Der \textit{Value Function Loss} beschreibt den quadratischen Fehler zwischen der Vorhersage des Critics und dem tatsächlichen Return $R_t$:
     \begin{equation}
         L_t^{VF}(\phi) = (V_\phi(s_t) - R_t)^2
     \end{equation}
     Dieser Term wird addiert, da er direkt minimiert werden soll.
 
-    \item \textbf{Entropie-Bonus} ($S[\pi_\theta]$): Dieser Term misst die Unvorhersehbarkeit der Policy. Er wird subtrahiert (bzw. mit negativem Vorzeichen addiert), um die Entropie zu maximieren und somit vorzeitige Konvergenz gegen lokale Optima zu verhindern.
+    \item \textbf{Entropie\hyp{}Bonus} ($S[\pi_\theta]$): Dieser Term misst die Unvorhersehbarkeit der Policy. Er wird subtrahiert (bzw. mit negativem Vorzeichen addiert), um die Entropie zu maximieren und somit vorzeitige Konvergenz gegen lokale Optima zu verhindern. Dieser Bonus fördert die Exploration, indem er die Policy dazu anregt, eine diversifizierte Aktionsverteilung beizubehalten. Exploration vs. Exploitation ist ein zentrales Thema im \ac{RL}, da der Agent sowohl neue Strategien ausprobieren (Exploration) als auch bewährte Strategien nutzen (Exploitation) muss, um langfristig optimale Ergebnisse zu erzielen.
 \end{itemize}
 
-Der Zusammenhang zwischen diesen Komponenten ist essentiell für die Stabilität: Ein präziser Critic minimiert $L_t^{VF}$, was zu verlässlichen Advantage-Schätzungen $A_t$ führt. Diese bilden wiederum die Grundlage für zielgerichtete Updates des Actors über $L_t^{CLIP}$. Die Hyperparameter $c_1$ und $c_2$ steuern dabei die Gewichtung zwischen Genauigkeit der Wertfunktion, Optimierung der Policy und dem Erhalt der Explorationsfähigkeit.
+Der Zusammenhang zwischen diesen Komponenten ist essentiell für die Stabilität: Ein präziser Critic minimiert $L_t^{VF}$, was zu verlässlichen Advantage\hyp{}Schätzungen $A_t$ führt. Diese bilden wiederum die Grundlage für zielgerichtete Updates des Actors über $L_t^{CLIP}$. Die Hyperparameter $c_1$ und $c_2$ steuern dabei die Gewichtung zwischen Genauigkeit der Wertfunktion, Optimierung der Policy und dem Erhalt der Explorationsfähigkeit.
 
-\section{Gradientenbasierte Optimierung}
-
-Die Optimierung der Actor- und Critic-Netzwerke erfolgt durch den Gradientenabstieg, mit dem Ziel, die jeweilige Verlustfunktion $L_t^{VF}(\phi)$ zu minimieren.
+\subsection{Gradientenbasierte Optimierung}
+Die Optimierung der Actor\hyp{} und Critic\hyp{}Netzwerke erfolgt durch den Gradientenabstieg, mit dem Ziel, die jeweilige Verlustfunktion $L_t^{VF}(\phi)$ zu minimieren.
 Die Anpassung der Netzwerkparameter $\theta$ erfolgt dabei iterativ entlang des negativen Gradienten. Die Berechnung dieser Gradienten wird in Frameworks wie PyTorch
-über das \textit{Autograd}-System realisiert, welches auf dem Prinzip der automatischen Differenzierung basiert.
+über das \textit{Autograd}\hyp{}System realisiert, welches auf dem Prinzip der automatischen Differenzierung basiert.
 
-\subsection{Computational Graph und Kettenregel} Während des Forward-Passes werden alle mathematischen Operationen auf den Tensoren in 
+
+\subsubsection*{Computational Graph und Kettenregel} Während des Forward\hyp{}Passes werden alle mathematischen Operationen auf den Tensoren in 
 einem dynamischen, gerichteten Graphen – dem sogenannten \textit{Computational Graph} – aufgezeichnet. Dieser Graph bildet die funktionale 
 Abhängigkeit der Verlustgröße L von den trainierbaren Parametern $\theta$ ab.
 
-Um die Gewichte im Backward-Pass zu aktualisieren, muss der Einfluss jedes Parameters auf den Gesamtfehler bestimmt werden. 
+Um die Gewichte im Backward\hyp{}Pass zu aktualisieren, muss der Einfluss jedes Parameters auf den Gesamtfehler bestimmt werden. 
 Da neuronale Netzwerke mathematisch als Komposition geschachtelter Funktionen betrachtet werden können, findet die Kettenregel der Differentialrechnung
 Anwendung. Für eine beispielhafte Kette von Operationen ergibt sich der Gradient des Verlustes L bezüglich eines Parameters $\theta$ als Produkt der lokalen Ableitungen:
 \begin{equation} 
     \frac{\partial \mathcal{L}}{\partial \theta} = \frac{\partial \mathcal{L}}{\partial y} \cdot \frac{\partial y}{\partial g} \cdot \frac{\partial g}{\partial \theta} 
 \end{equation}
 
-Das Autograd-System traversiert den Graphen ausgehend vom Loss-Knoten rückwärts (Backpropagation). An jedem Knoten wird der akkumulierte Gradient mit 
+Das Autograd\hyp{}System traversiert den Graphen ausgehend vom Loss\hyp{}Knoten rückwärts (Backpropagation). An jedem Knoten wird der akkumulierte Gradient mit 
 der lokalen partiellen Ableitung der jeweiligen Operation multipliziert.
 
-\subsection{Steuerung des Gradientenflusses} 
+\subsubsection*{Steuerung des Gradientenflusses} 
 Für die Implementierung komplexer Architekturen ist eine präzise Steuerung dieses Flusses notwendig.
 Über die Methode \texttt{tensor.detach()} kann ein Tensor explizit aus dem Rechengraphen ausgegliedert werden. Mathematisch wird die Kette
 der Ableitungen an dieser Stelle unterbrochen, sodass der Tensor für das System wie eine Konstante wirkt:
@@ -256,30 +272,31 @@ den Rückfluss der Gradienten zu den vorangegangenen Schichten. In dieser Arbeit
 um ein \textit{Gradient Masking} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
 Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehloptimierung inaktiver Netzwerkzweige verhindert wird.
 
-
 \section{Metriken im Reinforcement Learning}
 Im Reinforcement Learning gibt es verschiedene Metriken, die verwendet werden, um die Leistung eines Agenten zu bewerten.
 Diese Metriken helfen dabei, den Fortschritt des Lernprozesses zu überwachen und die Effektivität verschiedener Algorithmen und Hyperparameter zu vergleichen.
-Viele dieser Metriken werden automatisch von \ac{RL}-Bibliotheken wie Stable Baselines3 \cite{sb3} erfasst und können zur Analyse und Visualisierung verwendet werden.
-Dieser Abschnitt soll sich auf diese PPO-spezifischen Metriken konzentrieren. Die Umgebungs-spezifischen Metriken werden in Kapitel \ref{ch:konzeption} beschrieben.
+Viele dieser Metriken werden automatisch von \ac{RL}\hyp{}Bibliotheken wie Stable Baselines3 \cite{sb3} erfasst und können zur Analyse und Visualisierung verwendet werden.
+Dieser Abschnitt soll sich auf diese PPO\hyp{}spezifischen Metriken konzentrieren. Die Umgebungs\hyp{}spezifischen Metriken werden im Abschnitt \ref{sc:env_metrics} beschrieben.
 Folgende Metriken sind besonders relevant:
 \begin{itemize}
-    \item \textbf{Explained Variance (EV):} Diese Metrik misst, wie gut der Critic die tatsächlichen Returns vorhersagt. Ein hoher EV-Wert (nahe 1) deutet darauf hin, dass der Critic
+    \item \textbf{Explained Variance (EV):} Diese Metrik misst, wie gut der Critic die tatsächlichen Returns vorhersagt. Ein hoher EV\hyp{}Wert (nahe 1) deutet darauf hin, dass der Critic
     die Returns gut modelliert, während ein niedriger oder negativer Wert auf eine schlechte Vorhersage hinweist.
     \item \textbf{Policy Loss:} Dies ist der Verlust, der bei der Aktualisierung der Policy berechnet wird. Ein negativer Wert ist wünschenswert, da der Loss minimiert werden soll. 
     Ein stark positiver Wert kann auf Instabilitäten im Lernprozess hinweisen.
-    \item \textbf{Value Loss:} Dies ist der Verlust, der bei der Aktualisierung des Critic-Netzwerks berechnet wird. Ein negativer Wert ist wünschenswert, da der Loss minimiert werden soll. 
+    \item \textbf{Value Loss:} Dies ist der Verlust, der bei der Aktualisierung des Critic\hyp{}Netzwerks berechnet wird. Ein negativer Wert ist wünschenswert, da der Loss minimiert werden soll. 
     Ein stark positiver Wert kann auf Instabilitäten im Lernprozess hinweisen.
     \item \textbf{Entropy Loss:} Diese Metrik quantifiziert die Entropie (Zufälligkeit) der Aktionsverteilung des Agenten. Sie dient als Maß für die Exploration: 
     Eine hohe Entropie bedeutet eine breite Streuung der Aktionen und fördert das Entdecken neuer Strategien, während eine sinkende Entropie auf eine zunehmende 
     Spezialisierung (Exploitation) der gelernten Policy hindeutet. In der Optimierungslogik wird die Entropie mit einem negativen Vorzeichen versehen, um sie 
-    als Minimierungsproblem darzustellen. Da der Algorithmus den Gesamt-Loss minimiert, führt ein negativer Entropy Loss effektiv zu einer Maximierung der Entropie. 
+    als Minimierungsproblem darzustellen. Da der Algorithmus den Gesamt\hyp{}Loss minimiert, führt ein negativer Entropy Loss effektiv zu einer Maximierung der Entropie. 
     Ein Wert, der gegen Null strebt, signalisiert somit, dass der Agent eine deterministische Strategie entwickelt hat und die Exploration abgeschlossen ist.
     \item \textbf{Clip Fraction:} Diese Metrik gibt an, wie oft das Wahrscheinlichkeitsverhältnis \(r_t(\theta)\) im Clipped Surrogate Objective beschnitten wurde.
-    Ein hoher Clip Fraction-Wert kann darauf hinweisen, dass die Policy-Updates zu aggressiv sind, was die Stabilität des Lernprozesses beeinträchtigen kann.
-    \item \textbf{Approx KL:} Diese Metrik approximiert die Kullback-Leibler-Divergenz zwischen der alten und neuen Policy. Sie dient als Maß für die Änderung 
-    der Policy während des Lernprozesses. Ein hoher Approx KL-Wert deutet auf eine signifikante Policy-Änderung hin, was auf eine aggressive Aktualisierung hindeutet.
+    Ein hoher Clip Fraction\hyp{}Wert kann darauf hinweisen, dass die Policy\hyp{}Updates zu aggressiv sind, was die Stabilität des Lernprozesses beeinträchtigen kann.
+    \item \textbf{Approx KL:} Diese Metrik approximiert die Kullback\hyp{}Leibler\hyp{}Divergenz zwischen der alten und neuen Policy. Sie dient als Maß für die Änderung 
+    der Policy während des Lernprozesses. Ein hoher Approx KL\hyp{}Wert deutet auf eine signifikante Policy\hyp{}Änderung hin, was auf eine aggressive Aktualisierung hindeutet.
 \end{itemize}
+Diese Metriken bieten wertvolle Einblicke in den Lernprozess und helfen dabei, die Leistung des \ac{RL}\hyp{}Agenten zu bewerten und zu optimieren.
+Vor allem die Metriken wie Explained Variance, Policy Loss, Value Loss und Entropy Loss sind entscheidend, um den Trainingsfortschritt zu überwachen und sicherzustellen, dass der Agent effektiv lernt. Approx KL und Clip Fraction geben zusätzlich Hinweise auf die Stabilität der Policy\hyp{}Updates. Sprünge oder ungewöhnliche Muster in diesen Metriken können auf Probleme im Lernprozess hinweisen, die eine Anpassung der Hyperparameter oder der Algorithmus\hyp{}Architektur erfordern.
 
 \section{Open Source RL Bibliotheken}
 \begin{itemize}
@@ -308,7 +325,7 @@ Folgende Metriken sind besonders relevant:
 \begin{itemize}
     \item Curriculum Learning
     \item Domain Randomization
-    \item Self-Play
+    \item Self\hyp{}Play
 \end{itemize}
 
 
