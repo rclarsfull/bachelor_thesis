@@ -1,77 +1,37 @@
 \chapter{Statistische Auswertung}
 \label{ch:Statistische_Auswertung}
 
-Dieses Kapitel beschreibt die statistischen Methoden, die zur Analyse der experimentellen Ergebnisse eingesetzt werden. 
-Aufgrund der stochastischen Natur von Reinforcement-Learning-Experimenten kann der Mittelwert einzelner Trainingsläufe stark variieren. 
-Daher ist die Angabe eines einfachen Mittelwerts häufig nicht ausreichend, um belastbare Aussagen über die Leistung einer Variante zu treffen. 
-Ziel ist es, die Unsicherheit der Messwerte quantitativ zu erfassen und zwei Varianten auf einer objektiven Basis vergleichbar zu machen.
+Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderungen an die statistische Auswertung. Aufgrund der inhärenten Stochastik des Trainingsprozesses – bedingt durch zufällige Initialisierungen und probabilistische Policies – besitzen einzelne Trainingsläufe nur begrenzte Aussagekraft. Um dennoch belastbare Schlussfolgerungen über die Leistungsfähigkeit der entwickelten Methoden ziehen zu können, führt dieses Kapitel robuste statistische Metriken ein. Die hier vorgestellte Methodik, insbesondere die Berechnung von Konfidenzintervallen mittels Bootstrap, bildet die analytische Basis für die in Kapitel \ref{ch:evaluation} durchgeführte Validierung der Ergebnisse.
 
-\section{Konfidenzintervalle}
+\section{Konfidenzintervalle und Bootstrap nach \citet{statistical_rl_evaluation}}
 
-Ein \ac{KI} gibt an, in welchem Bereich der wahre Mittelwert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit liegt. 
-Beispielhaft bedeutet ein 95\%-Konfidenzintervall, dass bei wiederholter Durchführung des gesamten Experiments der wahre Mittelwert in 95\% der Fälle innerhalb dieses Intervalls liegen würde.  
-Konfidenzintervalle ermöglichen somit eine Abschätzung der statistischen Unsicherheit und dienen der quantitativen Bewertung von Unterschieden zwischen Varianten.
+Ein \ac{KI} beschreibt den Bereich, in dem der wahre (unbekannte) Wert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit liegt. In dieser Arbeit verwenden wir 95\%-Konfidenzintervalle, um die Unsicherheit der geschätzten Performancemaße zu quantifizieren. Die Berechnung erfolgt vollständig empirisch mittels Percentile-Bootstrap, wie von \citet{statistical_rl_evaluation} für Reinforcement-Learning-Evaluationen empfohlen.
 
-\section{Bootstrap-Verfahren}
+\paragraph{Bootstrap in zwei Sätzen.} Wir haben nur wenige Runs. Anstatt Verteilungsannahmen zu treffen, simuliert der Bootstrap viele virtuelle Datensätze durch Ziehen \emph{mit Zurücklegen} aus den vorhandenen Runs. Auf jedem virtuellen Datensatz wird dieselbe Kennzahl berechnet; die Streuung dieser Bootstrap-Kennzahlen liefert direkt das Konfidenzintervall.
 
-Zur Abschätzung der Unsicherheit der Kennzahlen wird in dieser Arbeit das Bootstrap-Verfahren eingesetzt. 
-Hierbei handelt es sich um einen nicht-parametrischen, datengetriebenen Ansatz, der keine Annahmen über die zugrunde liegende Verteilung der Daten erfordert. 
-Das Verfahren ist insbesondere dann geeignet, wenn nur eine geringe Anzahl unabhängiger Trainingsläufe verfügbar ist oder die Verteilung der Ergebnisse nicht normal ist, wie es häufig bei Reinforcement-Learning-Experimenten der Fall ist.
-
-\subsection{Percentile Bootstrap}
-
-Das Percentile-Bootstrap-Verfahren lässt sich wie folgt zusammenfassen:
-
+\paragraph{Percentile-Bootstrap (Algorithmus).}
 \begin{enumerate}
-  \item Gegeben sind die Messwerte \(p_1, \dots, p_n\) aus \(n\) unabhängigen Trainingsläufen (Runs).
-  \item Es werden zahlreiche Bootstrap-Stichproben der Größe \(n\) durch Ziehen mit Zurücklegen aus den vorhandenen Werten erzeugt. Für jede Stichprobe wird die gewünschte Kennzahl, beispielsweise der Mittelwert, berechnet.
-  \item Aus der empirischen Verteilung dieser Kennzahlen werden die 2,5\%- und 97,5\%-Perzentile bestimmt, welche das 95\%-Konfidenzintervall definieren.
+	\item Gegeben \(n\) unabhängige Runs einer Variante mit Kennzahlen \(p_1,\dots,p_n\).
+	\item Ziehe \(B\) Stichproben der Größe \(n\) \emph{mit Zurücklegen} aus \(\{p_i\}\).
+	\item Berechne für jede Stichprobe die Kennzahl (IQM oder Mittelwert der Success Rate).
+	\item Das 95\%-KI sind die Perzentile (2.5, 50, 97.5) der entstehenden Bootstrap-Verteilung.
 \end{enumerate}
+Dieses Verfahren ist nicht-parametrisch, benötigt keine Normalverteilungsannahme und bleibt stabil bei schiefen Verteilungen und kleinen Stichproben.
 
-Dieses Vorgehen erlaubt es, die Unsicherheit einer Kennzahl zu quantifizieren, ohne auf parametrisierte Annahmen zurückgreifen zu müssen. Durch die wiederholte Ziehung von Stichproben werden „virtuelle Mittelwerte“ erzeugt, die die Variabilität der Kennzahl realistisch widerspiegeln, selbst wenn nur wenige echte Trainingsläufe durchgeführt wurden.
+\paragraph{Stratified Bootstrap nach \citet{statistical_rl_evaluation}.} Bei mehreren Tasks/Environments wird nicht global gemischt resampelt, sondern \emph{pro Task} separat gezogen und anschließend werden die Beiträge gleichgewichtet aggregiert. Dadurch dominiert keine „leichte“ Task das Gesamtergebnis. In dieser Arbeit erfolgt die Auswertung taskweise (z.B. nur \texttt{crossing\_planes\_multiHead} oder nur \texttt{LunarLander-v3}); daher ist kein zusätzliches Stratified-Resampling nötig. Würden mehrere Environments gemeinsam ausgewertet, wäre das stratifizierte Vorgehen erforderlich, um Verteilungsverschiebungen zu vermeiden.
 
-\section{Vergleich zweier Varianten im gepaarten Versuchsaufbau}
+\section{Robuste Lagekennzahl: Interquartile Mean (IQM)}
 
-Werden zwei Varianten (A und B) pro Seed unter identischen Bedingungen trainiert, lässt sich ein gepaarter Versuchsaufbau konstruieren.  
-Die Differenz der Ergebnisse für jeden Seed wird berechnet als:
-\[
-d_i = p_{A,i} - p_{B,i}.
-\]
-Ein Konfidenzintervall für den Mittelwert der Differenzen \(\mu_d\) ermöglicht die Beurteilung, ob die Abweichung statistisch signifikant von null ist. Liegt das Intervall vollständig über null, deutet dies auf eine signifikante Überlegenheit von Variante A hin.
+Statt einfacher Mittelwerte nutzen wir den Interquartile Mean (IQM) als robuste Lagekennzahl der episodischen Rewards. Der IQM mittelt nur über das mittlere 50\%-Quantil und dämpft damit Ausreißer deutlich \citep{statistical_rl_evaluation}. Für jede Variante wird der IQM der \emph{last\_eval\_mean}-Werte berechnet; das 95\%-Konfidenzintervall resultiert aus dem Percentile-Bootstrap mit \(B=5000\).
 
-\subsection{Paired Bootstrap}
+\section{Vergleich zweier Varianten}
 
-Zur robusten Berechnung des Konfidenzintervalls für gepaarte Daten wird das Paired-Bootstrap-Verfahren angewendet:
+Für zwei Algorithmen \(A\) und \(B\) werden getrennte Bootstrap-Verteilungen ihrer IQM-Werte erzeugt. Die Differenz-Distribution entsteht durch Ziehen \emph{beider} IQM-Werte pro Bootstrap-Iteration und anschließendes Bilden \(IQM_A - IQM_B\). Das daraus abgeleitete 95\%-Konfidenzintervall ermöglicht die Aussage, ob sich die Varianten signifikant unterscheiden. Liegt 0 innerhalb des Intervalls, ist kein signifikanter Unterschied nachweisbar; liegt das Intervall vollständig oberhalb (unterhalb) von 0, spricht dies für eine Überlegenheit von \(A\) (bzw. \(B\)).
 
-\begin{enumerate}
-  \item Die Differenzen \(d_i\) werden für alle Seeds berechnet.
-  \item Es werden zahlreiche Bootstrap-Stichproben der Größe \(n\) aus den Differenzen gezogen, jeweils mit Zurücklegen, und der Mittelwert jeder Stichprobe \(\bar d^{*(b)}\) wird berechnet.
-  \item Die 2,5\%- und 97,5\%-Perzentile der empirischen Verteilung der Mittelwerte definieren das 95\%-Konfidenzintervall für \(\mu_d\).
-\end{enumerate}
+\section{Success-Rate-Analyse}
 
-Dieses Verfahren reduziert die Varianz durch Nutzung gepaarter Daten und ermöglicht eine robuste Einschätzung der statistischen Signifikanz, selbst bei wenigen Trainingsläufen.
+Neben den Rewards wird die Erfolgsrate (Anteil erfolgreicher Episoden pro Evaluation) ausgewertet. Da es sich um bereits robuste Anteilswerte handelt, wird hier der arithmetische Mittelwert als Kennzahl verwendet. Ein 95\%-Konfidenzintervall des Mittelwerts wird wiederum per Percentile-Bootstrap (\(B=5000\)) bestimmt; der Unterschied zweier Varianten folgt analog durch Bootstrap der Mittelwertdifferenzen.
 
-\section{Beispiel (Pseudocode)}
+\section{Performance Profiles}
 
-\begin{verbatim}
-# pA[1..n], pB[1..n]
-d = pA - pB
-for b in 1..B:
-    sampel = sample_with_replacement(range(n), n)
-    boot_mean[b] = mean([d[i] for i in sampel])
-CI = percentile(boot_mean, [2.5, 97.5])
-\end{verbatim}
-
-Hierdurch werden aus wenigen Trainingsläufen zahlreiche virtuelle Mittelwerte erzeugt, aus denen die Unsicherheit zuverlässig abgeschätzt werden kann.
-
-\section{Zusammenfassung}
-
-Für eine belastbare statistische Bewertung der experimentellen Ergebnisse sind folgende Punkte zentral:
-
-\begin{enumerate}
-  \item Durchführung unabhängiger Runs mit unterschiedlichen Seeds.  
-  \item Berechnung aggregierter Kennzahlen pro Run (z.B. Mittelwert aus mehreren Evaluationsepisoden).  
-  \item Einsatz gepaarter Vergleiche bei identischen Seeds, um Varianz zu reduzieren.  
-  \item Nutzung von Bootstrap-Konfidenzintervallen zur robusten Quantifizierung der Unsicherheit, insbesondere bei wenigen Runs oder asymmetrischen Verteilungen.  
-  \item Vollständige Dokumentation aller relevanten Parameter (Seeds, Evaluationsumfang, Hyperparameter, Software-Versionen).
-\end{enumerate}
+Zur ganzheitlichen Bewertung erzeugen wir Performance Profiles \citep{statistical_rl_evaluation}. Für ein Gitter von Schwellenwerten $\tau$ wird der Anteil der Runs berechnet, deren Score $> \tau$ liegt. Dies resultiert in einer Verteilungsfunktion, die den Anteil der erfolgreichen Läufe über verschiedene Schwellenwerte hinweg darstellt. Um die statistische Sicherheit dieser Kurve zu bewerten, werden mittels wiederholtem Resampling der Runs (Bootstrap) 95\%-Konfidenzbänder berechnet.. Performance Profiles zeigen auf einen Blick, wie viel Masse der Verteilung oberhalb bestimmter Qualitätsniveaus liegt und sind besonders aussagekräftig bei heterogenen oder breiten Verteilungen.

@@ -1,6 +1,51 @@
 \chapter{Code}
 
 \section{PPO-Anpassungen}
+\label{sc:ppo_code}
+
+\begin{lstlisting}[language=Python, caption={Netzarchitektur mit vollständig getrennten Pfaden}, label=lst:branching_network]
+class SplitActionNet(th.nn.Module):
+    def __init__(self, latent_dim: int, net_action_dims: List[int], action_space:  spaces.Dict, get_net_action_dim, net_arch: Union[list[int], dict[str, list[int]]] = [16, 16]):
+        super().__init__()
+        
+        self.action_nets = th.nn.ModuleList()
+        if isinstance(net_arch, dict):
+            assert len(net_arch) == len(action_space), "If using a dict for net_arch, you must specify a separate architecture for each action in the action space"
+            for key, action_dim in action_space.items():
+                layers = []
+                curr_dim = latent_dim
+                current_net_arch = net_arch[key]
+                for hidden_dim in current_net_arch:
+                    layers.append(th.nn.Linear(curr_dim, hidden_dim))
+                    layers.append(th.nn.Tanh())
+                    curr_dim = hidden_dim
+                layers.append(th.nn.Linear(curr_dim, get_net_action_dim(action_dim)))
+                self.action_nets.append(th.nn.Sequential(*layers))
+        else:
+            shared_net = []
+            curr_dim = latent_dim
+            for hidden_dim in net_arch:
+                shared_net.append(th.nn.Linear(curr_dim, hidden_dim))
+                shared_net.append(th.nn.Tanh())
+                curr_dim = hidden_dim
+            
+            self.action_nets = th.nn.ModuleList()
+                
+            for action_dim in action_space.values():
+                action_net = th.nn.Sequential(*shared_net).append(th.nn.Linear(curr_dim, get_net_action_dim(action_dim)))
+                self.action_nets.append(action_net)
+
+
+    def forward(self, x: th.Tensor) -> th.Tensor:
+        return th.cat([action_net(x) for action_net in self.action_nets], dim=1)
+    
+class Masked_MultiOutputDistribution(MultiOutputDistribution):
+    
+    def proba_distribution_net(self, latent_dim: int, log_std_init: float = 0.0) -> Tuple[th.nn.Module, th.nn.Parameter]:
+        action_net = SplitActionNet(latent_dim, self._net_action_dims, self.action_space, self.get_net_action_dim)
+        flatten_log_std = th.nn.Parameter(th.ones(self._net_flatten_action_dim) * log_std_init, requires_grad=True)
+        return action_net, flatten_log_std
+\end{lstlisting}
 
 \begin{lstlisting}[language=Python, caption={Maskierung in der Aktionsauswertung}, label=lst:evaluate_actions]
 def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
@@ -79,4 +124,208 @@ def forward(self, obs: th.Tensor, deterministic: bool = False) -> Tuple[th.Tenso
         
         actions = actions.reshape((-1, *get_action_shape(self.action_space)))
         return actions, values, masked_log_prob
+\end{lstlisting}
+
+\section{LunarLander}
+
+\begin{lstlisting}[language=Python, caption={LunarLander wrapper}, label=lst:lunar_lander_wrapper]
+"""
+LunarLanderContinuous wrapper to test MaskedHybridPPO with a standard environment
+"""
+import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
+
+
+class LunarLanderContinuousMultiOutput(gym.Wrapper):
+    """
+    Wraps LunarLanderContinuous to have a Dict action space matching the MaskedHybridPPO structure.
+    
+    Original LunarLanderContinuous actions:
+    Box(-1, +1, (2,), dtype=np.float32)
+    Action[0]: Main engine
+        - < 0: Off
+        - 0..1: Throttle 50%..100%
+    Action[1]: Lateral boosters
+        - -0.5..0.5: Off
+        - < -0.5: Left booster (Throttle scales 50%..100%)
+        - > 0.5: Right booster (Throttle scales 50%..100%)
+    
+    Multi-output structure (sorted alphabetically):
+    - main_opt_switch: Discrete(2)
+        0: Off
+        1: On
+    - main_val_power: Box(0, 1)
+        Throttle value.
+        clipped to 0..1. 
+        Note: PPO outputs centered at 0. So init will be around 0 (Min Power).
+    - side_opt_switch: Discrete(3)
+        0: Off
+        1: Left
+        2: Right
+    - side_val_power: Box(0, 1)
+        Throttle value
+        
+    """
+    
+    def __init__(self, env):
+        super().__init__(env)
+        
+        # Create multi-output action space
+        # Keys named to ensure alphabetical sorting aligns with logic:
+        # 1. main_opt_switch
+        # 2. main_val_power
+        # 3. side_opt_switch
+        # 4. side_val_power
+        self.action_space = spaces.Dict({
+            'main_opt_switch': spaces.Discrete(2),
+            'main_val_power': spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
+            'side_opt_switch': spaces.Discrete(3),
+            'side_val_power': spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)
+        })
+        
+    def step(self, action):
+        """
+        Map multi-output action to original LunarLanderContinuous action
+        """
+        if isinstance(action, dict):
+            main_switch = action['main_opt_switch']
+            main_power = action['main_val_power']
+            side_switch = action['side_opt_switch']
+            side_power = action['side_val_power']
+        else:
+            main_switch = int(action[0])
+            main_power = float(action[1])
+            side_switch = int(action[2])
+            side_power = float(action[3])
+            
+        if isinstance(main_switch, np.ndarray):
+            main_switch = main_switch.item()
+        if isinstance(side_switch, np.ndarray):
+            side_switch = side_switch.item()
+
+        # Map Box(0, 1) handling from PPO Gaussian(0, std)
+        # We simply clip. 
+        # Mean 0 -> 0 -> Min throttle (50% real world)
+        main_p = np.clip(main_power, 0.0, 1.0)
+        side_p = np.clip(side_power, 0.0, 1.0)
+        
+        if isinstance(main_p, np.ndarray):
+             main_p = main_p.item()
+        if isinstance(side_p, np.ndarray):
+             side_p = side_p.item()
+            
+        # 1. Handle Main Engine
+        # Env logic: main < 0 is off. 0..1 is on.
+        if main_switch == 0:
+            actual_main = -1.0 # Safe off
+        else:
+            actual_main = main_p
+                
+        # 2. Handle Side Engines
+        # Env logic: -0.5 < x < 0.5 off
+        # x < -0.5 Left
+        # x > 0.5 Right
+        if side_switch == 0:
+            actual_side = 0.0
+        elif side_switch == 1: # Left
+            # Map 0..1 to -0.5..-1.0
+            actual_side = -0.5 - (side_p * 0.5)
+        elif side_switch == 2: # Right
+            # Map 0..1 to 0.5..1.0
+            actual_side = 0.5 + (side_p * 0.5)
+        else:
+            actual_side = 0.0
+
+        real_action = np.array([actual_main, actual_side], dtype=np.float32)
+        
+        obs, reward, terminated, truncated, info = self.env.step(real_action)
+        
+        return obs, reward, terminated, truncated, info
+        
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
+
+\end{lstlisting}
+
+\begin{lstlisting}[caption={LunarLander Hyperparameter}, label=lst:lunar_lander_hyperparams]
+LunarLanderContinuous-v3:
+  n_envs: 16
+  n_timesteps: !!float 3e6
+  policy: 'MlpPolicy'
+  n_steps: 1024
+  batch_size: 64
+  gae_lambda: 0.98
+  gamma: 0.999
+  n_epochs: 4
+  ent_coef: 0.01
+
+LunarLanderContinuous-v3:
+  n_envs: 16
+  n_timesteps: !!float 3e6
+  policy: 'MultiOutputPolicy'
+  n_steps: 1024
+  batch_size: 64
+  gae_lambda: 0.98
+  gamma: 0.999
+  n_epochs: 4
+  ent_coef: 0.01
+
+LunarLander-v3:
+  policy: "MaskedMultiOutputPolicy"
+  n_timesteps: !!float 3e6
+  n_envs: 16
+  n_steps: 1024
+  batch_size: 64
+  gae_lambda: 0.98
+  gamma: 0.999
+  n_epochs: 4
+  ent_coef: 0.01
+  env_wrapper:
+    - custom_envs.lunarlander_multioutput.LunarLanderMultiOutput
+
+\end{lstlisting}
+
+\begin{lstlisting}[caption={LunarLander testscript}, label=lst:lunar_lander_script]
+#!/bin/bash
+
+set -euo pipefail
+
+SEEDS=(66 133 42 202 7 1234 999 2021 31415 2718 1618 8675 11235 3141 16180)
+ALGOS=(ppo masked_hybrid_ppo multioutputppo masked_hybrid_ppo_split_net) 
+ENV_ID="LunarLanderContinuous-v3"
+LOG_ROOT="logs"
+
+EVAL_FREQ="${EVAL_FREQ:-50000}"
+EVAL_EPISODES="${EVAL_EPISODES:-60}"
+N_EVAL_ENVS="${N_EVAL_ENVS:-6}"
+
+ITERATIONS=${#SEEDS[@]}
+RUN_IDX=0
+
+for SEED in "${SEEDS[@]}"; do
+  RUN_IDX=$((RUN_IDX + 1))
+  echo "----------------------------------------------------------"
+  echo "Lunar: Lauf ${RUN_IDX} von ${ITERATIONS} mit Seed: ${SEED}"
+  echo "----------------------------------------------------------"
+
+  for ALGO in "${ALGOS[@]}"; do
+    echo "Starte ${ALGO}..."
+    python train.py \
+      --algo "${ALGO}" \
+      --verbose 0 \
+      --env "${ENV_ID}" \
+      --vec-env subproc \
+      --device cpu \
+      --num-threads 4 \
+      --tensorboard-log "${LOG_ROOT}/tensorboard" \
+      -P --eval-episodes "${EVAL_EPISODES}" --n-eval-envs "${N_EVAL_ENVS}" \
+      --eval-freq "${EVAL_FREQ}" \
+      --seed "${SEED}"
+  done
+
+done
+
+python scripts/evaluate_results.py --logs "${LOG_ROOT}" --env "${ENV_ID}" --algos "${ALGOS[@]}"
 \end{lstlisting}

@@ -1,31 +1,54 @@
-\chapter{Flugsicherungsgrundlagen}
+\chapter{Flugsicherungskontext}
 \label{ch:fs_grundlagen}
 
-\section{Aufgabe der Flugsicherung}
+Die Entwicklung eines KI-gestützten Fluglotsen erfordert ein fundiertes Verständnis der operativen Umgebung, in der dieser agieren soll. Dieses Kapitel führt in die Domäne der Flugsicherung ein und erläutert die spezifischen Rahmenbedingungen, die für den Entwurf des Reinforcement-Learning-Agenten maßgeblich sind. Besonderes Augenmerk liegt dabei auf den Regeln der Konflikterkennung und -lösung sowie der spezifischen Rolle des \textit{Adjacent}-Lotsen. Diese Konzepte bilden das Fundament für die spätere Modellierung des Zustandsraums und der Belohnungsfunktion in Kapitel \ref{ch:konzeption}.
 
-\section{Aufbau des Luftraums}
+\section{Kontext und Aufgabe der Flugsicherung}
+Die \ac{DFS} ist ein privatrechtlich organisiertes Unternehmen im alleinigen Eigentum des Bundes.
+Ihre zentrale Aufgabe ist die Kontrolle des Luftverkehrs in Deutschland.
+Hierbei wird zwischen kontrolliertem und unkontrolliertem Luftraum unterschieden.
+Im kontrollierten Luftraum, der sich flächendeckend über der Bundesrepublik befindet, sind Fluglotsen für die aktive Steuerung der Luftfahrzeuge zuständig.
+Diese Arbeit fokussiert sich auf Szenarien im oberen Luftraum (Streckenkontrolle), in dem sich Flugzeuge zumeist entlang definierter Luftstraßen bewegen und im Vergleich zum An- und Abflugbereich eine geringere Dynamik aufweisen.
 
-\subsection{Sektorisirung}
+\section{Struktur des Luftraums}
+Zur Bewältigung des Verkehrsaufkommens ist der Luftraum in Sektoren unterteilt, die vertikal durch Höhenbänder und lateral durch geographische Grenzen definiert sind.
+Ein Sektor wird typischerweise von einem Team aus zwei Fluglotsen kontrolliert:
+\begin{itemize}
+    \item \textbf{Executive (Radarlotse):} Verantwortlich für die unmittelbare taktische Steuerung des Verkehrs mittels Funksprechverkehr.
+    \item \textbf{Planner (Koordinationslotse):} Zuständig für die strategische Planung und die Abstimmung mit benachbarten Sektoren.
+\end{itemize}
 
-\subsection{Flugzeugübergabe}
+Für die Übergabe von Flügen zwischen Sektoren existieren in \textit{Letter of Agreement} (LoA) definierte Standardverfahren.
+Diese legen Übergabepunkte sowie die zugehörigen Höhen und Geschwindigkeiten fest.
+Abweichungen von diesen Standards erfordern eine explizite Koordinierung zwischen den betroffenen Sektoren, dies geschieht üblicherweise über Telefonate zwischen den Lotsen.
 
-\section{Flugzeugkonflikte}
+\section{Staffelung und Konfliktlösung}
+Die zentrale Sicherheitsmaßnahme der Flugsicherung ist die Staffelung (\textit{Separation}), also die Gewährleistung definierter Mindestabstände zwischen Luftfahrzeugen.
+Die \textit{International Civil Aviation Organization} (ICAO) gibt hierfür Standards vor. Für den Streckenflug gelten in der Regel:
+\begin{itemize}
+    \item \textbf{Vertikale Staffelung:} Mindestens 1000 ft (ca. 300 m).
+    \item \textbf{Laterale Staffelung:} Mindestens 5 NM (ca. 9,3 km).
+\end{itemize}
+Eine Unterschreitung dieser Mindestabstände definiert eine Staffelungsverletzung.
+\vspace{\baselineskip}
 
-\subsection{Definition}
+Zur Lösung potenzieller Konflikte stehen drei grundlegende Manöver zur Verfügung, die den Flugpfad relativ zum \ac{CPA} verändern \cite{Che+23}:
+\begin{enumerate}
+    \item \textbf{Altitude Change:} Änderung der Flughöhe zur Herstellung vertikaler Staffelung.
+    \item \textbf{Speed Change:} Anpassung der Geschwindigkeit, um den Zeitpunkt des Passierens eines Kreuzungspunktes zu verschieben.
+    \item \textbf{Heading Change (Vectoring):} Änderung des Steuerkurses, um den Konflikt lateral zu umfliegen.
+\end{enumerate}
 
-\subsection{Konfliktarten und deren Lösungsstrategien}
-Ziel Abstand von 6 - 9 NM horizontal
-\subsection{Kreuzende Routen}
-60NM Regel: 60 NM vor Kollisionpunkt 1 grad heading Änderung resultiert in etwa 5 NM Abstand am Kollisionpunkt
-\subsection{Vereinen von Routen}
-dürfen sich nicht annähern und mindestens 10 NM Abstand halten
-\subsection{Identische Koordinationspunkte}
-Direct Routing (Koordinationspunkt auslassen)
+\section{Simulationsumgebung und Adjacent Position}
+Simulatoren spielen eine zentrale Rolle in der Ausbildung von Fluglotsen.
+Um ein realistisches Trainingsszenario für den zu schulenden Sektor zu gewährleisten, müssen die angrenzenden Lufträume simuliert werden.
+Dies ist die Aufgabe der sogenannten \textit{Adjacent Position}.
 
-\section{Simulator}
+Der \textit{Adjacent-Lotse} agiert als Schnittstelle zur Außenwelt des trainierenden Sektors.
+Zu seinen Aufgaben gehören:
+\begin{itemize}
+    \item Die Simulation der Piloten aller Flugzeuge in den Nachbarsektoren mittels \textit{Pilot Commands}.
+    \item Die Durchführung von Koordinierungsgesprächen mit den Trainees (z.B. bei Abweichungen von Übergabebedingungen).
+\end{itemize}
 
-\subsection{Nutzung}
-
-\subsection{Aufgaben der Adjazenlotsen}
-
-\subsection{Pilot Commands}
+Im Rahmen dieser Arbeit soll diese Rolle durch einen \ac{RL}-Agenten automatisiert werden, um insbesondere für Selbstlernphasen (z.B. im Web-Simulator) eine realistische Interaktion ohne menschlichen Gegenpart zu ermöglichen. Kernherausforderung ist hierbei die Entwicklung eines Agenten, der nicht nur Konflikte zuverlässig erkennt und löst, sondern dies auch auf eine Weise tut, die für menschliche Trainees nachvollziehbar und akzeptabel ist. Dies Arbeit konzentriert sich daher auf die Entwicklung eines Agenten, der durch gezielte Kursänderungen Konflikte vermeidet, ohne dabei unnötige oder verwirrende Manöver durchzuführen.

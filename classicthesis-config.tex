@@ -19,6 +19,8 @@
 \PassOptionsToPackage{utf8}{inputenc}
   \usepackage{inputenc}
 
+\PassOptionsToPackage{dvipsnames,svgnames,table}{xcolor}
+
 % ****************************************************************************************************
 % 1. Configure classicthesis for your needs here, e.g., remove "drafting" below
 % in order to deactivate the time-stamp on the pages
@@ -124,7 +126,8 @@
   \def\bflabel#1{{\acsfont{#1}\hfill}}
   \def\aclabelfont#1{\acsfont{#1}}
 % ****************************************************************************************************
-%\usepackage{pgfplots} % External TikZ/PGF support (thanks to Andreas Nautsch)
+\usepackage{pgfplots} % External TikZ/PGF support (thanks to Andreas Nautsch)
+\pgfplotsset{compat=1.18}
 %\usetikzlibrary{external}
 %\tikzexternalize[mode=list and make, prefix=ext-tikz/]
 % ****************************************************************************************************

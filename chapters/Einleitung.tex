@@ -22,19 +22,19 @@ die den Trainees zusätzlich zu den im Vorhinein speziell gebauten Szenarien zur
 \section{Ziel der Arbeit}
 \label{sec:intro:goal}
 
-Ziel dieser Arbeit ist die Konzeption und Evaluation eines \ac{RL}-Systems, das die konfliktfreie Steuerung des Flugverkehrs in den umliegenden Sektoren der Trainees übernimmt. 
-Das System soll Steueranweisungen (Pilot-Commands) generieren, um Flugkonflikte zu vermeiden und den Verkehr effizient zu steuern. 
-Dabei werden die Realisierbarkeit der Anweisungen, physikalische Limitierungen und die Anweisungsfrequenz berücksichtigt. 
-Die Arbeit soll folgende Fragestellung beantworten:
+Ziel dieser Arbeit ist die Entwicklung eines \ac{RL}-Agenten für die Adjacent-Position, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und vor allem ruhiges Steuerungsverhalten zeigt. Im Gegensatz zu klassischen Ansätzen soll das häufige "Jittering" – also unnötige, kleinteilige Kurskorrekturen – durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option minimiert werden.
+
+Die zentrale Forschungsfrage lautet daher:
 \begin{itemize}
-    \item Wie lassen sich ein RL-Agent und dessen Trainingsumgebung gestalten, um einerseits konfliktarmes, andererseits aber auch effizientes Lotsen durch den Agenten zu erreichen?
+    \item Wie muss die Architektur eines Reinforcement-Learning-Agenten sowie dessen Trainingsumgebung beschaffen sein, um im Kontext der Flugverkehrssteuerung sowohl Konfliktfreiheit als auch eine hohe Effizienz der Lotsentätigkeit zu gewährleisten?
 \end{itemize}
-Daraus leiten sich folgende Unterfragen ab:
+
+Zur Beantwortung dieser Frage werden vier konkrete Untersuchungsziele definiert, die für die spätere Evaluation maßgeblich sind:
 \begin{itemize}
-    \item Wie sollte der Aktionsraum gestaltet werden, um ein bestmögliches Ergebnis zu erzielen?
-    \item Lässt sich ein RL-Agent mit diskreten und kontinuierlichen Aktionen so konzipieren, dass Noop-Entscheidungen korrekt abgebildet werden und kontinuierliche Aktionen nur bei Bedarf trainiert werden?
-    \item Wie kann ein aktionsabhängiges Gradient-Gating implementiert werden, um das Training durch Aktionsmaskierung nicht negativ zu beeinträchtigen?
-    \item Überwiegen die Vorteile eines RL-Agenten mit diskreten und kontinuierlichen Aktionen gegenüber einem klassischen (rein diskreten) Agenten?
+    \item \textbf{Abbildung von Noops:} In welcher Form lässt sich eine explizite Repräsentation von Nicht-Eingriffen (\emph{No-Operation}) im Aktionsraum realisieren, die zur Vermeidung redundanter Steuerbefehle führt?
+    \item \textbf{Architektonische Machbarkeit:} Ermöglicht eine Architektur mit hybridem Aktionsraum (diskret und kontinuierlich) dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe?
+    \item \textbf{Algorithmische Machbarkeit:} Lässt sich der Proximal-Policy-Optimization-Algorithmus (PPO) durch die Integration von \emph{Gradient Gating} derart modifizieren, dass ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum ohne Beeinträchtigung der Konvergenz gewährleistet ist?
+    \item \textbf{Operativer Mehrwert:} Resultiert aus dem erhöhten architektonischen Aufwand ein quantifizierbarer operativer Mehrwert – insbesondere im Hinblick auf eine reduzierte Eingriffsfrequenz, effizientere Flugführung oder gesteigerte Erfolgsrate – im Vergleich zu einem Agenten mit rein diskretem Aktionsraum?
 \end{itemize}
 
 
@@ -48,9 +48,7 @@ Zu Beginn der Arbeit werden in Kapitel \ref{ch:fs_grundlagen} die Grundlagen der
 Anschließend werden in Kapitel \ref{ch:rl_grundlagen} die theoretischen Grundlagen der Lösungsdomäne (\ac{RL}) und relevanten Algorithmen vorgestellt. 
 Danach wird in Kapitel \ref{ch:Statistische_Auswertung} auf die statistischen Methoden zur Auswertung der Experimente eingegangen.
 In Kapitel \ref{ch:konzeption} werden die Definition von Zustands- und Aktionsräumen sowie der Belohnungsfunktion behandelt, sowie deren Zusammenhang mit verschiedenen Konfliktlösungsmaßnahmen erläutert.
+Darauf aufbauend beschreibt Kapitel \ref{ch:ppo_bedingt} die notwendigen algorithmischen Anpassungen des PPO\hyp{}Algorithmus, um die Besonderheiten des zuvor definierten gemischten Aktionsraums effizient zu handhaben.
 Kapitel \ref{ch:evaluation} widmet sich der Evaluation des \ac{RL}-Systems, in welchem die durchgeführten Experimente und deren Ergebnisse präsentiert und analysiert werden.
 Abschließend werden in Kapitel \ref{ch:zusammenfassung} die Ergebnisse der Arbeit zusammengefasst und ein Ausblick auf mögliche zukünftige Arbeiten gegeben.
 
-% Auswertung in genauer beschreibem, Statistische segnifikanz, Wiederholbarkeit usw. Porblm aktuelle dass das projekt weniger Architektur usw ist soder n ehrr parametrisierung. Literaturrschersche. 
-%Genaueres Exposee in einem getrennten Dokument.Raschersche wie de performance von RL systemen in anderen arbeiten bwertet wird
-https://medium.com/@digitalconsumer777/evaluating-reinforcement-learning-algorithms-metrics-and-benchmarks-e796d03cb81c
