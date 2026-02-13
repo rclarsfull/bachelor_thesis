@@ -1,8 +1,31 @@
 \chapter{Zusammenfassung und Ausblick}
 \label{ch:zusammenfassung}
-\section{Zukünftige Arbeiten}
-\begin{itemize}
-    \item Erweiterung des \ac{RL}-Systems um zusätzliche Konfliktlösungsstrategien.
-    \item Imitationslernen basierend auf menschlichen Lotsenverhalten. \cite{imitationLearning}
-    \item Integration trainierter Policies mittels ONNX in der Java Umgebung der Simulatoren.
-\end{itemize}
+\section{Ausblick}
+\label{ch:Future_Work}
+Während der Entwicklung und Evaluation des \ac{RL}\hyp{}Agenten sind einige Aspekte aufgefallen, die in zukünftigen Arbeiten weiter untersucht werden könnten. Diese Themen besitzen das Potenzial, die Leistung und Anwendbarkeit eines \ac{RL}\hyp{}Agenten im Kontext der Flugverkehrssteuerung weiter zu steigern.
+
+\subsection*{Erweiterte Konfliktlösungsstrategien}
+Der aktuelle Agent operiert in einem eingeschränkten Aktionsraum, der sich primär auf horizontale Kursänderungen fokussiert. In der realen Flugsicherung stehen Lotsen jedoch weitere Freiheitsgrade zur Verfügung, insbesondere Geschwindigkeitsanpassungen (\emph{Speed Control}) und Höhenänderungen (\emph{Vertical Rate}). Die Integration dieser Dimensionen in das \ac{RL}-Framework würde nicht nur effizientere Trajektorien ermöglichen, sondern auch die Lösung komplexer Konfliktsituationen erlauben, die allein durch laterale Manöver schwer beherrschbar sind.
+
+\subsection*{Imitationslernen von Expertenwissen}
+Ein häufiger Kritikpunkt an rein explorativ trainierten KI-Systemen ist das teils "unnatürliche" Lösungsverhalten. Durch die Nutzung von \emph{Imitation Learning} \cite{imitationLearning} könnte der Agent initial auf Basis historischer Radarspuren und menschlicher Lotsenkommandos trainiert werden. Dieser Ansatz des \emph{Behavior Cloning} würde sicherstellen, dass die Basis-Policy bereits menschlichen Erwartungen entspricht, bevor sie durch exploratives \ac{RL} weiter optimiert wird.
+
+\subsection*{Systemintegration und Simulationsschnittstellen}
+Für den Transfer von der Forschung in den operativen Betrieb ist die technische Lücke zwischen Trainings- und Produktionsumgebung zu schließen. Während das Training effizient in Python-Frameworks erfolgt, basiert der Simulator der Deutschen Flugsicherung auf Java. Der Export der trainierten Policies in das \emph{Open Neural Network Exchange} (ONNX) Format erlaubt eine nahtlose und performante Integration in die Java-Umgebung, ohne dass die Agenten-Logik neu implementiert werden muss.
+
+Ergänzend hierzu sollte betrachtet werden, wie der Simulator nicht nur zur reinen Anwendung der trainierten Agenten, sondern direkt als Trainingsumgebung genutzt werden kann. Dies erfordert die Konzeption einer hochperformanten Schnittstelle zwischen der Java-Simulation und den Python-basierten Lernalgorithmen. Eine solche Anbindung würde Trainingsläufe direkt auf der produktiven Logik ermöglichen, stellt jedoch hohe Anforderungen an die Effizienz der Datenkommunikation, um die Trainingsdauer nicht durch Latenzen negativ zu beeinflussen.
+
+\subsection*{Multi-Agenten-Systeme}
+Die Integration von mehreren \ac{RL}\hyp{}Agenten, die kooperativ zusammenarbeiten, um den Flugverkehr zu steuern, könnte realistischere Szenarien abbilden und die Effizienz der Konfliktlösung erhöhen. Insbesondere in komplexen Luftraumstrukturen ist die Koordination zwischen mehreren Akteuren essenziell.
+
+\subsection*{Variable Zeitschritte}
+Standard-\ac{RL}\hyp{}Algorithmen arbeiten üblicherweise mit festen Zeitschritten. Aktionen ohne expliziten Eingriff (\emph{Noops}) könnten mittels variabler Zeitschritte effizienter modelliert werden, indem die Zeitspanne bis zur nächsten Entscheidung dynamisch variiert wird – je nachdem, wie kritisch die aktuelle Situation bewertet wird. Zu diesem Thema existieren bereits einschlägige Forschungsarbeiten \cite{variable_time_steps}. Eine technische Herausforderung stellt dabei der Discounting-Faktor dar, der bei variablen Zeitintervallen in Standardimplementierungen entsprechend angepasst werden muss.
+
+\subsection*{Selfplay und Curriculum Learning}
+Die Anwendung von Selfplay-Techniken, bei denen der Agent gegen Kopien seiner selbst oder gegen andere trainierte Agenten antritt, könnte die Robustheit und Generalisierungsfähigkeit signifikant verbessern. Ansätze hierzu wurden im Laufe der Entwicklung bereits kurzzeitig evaluiert, scheiterten jedoch am exponentiell gestiegenen Rechenaufwand. 
+Ein vielversprechender Ansatz für zukünftige Arbeiten wäre das Training gegen ältere Versionen des eigenen Agenten ("League Training"), um das Verhalten in einer zunehmend realistischen Umgebung zu schärfen. Dieses Konzept des stufenweise anspruchsvolleren Trainings wird auch als \emph{Curriculum Learning} bezeichnet und könnte helfen, lokale Optima zu vermeiden.
+
+\section*{Bildbasierte Zustandserfassung}
+Ein fundamentaler alternativer Ansatz bei der Modellierung des Beobachtungsraums ist die Nutzung von Bilddaten, welche die grafische Darstellung des Radarschirms repräsentieren. Dieser Ansatz findet in der Mehrheit der bisherigen Forschungsarbeiten Verwendung, da er eine elegante Lösung für das Problem variabler Observationsvektoren bietet: Unabhängig von der Anzahl der Flugzeuge im Sektor bleibt die Dimension der Eingabe (Bildgröße) konstant.
+
+Die Vorteile liegen in der intuitiven Erfassung räumlicher Relationen durch \emph{Convolutional Neural Networks} (CNNs), die visuelle Konfliktmustern ähnlich wie ein menschlicher Lotse verarbeiten können. Dem gegenüber stehen jedoch Nachteile, wie der Verlust an Präzision im Vergleich zu exakten numerischen Zustandsvektoren und der signifikant erhöhte Rechenaufwand für das Training der Bildverarbeitungsnetzwerke. Zudem macht dieser Ansatz den Agenten abhängig von der visuellen Repräsentation der Simulation, was die Übertragbarkeit auf andere Sektoren erschweren kann.

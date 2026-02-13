@@ -5,20 +5,21 @@ Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderu
 
 \section{Konfidenzintervalle und Bootstrap nach \citet{statistical_rl_evaluation}}
 
-Ein \ac{KI} beschreibt den Bereich, in dem der wahre (unbekannte) Wert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit liegt. In dieser Arbeit verwenden wir 95\%-Konfidenzintervalle, um die Unsicherheit der geschätzten Performancemaße zu quantifizieren. Die Berechnung erfolgt vollständig empirisch mittels Percentile-Bootstrap, wie von \citet{statistical_rl_evaluation} für Reinforcement-Learning-Evaluationen empfohlen.
+In der Forschungspraxis des Deep Reinforcement Learning ist es aufgrund der enormen Rechenkosten üblich, Algorithmen nur auf einer sehr geringen Anzahl von unabhängigen Trainingsläufen (Seeds) zu evaluieren. \citet{statistical_rl_evaluation} stellen in ihrer Untersuchung fest, dass in der Literatur typischerweise nur 3 bis 10 Runs verwendet werden. Bei derart kleinen Stichproben sind klassische Punktschätzer (wie der Mittelwert) und parametrische Tests (wie der t-Test) oft unzuverlässig, da sie empfindlich auf Ausreißer reagieren und Normalverteilungsannahmen häufig verletzt sind.
 
-\paragraph{Bootstrap in zwei Sätzen.} Wir haben nur wenige Runs. Anstatt Verteilungsannahmen zu treffen, simuliert der Bootstrap viele virtuelle Datensätze durch Ziehen \emph{mit Zurücklegen} aus den vorhandenen Runs. Auf jedem virtuellen Datensatz wird dieselbe Kennzahl berechnet; die Streuung dieser Bootstrap-Kennzahlen liefert direkt das Konfidenzintervall.
+Um dennoch belastbare Aussagen über die Leistungsfähigkeit der Methoden treffen zu können, empfiehlt \citet{statistical_rl_evaluation} den Einsatz von Bootstrap-Verfahren zur Berechnung von Konfidenzintervallen. Ein \ac{KI} beschreibt den Bereich, in dem der wahre Wert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit (hier 95\%) liegt.
 
-\paragraph{Percentile-Bootstrap (Algorithmus).}
+\paragraph{Percentile-Bootstrap.}
+Wir verwenden den Percentile-Bootstrap zur Bestimmung der Konfidenzintervalle. \citet{statistical_rl_evaluation} untersuchen in Appendix A.5 verschiedene Bootstrap-Varianten (Basic, Percentile, Bias-Corrected, BCa) und zeigen, dass im Kontext von Deep Reinforcement Learning mit wenigen Runs der Percentile-Bootstrap die zuverlässigste Abdeckung (Coverage) der wahren Werte liefert, während komplexere Methoden wie BCa bei kleinen Stichproben instabiler sein können. Das Vorgehen lässt sich wie folgt zusammenfassen:
 \begin{enumerate}
-	\item Gegeben \(n\) unabhängige Runs einer Variante mit Kennzahlen \(p_1,\dots,p_n\).
-	\item Ziehe \(B\) Stichproben der Größe \(n\) \emph{mit Zurücklegen} aus \(\{p_i\}\).
-	\item Berechne für jede Stichprobe die Kennzahl (IQM oder Mittelwert der Success Rate).
-	\item Das 95\%-KI sind die Perzentile (2.5, 50, 97.5) der entstehenden Bootstrap-Verteilung.
+	\item Gegeben sei eine Menge von \(n\) unabhängigen Runs einer Variante mit den Ergebnissen \(p_1,\dots,p_n\).
+	\item Es werden \(B\) Bootstrap-Stichproben (in dieser Arbeit \(B=5000\)) der Größe \(n\) durch Ziehen \emph{mit Zurücklegen} aus den Originaldaten generiert.
+	\item Für jede dieser Stichproben wird die untersuchte Kennzahl (z.B. IQM oder Mittelwert) berechnet.
+	\item Das 95\%-Konfidenzintervall wird direkt aus den Perzentilen (2.5\% und 97.5\%) der so erzeugten Verteilung bestimmt.
 \end{enumerate}
-Dieses Verfahren ist nicht-parametrisch, benötigt keine Normalverteilungsannahme und bleibt stabil bei schiefen Verteilungen und kleinen Stichproben.
 
-\paragraph{Stratified Bootstrap nach \citet{statistical_rl_evaluation}.} Bei mehreren Tasks/Environments wird nicht global gemischt resampelt, sondern \emph{pro Task} separat gezogen und anschließend werden die Beiträge gleichgewichtet aggregiert. Dadurch dominiert keine „leichte“ Task das Gesamtergebnis. In dieser Arbeit erfolgt die Auswertung taskweise (z.B. nur \texttt{crossing\_planes\_multiHead} oder nur \texttt{LunarLander-v3}); daher ist kein zusätzliches Stratified-Resampling nötig. Würden mehrere Environments gemeinsam ausgewertet, wäre das stratifizierte Vorgehen erforderlich, um Verteilungsverschiebungen zu vermeiden.
+\paragraph{Warum kein Stratified Bootstrap?}
+\citet{statistical_rl_evaluation} schlagen für die Aggregation von Ergebnissen über viele verschiedene Aufgaben (Tasks) hinweg den sogenannten Stratified Bootstrap vor. Dieser stellt sicher, dass beim Resampling jeder Task gleich gewichtet bleibt. In dieser Arbeit untersuchen wir die Leistung der Algorithmen jedoch \emph{getrennt pro Task} (Environment) und aggregieren die Ergebnisse nicht über verschiedene Umgebungen hinweg. Da wir die Auswertung für jede Umgebung separat durchführen, ist das stratifizierte Verfahren nicht notwendig. Wir wenden daher den klassischen Percentile Bootstrap direkt auf die Runs des jeweiligen Tasks an.
 
 \section{Robuste Lagekennzahl: Interquartile Mean (IQM)}
 
@@ -26,12 +27,15 @@ Statt einfacher Mittelwerte nutzen wir den Interquartile Mean (IQM) als robuste 
 
 \section{Vergleich zweier Varianten}
 
-Für zwei Algorithmen \(A\) und \(B\) werden getrennte Bootstrap-Verteilungen ihrer IQM-Werte erzeugt. Die Differenz-Distribution entsteht durch Ziehen \emph{beider} IQM-Werte pro Bootstrap-Iteration und anschließendes Bilden \(IQM_A - IQM_B\). Das daraus abgeleitete 95\%-Konfidenzintervall ermöglicht die Aussage, ob sich die Varianten signifikant unterscheiden. Liegt 0 innerhalb des Intervalls, ist kein signifikanter Unterschied nachweisbar; liegt das Intervall vollständig oberhalb (unterhalb) von 0, spricht dies für eine Überlegenheit von \(A\) (bzw. \(B\)).
+Um zu beurteilen, ob ein Algorithmus A signifikant besser ist als ein Algorithmus B, genügt es nicht, lediglich zu prüfen, ob sich die individuellen Konfidenzintervalle der beiden Varianten überschneiden. \citet{statistical_rl_evaluation} weisen im Anhang A ihrer Arbeit explizit darauf hin, dass dieses Vorgehen irreführend sein kann. Selbst wenn sich Intervalle überlappen, kann ein signifikanter Unterschied vorliegen. Um die Unsicherheit korrekt zu erfassen, muss stattdessen das Konfidenzintervall der \emph{Differenz} berechnet werden (vgl. Figure A.15 in \citet{statistical_rl_evaluation}).
 
-\section{Success-Rate-Analyse}
-
-Neben den Rewards wird die Erfolgsrate (Anteil erfolgreicher Episoden pro Evaluation) ausgewertet. Da es sich um bereits robuste Anteilswerte handelt, wird hier der arithmetische Mittelwert als Kennzahl verwendet. Ein 95\%-Konfidenzintervall des Mittelwerts wird wiederum per Percentile-Bootstrap (\(B=5000\)) bestimmt; der Unterschied zweier Varianten folgt analog durch Bootstrap der Mittelwertdifferenzen.
+Wir verwenden daher das Verfahren der Bootstrap-Differenzen. Hierfür werden – wie oben beschrieben – Bootstrap-Verteilungen für beide Varianten erzeugt. In jeder Bootstrap-Iteration \(i\) wird die Differenz der Kennzahlen berechnet: \(\Delta_i = IQM_{A,i} - IQM_{B,i}\). Dies liefert eine empirische Verteilung der Differenzen. Das 95\%-Konfidenzintervall dieser Differenz-Verteilung ermöglicht eine präzise Aussage:
+\begin{itemize}
+    \item Liegt das gesamte Intervall oberhalb von 0, ist Algorithmus A signifikant besser.
+    \item Liegt das gesamte Intervall unterhalb von 0, ist Algorithmus B signifikant besser.
+    \item Schließt das Intervall die 0 ein, ist kein statistisch signifikanter Unterschied auf dem 95\%-Niveau nachweisbar.
+\end{itemize}
 
 \section{Performance Profiles}
 
-Zur ganzheitlichen Bewertung erzeugen wir Performance Profiles \citep{statistical_rl_evaluation}. Für ein Gitter von Schwellenwerten $\tau$ wird der Anteil der Runs berechnet, deren Score $> \tau$ liegt. Dies resultiert in einer Verteilungsfunktion, die den Anteil der erfolgreichen Läufe über verschiedene Schwellenwerte hinweg darstellt. Um die statistische Sicherheit dieser Kurve zu bewerten, werden mittels wiederholtem Resampling der Runs (Bootstrap) 95\%-Konfidenzbänder berechnet.. Performance Profiles zeigen auf einen Blick, wie viel Masse der Verteilung oberhalb bestimmter Qualitätsniveaus liegt und sind besonders aussagekräftig bei heterogenen oder breiten Verteilungen.
+Zur ganzheitlichen Bewertung erzeugen wir Performance Profiles \citep{statistical_rl_evaluation}. Für ein Gitter von Schwellenwerten $\tau$ wird der Anteil der Runs berechnet, deren Score größer als $\tau$ ist. Dies resultiert in einer Verteilungsfunktion, die den Anteil der erfolgreichen Läufe über verschiedene Leistungsniveaus hinweg darstellt. Um die Unsicherheit dieser Verteilungsschätzung zu visualisieren, werden zusätzlich 95\%-Konfidenzbänder mittels Bootstrap berechnet. Performance Profiles zeigen auf einen Blick, wie viel Masse der Verteilung oberhalb bestimmter Qualitätsniveaus liegt, und sind besonders aussagekräftig bei heterogenen oder breiten Verteilungen.

@@ -1,7 +1,7 @@
 \chapter{Umgebungs-Konzeption}
 \label{ch:konzeption}
 
-Nachdem die theoretischen Fundamente der Flugsicherung und des Reinforcement Learning gelegt sind, widmet sich dieses Kapitel der konkreten Überführung der Problemstellung in ein trainierbares System. Die Konzeption der Lernumgebung ist der entscheidende Entwicklungsschritt, in dem abstrakte Anforderungen in ein mathematisch greifbares Markov-Entscheidungsmodell (MDP) übersetzt werden.
+Nachdem die theoretischen Fundamente der Flugsicherung und des Reinforcement Learning gelegt sind, widmet sich dieses Kapitel der konkreten Überführung der Problemstellung in ein trainierbares System. Die Konzeption der Lernumgebung ist der entscheidende Entwicklungsschritt, in dem abstrakte Anforderungen in ein mathematisch greifbares \ac{MDP} übersetzt werden.
 \vspace{\baselineskip}
 
 Die Qualität der hier getroffenen Designentscheidungen – von der Auswahl der Zustandsmerkmale bis zur Ausgestaltung der Belohnungsfunktion – bestimmt maßgeblich, ob der Agent in der Lage sein wird, nicht nur konfliktfreie, sondern auch operativ sinnvolle und effiziente Strategien zu entwickeln. Ein besonderer Schwerpunkt liegt dabei auf der Modellierung des Aktionsraums, da hier der zentrale Hebel zur Reduktion unnötiger Steuerbefehle (Jittering) vermutet wird. Zu diesem Zweck werden zwei konkurrierende Ansätze vorgestellt: ein klassischer diskreter Aktionsraum und ein neuartiger gemischter Ansatz.
@@ -15,6 +15,14 @@ Der Lotse im angrenzenden Sektor (Adjacent) muss Flugkonflikte frühzeitig erken
 Effizienz impliziert in diesem Kontext, dass Flugzeuge möglichst auf direkten Routen geführt werden und unnötige Kurskorrekturen vermieden werden.
 Jede Kursänderung erfordert in der Praxis eine Funkkommunikation zwischen Lotse und Pilot, was die kognitive Arbeitsbelastung (Workload) erhöht und die Frequenzbelegung steigert.
 Der \ac{RL}\hyp{}Agent soll daher lernen, Konflikte unter Minimierung von Steuerbefehlen zu lösen, um ein realistisches Lotsenverhalten zu emulieren.
+
+\section{Verwandte Arbeiten und Abgrenzung}
+Die Anwendung von Reinforcement Learning im Kontext der Flugverkehrskontrolle ist ein aktives Forschungsfeld, das sich mit der Automatisierung von Entscheidungsprozessen in komplexen, dynamischen Umgebungen beschäftigt.
+Viele Arbeiten konzentrieren sich auf die Entwicklung von Agenten, die in der Lage sind, Konflikte zu erkennen und zu lösen, wobei jedoch die Effizienz der Steuerbefehle oft nicht explizit adressiert wird.
+
+Die Arbeit von Groot et al. \cite{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}Gym\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
+Diese Arbeit erweitert die bisherigen Ansätze, indem sie nicht nur die Konfliktlösung, sondern auch die Minimierung von Steuerbefehlen in den Fokus stellt. 
+Die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option stellt eine innovative Erweiterung dar, die es dem Agenten ermöglicht, zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe zu differenzieren, was in der Literatur bisher wenig Beachtung gefunden hat.
 
 \section{Szenarien}
 Die Szenarien wurden so gestaltet, dass der Agent mit einer Vielzahl an Verkehrssituationen konfrontiert wird, was essenziell für die Generalisierungsfähigkeit des Modells ist. 
@@ -76,7 +84,7 @@ Um Sprungstellen im Zustandsraum zu vermeiden, werden Winkel durch ihre Sinus\hy
 Da neuronale Netze in der Regel Eingabevektoren fester Länge erwarten, muss die Dimension des Zustandsraums unabhängig von der variablen Anzahl der Flugzeuge im Sektor konstant bleiben. 
 Dies wird durch die Festlegung einer maximalen Slot\hyp{}Anzahl für beobachtbare Flugzeuge und das Auffüllen (Padding) ungenutzter Slots mit neutralen Werten erreicht. 
 Die Auswahl, welche Flugzeuge in den Zustandsvektor aufgenommen werden, erfolgt priorisiert nach deren Konfliktpotential.
-Dieses wird mittels der \ac{CPA}\hyp{}Methode \ref{CPA} bestimmt, wobei die Zeit bis zum nächsten Konflikt sowie die Anzahl der prognostizierten Konflikte die ausschlaggebenden Metriken darstellen.
+Dieses wird mittels der \ac{CPA}\hyp{}Methode \cite{CPA} bestimmt, wobei die Zeit bis zum nächsten Konflikt sowie die Anzahl der prognostizierten Konflikte die ausschlaggebenden Metriken darstellen.
 \vspace{\baselineskip}
 
 Der Zustandsraum beider Umgebungen umfasst folgende Merkmale:
@@ -129,6 +137,7 @@ Ein zentrales Lernziel ist die Minimierung der Interventionsrate: Der Agent soll
 Der Aktionsraum wurde in zwei Varianten implementiert:
 \begin{itemize}
     \item \textbf{Diskreter Aktionsraum:} Der Agent wählt aus einem finiten Set an Aktionen, bestehend aus festen Kursänderungen (z.\,B. $-15^\circ, -5^\circ, \dots, +15^\circ$), \emph{Noop} und \emph{Direct Route}.
+    Dieser Ansatz eignet sich für grobe Manöver, stößt jedoch bei feingranularer Steuerung an Grenzen. Wie in Abschnitt \ref{sc:action_extraction} ausführlich hergeleitet, führt eine Erhöhung der Auflösung zu einer drastischen Zunahme der Modellkomplexität (Ausgangsneuronen), weshalb hier eine limitierte Auswahl an diskreten Schritten getroffen wurde.
     \item \textbf{Gemischter Aktionsraum (Hybrid):} Die Entscheidung erfolgt hierarchisch über einen diskreten Aktionstyp und einen zugehörigen kontinuierlichen Parameter:
     \begin{itemize}
         \item \textbf{Steer:} Der Agent bestimmt eine Kursänderung als kontinuierlichen Wert im Intervall $[-180^\circ, +180^\circ]$.
@@ -172,24 +181,25 @@ Folgende Schlüsselmetriken werden erhoben:
     \item \textbf{Total Noop Instructions:} Anzahl der Zeitschritte ohne aktive Steuerbefehle.
     \item \textbf{Total Direct Route Instructions:} Häufigkeit, mit der der Befehl \glqq Direct Route\grqq{} gewählt wurde.
     \item \textbf{Total Steer Instructions:} Anzahl der aktiven Kursänderungen. Diese Metrik ist ein Indikator für die Arbeitslast des Lotsen und sollte minimiert werden.
-    \item \textbf{Average Drift:} Die durchschnittliche Kursabweichung vom Idealweg über die gesamte Episode, als Maß für die Flugeffizienz.
+    \item \textbf{Average Drift:} Die durchschnittliche Kursabweichung vom Idealweg über die gesamte Episode.
 \end{itemize}
 
 \section{Auswahl des RL\hyp{}Algorithmus}
-Für das Training des Agenten fiel die Wahl auf den Algorithmus Proximal Policy Optimization (PPO).
-PPO zählt zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (siehe Grundlagenkapitel \ref{ch:rl_grundlagen}) und hat sich aufgrund seiner Stabilität und Robustheit gegenüber Hyperparameter\hyp{}Schwankungen als Standard in vielen Anwendungen etabliert.
+Für das Training des Agenten wurde Proximal Policy Optimization (PPO) gewählt.
+PPO gehört zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (siehe Kapitel \ref{ch:rl_grundlagen}) und hat sich in zahlreichen Anwendungen als stabiler und robuster Standard etabliert \cite{OriginalPPO}.
 \vspace{\baselineskip}
 
-Ein wesentlicher Vorteil von PPO ist die effiziente Parallelisierbarkeit (On\hyp{}Policy), was eine signifikante Beschleunigung des Trainings durch die gleichzeitige Nutzung mehrerer Simulationsinstanzen ermöglicht. 
-Im Vergleich zu ebenfalls evaluierten Algorithmen wie Soft Actor\hyp{}Critic (SAC) oder Deep Q\hyp{}Networks (DQN) zeigte PPO in Vorversuchen die beste Balance aus Lernstabilität und Konvergenzgeschwindigkeit für die vorliegende Problemstellung.
-Zudem unterstützt PPO nativ sowohl diskrete als auch kontinuierliche Aktionsräume, was eine flexible Anwendung auf die unterschiedlichen Umgebungskonzepte erlaubt.
+Ein zentrales Auswahlkriterium war die praktische Einsetzbarkeit in \textit{Stable Baselines3} (SB3), wo PPO als ausgereifter und weit verbreiteter Algorithmus mit belastbarer Referenzimplementierung vorliegt \cite{sb3,sb3_algos_doc}.
+Für die vorliegende Arbeit ist insbesondere die funktionale Breite relevant: Laut SB3\hyp{}Dokumentation unterstützt PPO nativ sowohl kontinuierliche als auch diskrete Aktionsräume (u.\,a. \texttt{Box}, \texttt{Discrete}, \texttt{MultiDiscrete}, \texttt{MultiBinary}) \cite{sb3_algos_doc}.
+Damit lässt sich eine einheitliche Trainingspipeline über unterschiedliche Environment\hyp{}Designs hinweg nutzen.
+Zusätzlich sind im \textit{sb3\hyp{}contrib}\hyp{}Ökosystem Erweiterungen wie \textit{RecurrentPPO} und \textit{MaskablePPO} verfügbar, was die methodische Anschlussfähigkeit für spätere Experimente erhöht \cite{sb3_algos_doc}.
 \vspace{\baselineskip}
 
-Die im Vergleich zu Off\hyp{}Policy\hyp{}Methoden (wie SAC) potenziell geringere Sample\hyp{}Effizienz von PPO wurde durch die hochperformante Simulatoranbindung und die massive Parallelisierung der Trainingsumgebungen kompensiert, sodass sie keinen limitierenden Faktor darstellte.
-Ein weiterer entscheidender Faktor für die Wahl von PPO war die Vermeidung von I/O-Flaschenhälsen. 
-Während SAC durch das kontinuierliche Management eines Replay Buffers massive Lese- und Schreiboperationen (Memory I/O) verursacht, verarbeitet PPO die gesammelten Erfahrungen linear und ohne diesen Verwaltungs-Overhead.
-Dieser Verzicht auf die bandbreitenintensive Verwaltung historischer Daten entlastet den Datendurchsatz signifikant.
-Dies ermöglichte auf der verwendeten Entwicklungshardware eine höhere Anzahl paralleler Umgebungen, was die effektive Trainingsgeschwindigkeit im Vergleich zu I/O-intensiveren Algorithmen steigerte.
+Off\hyp{}Policy\hyp{}Verfahren wurden in dieser Arbeit bewusst nicht eingesetzt.
+Ein wesentlicher Grund ist, dass in SB3 kein allgemein einsetzbarer Standardalgorithmus verfügbar ist, der sich wahlweise für diskrete und kontinuierliche Aktionen konfigurieren lässt.
+Zudem war die von Off\hyp{}Policy\hyp{}Verfahren häufig versprochene Sample\hyp{}Effizienz im vorliegenden Experiment nicht ausschlaggebend, da die Simulationsumgebung eine schnelle Datengenerierung erlaubte.
+Off\hyp{}Policy\hyp{}Algorithmen wurden in Vorversuchen dennoch evaluiert. Aufgrund zusätzlichen I/O\hyp{}Overheads lagen ihre Wall\hyp{}Clock\hyp{}Trainingszeiten\footnote{Mit \glqq Wall\hyp{}Clock\hyp{}Trainingszeit\grqq{} ist die tatsächlich verstrichene Echtzeit gemeint, also wie lange das Training auf der Uhr dauert.} jedoch über denen von PPO.
+Unter diesen Randbedingungen erwies sich PPO als die zweckmäßigere Wahl im Hinblick auf Stabilität, Durchsatz und Entwicklungsaufwand.
 \vspace{\baselineskip}
 
 Für die technische Umsetzung wurde die Bibliothek \textit{Stable Baselines3\textunderscore Plus} \cite{sb3_plus} herangezogen. 

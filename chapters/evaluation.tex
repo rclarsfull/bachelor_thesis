@@ -97,16 +97,30 @@ Die zugrunde liegenden Hypothesen lauten wie folgt:
     \item \label{hyp:convergence} \textbf{Gating-Trade-off:} Der Einsatz von Gradient Gating führt initial zu einer verlangsamten Konvergenz (niedriger \emph{Mean Eval Mean}), resultiert jedoch in einer überlegenen finalen Policy (höherer \emph{Last Eval Mean}).
     \item \label{hyp:stability} \textbf{Stabilität:} Gradient Gating reduziert die Varianz zwischen den Trainingsläufen und erhöht die Lernstabilität signifikant.
     \item \label{hyp:Interferenzen} \textbf{Vermeidung negativer Interferenzen:} Die angepasste Netzarchitektur mit separaten Verarbeitungspfaden für diskrete und kontinuierliche Aktionen in Kombination mit Gradient Gating führt zu einer weiteren Leistungssteigerung gegenüber der Standard-Gradient-Gating-Variante, besonders in Scenarien mit eine hochen Anteil non -Noop Aktionen.
+    \item \label{hyp:Netzarchitektur} \textbf{Netzarchitektur:} Die angepassten Netzarchitekturen sollten in diesm Scenario keine signifikante Leistungssteigerung gegenüber der Standard-Gradient-Gating-Variante zeigen, da alle Aktionen etwa gleich häufig auftreten und die Interferenz zwischen den Aktionszweigen gering sein sollten. 
 \end{enumerate}
 
 \subsubsection*{Durchführung}
 
-Um die Effektivität des Gradient-Gating-Mechanismus zu testen, werden vier Versionen des PPO-Algorithmus in dieser Umgebung trainiert:
+Um die Effektivität des Gradient-Gating-Mechanismus und den Einfluss der Netzwerkarchitektur zu testen, werden die Experimente in zwei übergeordnete Testreihen gegliedert:
+
 \begin{enumerate}
-    \item \textbf{Standard PPO:} Der unveränderte Basis-Algorithmus.
-    \item \textbf{PPO mit Wrapper:} Eine mittels Wrapper modifizierte Umgebung, die den gemischten Aktionsraum simuliert.
-    \item \textbf{PPO mit Wrapper und Gradient Gating:} Der Standard-Algorithmus in der modifizierten Umgebung, erweitert um den Gradient-Gating-Mechanismus.
-    \item \textbf{PPO mit Gating und angepasster Architektur:} Zusätzlich zum Gradient Gating wird eine spezialisierte Netzarchitektur eingesetzt. Diese trennt die Verarbeitungspfade für diskrete und kontinuierliche Ausgaben, um negative Interferenzen zwischen den unterschiedlichen Lernzielen zu minimieren. Die Netzarchitektur sieht für jede Aktionskomponente separate Subnetzwerke vor. 
+    \item \textbf{Testreihe 1: Validierung der Wirksamkeit des Gradient Gating} \\
+    In dieser Phase wird geprüft, ob der Gating-Mechanismus gegenüber den Standard-Verfahren einen Vorteil bietet.
+    \begin{itemize}
+        \item \textbf{Standard PPO:} Der unveränderte Basis-Algorithmus in der Standard-Umgebung.
+        \item \textbf{PPO mit Wrapper:} Der Standard-Algorithmus in der mittels Wrapper modifizierten Umgebung. Diese simuliert den gemischten Aktionsraum und dient als Baseline, um sicherzustellen, dass allein die Umgebungskapselung keine Leistungsänderung bewirkt.
+        \item \textbf{PPO mit Gating:} Der Standard-Algorithmus in der modifizierten Umgebung, erweitert um den in Kapitel \ref{ch:ppo_bedingt} beschriebenen Gradient-Gating-Mechanismus.
+    \end{itemize}
+
+    \item \textbf{Testreihe 2: Analyse verschiedener Netzarchitekturen unter Gradient Gating} \\
+    In dieser Phase werden verschiedene Netzwerk-Topologien evaluiert, die alle den Gating-Mechanismus nutzen.
+    \begin{itemize}
+        \item \textbf{PPO (Fully Shared):} Diese Variante nutzt dieselbe vollständig geteilte Architektur wie \textit{PPO mit Gating}, realisiert diese jedoch technisch über eine \textit{Aktionsnetzwerk-basierte Implementierung}. Dabei wird das vorgeschaltete Policy-Netzwerk leer initialisiert (\texttt{[]}) und die gesamte Topologie direkt im Aktionsnetzwerk abgebildet. Da die spezialisierten Split-Architekturen ebenfalls auf dieser Methode beruhen, dient diese Variante als interne Validierung, um methodische Abweichungen zur nativen Implementierung zu isolieren.
+        \item \textbf{PPO (Split Net):} Das Netzwerk wird ab der Eingabeschicht in separate Äste für die unterschiedlichen Aktionen aufgeteilt. Um die Parametereffizienz vergleichbar zur Basis-Architektur zu halten, wird die Anzahl der Neuronen pro Ast reduziert. Die Dimensionierung erfolgt dabei gemäß der in Kapitel \ref{ch:ppo_bedingt} hergeleiteten Approximation (siehe Gleichung \ref{eq:complexity_approx}).
+        \item \textbf{PPO (Split Net Full):} Eine Variante mit vollständig getrennten Netzwerken, bei der jeder Ast die volle Breite des ursprünglichen Netzwerks behält. Da jeder Pfad auch die Feature-Extraktion vollständig eigenständig erlernen muss, wird auf eine Reduktion der Parameter verzichtet.
+        \item \textbf{PPO (Shared \& Split):} Ein hybrider Ansatz, der einen gemeinsamen Layer für die grundlegende Feature-Extraktion verwendet, gefolgt von getrennten Köpfen (Heads) für die Aktionen. Auch hier wird die Neuronenanzahl der getrennten Layer anhand der Formel (Gleichung \ref{eq:complexity_approx}) reduziert.
+    \end{itemize}
 \end{enumerate}
 
 Jede Konfiguration wird mit den selben Hyperparamertern und den gleichen 15 Seeds trainiert, um die Vergleichbarkeit der Ergebnisse zu gewährleisten. Beim Bootstrap wurden 5000 Stichproben gezogen. Die Trainingsdauer beträgt jeweils 3 Million Zeitschritte.
@@ -118,77 +132,150 @@ Jede Konfiguration wird mit den selben Hyperparamertern und den gleichen 15 Seed
     \centering
     \caption{Vergleich der Trainingsergebnisse (IQM mit 95\%-Konfidenzintervall)}
     \label{tab:evaluation_results}
-    \begin{tabular}{l|ccc|ccc}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{cl|ccc|ccc}
         \toprule
-        & \multicolumn{3}{c}{\textbf{Last Eval Mean}} & \multicolumn{3}{c}{\textbf{Mean Eval Mean}} \\ 
-        \textbf{Konfiguration} & \textbf{Low} & \textbf{IQM} & \textbf{High} & \textbf{Low} & \textbf{IQM} & \textbf{High} \\
+        & & \multicolumn{3}{c}{\textbf{Last Eval}} & \multicolumn{3}{c}{\textbf{Mean Eval}} \\ 
+        \multicolumn{2}{l|}{\textbf{Konfiguration}} & \textbf{Low} & \textbf{IQM} & \textbf{High} & \textbf{Low} & \textbf{IQM} & \textbf{High} \\
         \midrule
-        Standard PPO & 264.31 & 274.23 & 277.15 & 229.04 & 231.75 & 235.12 \\
-        PPO (No Gating) & 266.87 & 275.03 & 279.86 & 224.91 & 229.86 & 235.33 \\
-        PPO (Gating) & 282.46 & 283.50 & 284.54 & 130.73 & 157.66 & 177.86 \\
-        PPO (Split Net) & 278.07 & 279.81 & 282.22 & 90.85 & 113.48 & 142.64 \\
+        \multirow{7}{*}{\rotatebox{90}{\textbf{Absolute Werte}}}
+        & Standard PPO & 270.05 & 275.04 & 278.56 & 238.79 & 241.95 & 245.02 \\
+        & PPO (with Wrapper) & 256.65 & 266.76 & 275.05 & 236.47 & 239.76 & 244.11 \\
+        & PPO (Gating) & 284.20 & 287.41 & 289.28 & 167.43 & 188.50 & 205.07 \\
+        & PPO (Fully Shared) & 278.64 & 285.12 & 286.67 & 179.59 & 194.76 & 203.68 \\
+        & PPO (Split Net) & 284.45 & 286.09 & 287.09 & 179.32 & 193.35 & 204.17 \\
+        & PPO (Split Net Full) & 277.56 & 283.11 & 285.47 & 180.10 & 188.88 & 196.58 \\
+        & PPO (Shared \& Split) & 281.94 & 284.99 & 286.80 & 177.24 & 196.29 & 207.38 \\
         \midrule
-        Paird (Gating - Standard) & 5.22 & 9.24 & 19.41 & -101.07 & -74.10 & -53.81 \\
-        Paird (No Gating - Standard) & -9.17 & 0.96 & 12.51 & -7.61 & -2.03 & 4.38 \\
-        Paird (Split Net - Standard) & 2.41 & 5.71 & 14.56 & -140.17 & -118.04 & -90.54 \\
+        \multirow{6}{*}{\rotatebox{90}{\shortstack{\textbf{Pairdifferenz}\\ \scriptsize (Modell - Standard)}}} 
+        & Wrapper & -18.59 & -8.19 & 1.75 & -7.03 & -2.22 & 3.96 \\
+        & Gating & 6.74 & 12.28 & 18.17 & -73.79 & -53.60 & -36.27 \\
+        & Fully Shared & 1.80 & 10.05 & 16.05 & -63.36 & -47.12 & -37.30 \\
+        & Split Net & 7.12 & 11.03 & 16.19 & -62.47 & -48.63 & -36.57 \\
+        & Split Net Full & 0.91 & 8.11 & 13.58 & -62.88 & -53.33 & -44.49 \\
+        & Shared \& Split & 4.81 & 9.85 & 15.98 & -66.72 & -45.79 & -33.78 \\
         \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
-Die in Tabelle \ref{tab:evaluation_results} quantifizierten Daten ermöglichen eine detaillierte Überprüfung der aufgestellten Hypothesen.
-Zunächst bestätigt sich die grundlegende Validität des Versuchsaufbaus: Der Standard-PPO erreicht mit einem IQM von 274.23 den geforderten Referenzwert (Hypothese \ref{hyp:baseline}). Wichtiger noch ist die Bestätigung von Hypothese \ref{hyp:no_gating}: Die Einführung der Wrapper-Struktur führt beim Basis-Algorithmus (`Paird No Gating - Standard`) zu keiner signifikanten Leistungsänderung, da das Konfidenzintervall $[-9.17, 12.51]$ die Null einschließt. Dies stellt sicher, dass alle im Folgenden beobachteten Effekte tatsächlich auf den Gating-Mechanismus und nicht auf die Umgebungskapselung zurückzuführen sind.
+Die in Tabelle \ref{tab:evaluation_results} quantifizierten Daten belegen die Validität des Versuchsaufbaus und ermöglichen eine differenzierte Bewertung der beiden Testreihen.
 
-\subsubsection*{Der Trade-off zwischen Konvergenz und Endleistung}
-Der Kern der Untersuchung, der postulierte "Trade-off" (Hypothese \ref{hyp:convergence}), tritt in den Ergebnissen deutlich hervor. Betrachtet man die durchschnittliche Leistung über das gesamte Training hinweg, ist der Standard-Algorithmus überlegen.
+\subsubsection*{Grundlegende Validierung}
+Die Ergebnisse bestätigen, dass der experimentelle Rahmen solide ist. Der Standard-PPO erreicht mit einem IQM von 275.04 den geforderten Referenzwert (Bestätigung Hypothese \ref{hyp:baseline}). Zudem zeigt das Konfidenzintervall der Wrapper-Variante $[-18.59, 1.75]$ (Differenz zu Standard-PPO), dass die Kapselung der Umgebung selbst keinen signifikanten Einfluss auf die Leistung hat (Bestätigung Hypothese \ref{hyp:no_gating}). Dies isoliert den Gating-Mechanismus als die alleinige Ursache für die im Folgenden diskutierten Effekte.
 
+\subsubsection*{Testreihe 1: Wirksamkeit des Gradient Gating}
+Der Vergleich zwischen Standard-PPO und PPO mit Gating offenbart den postulierten Trade-off (Hypothese \ref{hyp:convergence}):
+Während der Gating-Ansatz über das gesamte Training hinweg eine niedrigere Durchschnittsleistung (\emph{Mean Eval Mean}) aufweist, was auf die initialen Lernkosten der hierarchischen Struktur zurückzuführen ist, zahlt sich diese Investition am Ende aus. Das positive Paird-Intervall für die finale Leistung (`Last Eval Mean`: $[6.74, 18.17]$) belegt, dass der Gating-Mechanismus zu einer signifikant leistungsfähigeren finalen Policy führt.
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\textwidth]{chapters/bilder/iqm_ci_LunarLanderContinuous-v3_mean_eval_mean.png}
-    \caption{Durchschnittliche Trainingsleistung (IQM) über alle Episoden. Der niedrige Wert des Gating-Ansatzes (orange) visualisiert die anfänglichen Lernschwierigkeiten, durch die die hierarchische Struktur zunächst erlernt werden muss.}
-    \label{fig:iqm_mean_eval}
-\end{figure}
-
-Wie in Abbildung \ref{fig:iqm_mean_eval} visualisiert, resultiert dies in einem signifikant niedrigeren \emph{Mean Eval Mean} für den Gating-Ansatz. Das strikt negative Paird-Intervall $[-101.07, -53.81]$ quantifiziert diesen Effekt und belegt die verlangsamte initiale Konvergenz. Der Agent muss zunächst lernen, die diskrete Entscheidung (Aktion oder Noop) korrekt zu treffen, bevor er die kontinuierliche Steuerung verfeinern kann.
-
-Dieser initiale Investition zahlt sich jedoch am Ende des Trainings aus. Sobald die hierarchische Struktur erlernt ist, übertrifft der Gating-Mechanismus die Baseline deutlich. Das positive Paird-Intervall für die finale Leistung (`Last Eval Mean`: $[5.22, 19.41]$) bestätigt, dass das langsamere Lernen zu einer leistungsfähigeren finalen Policy führt.
-
-\subsubsection*{Stabilität und Architektur-Entscheidungen}
-Ein wesentlicher Vorteil des Gating-Ansatzes zeigt sich in der Robustheit der Ergebnisse (Hypothese \ref{hyp:stability}). Während die Standard-Varianten gegen Ende des Trainings eine höhere Varianz aufweisen, konvergiert der Gating-Ansatz sehr stabil.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.8\textwidth]{chapters/bilder/iqm_ci_LunarLanderContinuous-v3_last_eval_mean.png}
-    \caption{Finale Trainingsleistung (IQM) am Ende des Trainings. Der Gating-Ansatz zeigt nicht nur einen höheren Mittelwert, sondern durch das schmalere Intervall auch eine signifikant höhere Reproduzierbarkeit.}
+    \includegraphics[width=0.9\textwidth]{chapters/bilder/iqm_ci_LunarLanderContinuous-v3_last_eval_mean.png}
+    \caption{Finale Trainingsleistung (Last Eval)}
     \label{fig:iqm_last_eval}
 \end{figure}
 
-Abbildung \ref{fig:iqm_last_eval} verdeutlicht dies durch die Spannweite der Konfidenzintervalle: Das Intervall der Gating-Variante ist mit einer Breite von 2.08 drastisch schmaler als das der Standard-Variante (12.84). Dies impliziert eine signifikant höhere Lernstabilität und Reproduzierbarkeit über verschiedene Random Seeds hinweg.
+Gleichzeitig bestätigt sich Hypothese \ref{hyp:stability} bezüglich der Stabilität. Wie in Abbildung \ref{fig:iqm_last_eval} ersichtlich, konvergiert der Gating-Ansatz robuster (schmaleres Konfidenzintervall von 5.08) als die Standard-Variante (8.51). Die Performance Profiles (Abbildung \ref{fig:perf_profile_last_eval}) unterstreichen dies durch die stochastische Dominanz der Gating-Kurve, die insbesondere im hohen Leistungsbereich stabil bleibt.
 
-Überraschend sind hingegen die Ergebnisse bezüglich der Netzarchitektur (Hypothese \ref{hyp:Interferenzen}). Die spezialisierte \emph{Split Net}-Variante verbessert zwar die Leistung gegenüber der Baseline, bleibt jedoch mit einem IQM von 279.81 signifikant hinter der einfachen Gating-Variante (283.50) zurück. 
-Dies widerlegt die Annahme, dass eine frühe Trennung der Netzpfade in diesem Szenario zwingend notwendig ist. Zwei Gründe scheinen hierfür ausschlaggebend: Erstens erhöht die spezialisierte Architektur die Komplexität des Modells, was sich in einer nochmals verlangsamten Konvergenz (Mean Eval IQM 113.48) niederschlägt. Zweitens ist der Anteil an Noop-Aktionen in der LunarLander-Umgebung im Vergleich zu Flugverkehrsszenarien relativ gering, wodurch negative Interferenzen weniger stark ins Gewicht fallen und die einfachere Architektur effizienter bleibt.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{chapters/bilder/iqm_ci_LunarLanderContinuous-v3_mean_eval_mean.png}
+    \caption{Durchschnittliche Trainingsleistung (Mean Eval)}
+    \label{fig:iqm_mean_eval}
+\end{figure}
 
-\subsubsection*{Analyse der Performance Profiles}
-Einen tieferen Einblick in die Verteilung der Ergebnisse über alle Trainingsläufe hinweg bieten die Performance Profiles. Sie zeigen nicht nur Mittelwerte, sondern die Wahrscheinlichkeit, mit der ein bestimmtes Leistungsniveau erreicht wird.
+\subsubsection*{Testreihe 2: Performance der Architekturen}
+Bei der Analyse der Netzwerkarchitekturen ist zunächst eine methodische Besonderheit zu beachten. Um die verschiedenen Topologien flexibel zu realisieren, wurde für diese Testreihe eine \textit{Aktionsnetzwerk-basierte Implementierung} gewählt, bei der die Netzstruktur technisch in das Aktionsnetzwerk verlagert wurde. Ein Vergleich der \textit{PPO (Fully Shared)} Variante (welche diese Methode nutzt) mit der nativen \textit{PPO mit Gating} Implementierung zeigt einen leichten Leistungsabfall (IQM 285.12 vs. 287.41). Dies deutet auf minimale Ineffizienzen durch diese technische Realisierung hin.
+Aus diesem Grund werden die Architekturen im Folgenden relativ zueinander bewertet, wobei \textit{PPO (Fully Shared)} als interne Baseline dient.
+\vspace{\baselineskip}
+
+In diesem direkten Vergleich schneidet die \textit{PPO (Split Net)} Architektur am besten ab (IQM 286.09). Sie übertrifft die Fully\hyp{}Shared\hyp{}Baseline, wenngleich die Überlappung der Konfidenzintervalle keine statistische Signifikanz ausweist. Dennoch stützt dieses Ergebnis Hypothese \ref{hyp:Netzarchitektur}: Die Trennung der Pfade (bei gleichzeitiger Reduktion der Neuronenanzahl zur Wahrung der Parameter\hyp{}Effizienz) scheint vorteilhaft zu sein, da sie spezialisierte Repräsentationen ohne negativen Einfluss erlaubt.
+Die komplexeren Varianten (\textit{Split Net Full}, \textit{Shared \& Split}) zeigen hingegen keine Vorteile. Dies lässt vermuten, dass die erhöhte Parameteranzahl in dieser vergleichsweise einfachen Umgebung keinen Mehrwert bietet und tendenziell eher zu Overfitting führt.
+\vspace{\baselineskip}
+
+Zusammenfassend lässt sich festhalten, dass der Gating\hyp{}Mechanismus der entscheidende Faktor für den Leistungsgewinn ist.
+Die Wahl der Netzarchitektur spielt in diesem Szenario eine untergeordnete Rolle, wobei die effiziente \textit{Split Net}-Struktur das vielversprechendste Potenzial für komplexere Aufgaben (wie die Flugverkehrskontrolle) andeutet.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{chapters/bilder/perf_profile_LunarLanderContinuous-v3_last_eval_mean.png}
-    \caption{Performance Profile der finalen Leistung (Last Eval). Die Gating-Variante (orange) zeigt stochastische Dominanz (Verlauf oben rechts), was bedeutet, dass sie über fast das gesamte Spektrum hinweg mit höherer Wahrscheinlichkeit bessere Ergebnisse liefert.}
+    \caption{Performance Profile der finalen Leistung}
     \label{fig:perf_profile_last_eval}
 \end{figure}
 
-In Abbildung \ref{fig:perf_profile_last_eval} ist die Überlegenheit des Gating-Ansatzes (orange Kurve) evident. Die Kurve verläuft stochastisch dominant gegenüber den Baselines, liegt also konstant weiter rechts oben. Besonders im Bereich sehr hoher Scores hält die Gating-Kurve ihr Niveau länger, was die zuvor diskutierte Robustheit visuell unterstreicht.
+\subsection{Versuch 2: Validierung in der Flugverkehrsumgebung}
+
+Nachdem die grundlegende Funktionalität des Gradient\hyp{}Gating\hyp{}Mechanismus am Beispiel des Lunar Landers validiert wurde, folgt nun die Untersuchung in der eigentlichen Zieldomäne: der Flugverkehrskontrolle. Diese Umgebung stellt deutlich höhere Anforderungen an den Agenten, da sowohl die Dynamik komplexer ist als auch die Sicherheitsanforderungen strikter sind.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{chapters/bilder/atc_env.png}
+    \caption{Die Simulationsumgebung BlueSky}
+    \label{fig:atc_env}
+\end{figure}
+
+Ein wesentlicher Unterschied zum vorangegangenen Versuch liegt in der Spärlichkeit der Konflikte (Sparse Rewards). Da tatsächliche Konfliktsituationen selten auftreten, ist ein rein reaktives Lernen ineffizient. Um dem Agenten dennoch ein stetiges und informatives Lernsignal zu bieten, wurden Belohnungsfunktion und Beobachtungsraum signifikant erweitert. Die Einbeziehung prädiktiver Faktoren – wie potenzieller zukünftiger Konfliktpunkte – sowie komplexer Metriken zu benachbarten Flugzeugen und der Routeneffizienz erhöht die Dimensionalität des Problems drastisch. Dies führt zu einer weitaus anspruchsvolleren Systemdynamik, die im Vergleich zur LunarLander-Umgebung deutlich höhere Anforderungen an die Lernstabilität des Algorithmus stellt.
+\vspace{\baselineskip}
+
+Die Hypothesen für diesen Versuch lauten:
+\begin{enumerate}
+    \item \label{hyp:atc_stability} \textbf{Lernstabilität in komplexer Umgebung:} Der Gradient\hyp{}Gating\hyp{}Mechanismus ermöglicht auch in der hochdimensionalen ATC-Umgebung ein stabiles Training und verhindert den Kollaps der Policy.
+    \item \label{hyp:atc_performance} \textbf{Performance-Gewinn:} Der Agent mit Gating erreicht eine höhere durchschnittliche Belohnung als der Standard-Agent, da er feinfühligere Steuerbefehle erlernen kann, ohne durch das Rauschen irrelevanter Aktionen gestört zu werden.
+    \item \label{hyp:atc_architecture} \textbf{Architektureffizienz:} Analog zum ersten Versuch wird erwartet, dass spezialisierte Architekturen (wie Split Net) die Lernleistung weiter verbessern können.
+\end{enumerate}
+
+\subsubsection*{Durchführung}
+
+Im Gegensatz zum vorherigen Versuch wird die Evaluation in der Flugverkehrsumgebung aufgrund der enormen Rechenkomplexität auf eine einzelne, konsolidierte Testreihe beschränkt. Zwei Faktoren sind hierfür ausschlaggebend: Erstens ist die Interaktion mit dem externen Simulator (BlueSky) um ein Vielfaches zeitintensiver als mit einfachen Gym-Umgebungen. Zweitens erfordert die Lösung des ATC-Problems ein breiteres neuronales Netz und eine deutlich längere Trainingsdauer, um eine stabile Policy zu erlernen.
+
+Daher werden die folgenden vier Konfigurationen in einem gemeinsamen Szenario evaluiert:
+\begin{itemize}
+    \item \textbf{PPO:} Der Standard-Algorithmus als Baseline.
+    \item \textbf{Masked PPO:} Der PPO-Algorithmus erweitert um den Gradient-Gating-Mechanismus.
+    \item \textbf{Masked split\_net PPO:} Die Variante mit getrennten Netzpfaden für diskrete und kontinuierliche Aktionen.
+    \item \textbf{Masked shared \& split\_net PPO:} Die hybride Architektur mit geteiltem Feature-Extractor.
+\end{itemize}
+Dies gewährleistet die direkte Vergleichbarkeit unter identischen Bedingungen bei vertretbarem Ressourcenaufwand.
+
+Die Trainingsdauer wird auf [6] Millionen Zeitschritte festgelegt. Es werden 7 Seeds verwendet.
+
+\subsubsection*{Ergebnisse}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Vergleich der Trainingsergebnisse in der Flugverkehrsumgebung (IQM mit 95\%-Konfidenzintervall)}
+    \label{tab:atc_evaluation_results}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{cl|ccc|ccc}
+        \toprule
+        & & \multicolumn{3}{c}{\textbf{Last Eval}} & \multicolumn{3}{c}{\textbf{Mean Eval}} \\ 
+        \multicolumn{2}{l|}{\textbf{Konfiguration}} & \textbf{Low} & \textbf{IQM} & \textbf{High} & \textbf{Low} & \textbf{IQM} & \textbf{High} \\
+        \midrule
+        \multirow{4}{*}{\rotatebox{90}{\textbf{Absolute Werte}}}
+        & PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        & Masked PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        & Masked split\_net PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        & Masked shared \& split\_net PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        \midrule
+        \multirow{3}{*}{\rotatebox{90}{\shortstack{\textbf{Pairdifferenz}\\ \scriptsize (Modell - PPO)}}} 
+        & Masked PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        & Masked split\_net PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        & Masked shared \& split\_net PPO & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+[Hier Text einfügen: Analyse der Tabelle, Bestätigung oder Widerlegung der Hypothesen.]
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.8\textwidth]{chapters/bilder/perf_profile_LunarLanderContinuous-v3_mean_eval_mean.png}
-    \caption{Performance Profile der durchschnittlichen Leistung (Mean Eval). Hier fällt die Gating-Kurve früher ab, was die initialen "Kosten" des hierarchischen Lernprozesses grafisch darstellt.}
-    \label{fig:perf_profile_mean_eval}
+    % TODO: Plot einfügen
+    %\includegraphics[width=0.9\textwidth]{chapters/bilder/iqm_ci_atc_last_eval.png}
+    \caption{Finale Trainingsleistung (Last Eval) - Flugverkehr}
+    \label{fig:iqm_atc_last_eval}
 \end{figure}
 
-Spiegelt man dies gegen die durchschnittliche Performance in Abbildung \ref{fig:perf_profile_mean_eval}, zeigt sich das exakte Gegenteil. Hier dominiert die Standard-PPO-Variante, während die Gating-Kurve deutlich früher abfällt. Dies ist die grafische Entsprechung des identifizierten Trade-offs: Der Preis für die überlegene Endleistung und Stabilität ist eine längere und "teurer" Trainingsphase zu Beginn.
-
-\subsection{Versuch 2: Validierung in der Flugverkehrsumgebung}
+[Hier Text einfügen: Diskussion der Performance Profiles oder Lernkurven.]
 
 
 

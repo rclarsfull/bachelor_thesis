@@ -1,33 +1,47 @@
 \chapter{PPO mit bedingtem Aktionsraum}
 \label{ch:ppo_bedingt}
 
-Standard \ac{RL}\hyp{}Algorithmen basieren üblicherweise auf der Annahme, dass Aktionen stochastisch unabhängig voneinander sind.
-Im hier betrachteten Szenario ist diese Annahme jedoch verletzt, da die kontinuierliche Komponente des gemischten Aktionsraums nur dann relevant ist, wenn sich der Agent für eine \emph{Heading}\hyp{}Änderung entscheidet.
-In Fällen, in denen \emph{Noop} oder \emph{Direct Route} gewählt wird, hat der Wert der kontinuierlichen Aktion keinen Einfluss auf die Umgebung.
-Dennoch würde der Standard\hyp{}PPO\hyp{}Algorithmus Gradienten für diese irrelevante Komponente berechnen. Dies führt zu Fehloptimierungen, da der Agent Ressourcen darauf verwendet, eine in diesem Kontext wirkungslose Aktion zu optimieren, was das Lernen der relevanten Strategien behindert.
+Dieses Kapitel widmet sich der Anpassung des PPO-Algorithmus an die spezifische Struktur des hybriden und bedingten Aktionsraums. Eine zentrale Herausforderung besteht hierbei in der hierarchischen Abhängigkeit zwischen den Teilaktionen, welche von Standard-Implementierungen oft nicht korrekt abgebildet wird.
 \vspace{\baselineskip}
 
-Um dieses Problem zu adressieren, wurde ein aktionsabhängiges Gradient\hyp{}Gating implementiert, welches die Rückpropagation von Gradienten für irrelevante Aktionen unterbindet.
+Die verwendete sb3-Plus Bibliothek geht davon aus, dass alle Komponenten eines Aktionsvektors unabhängig voneinander gewählt werden können. Dies führt dazu, dass das Netzwerk auch dann versucht, einen optimalen Wert für die kontinuierliche Lenkaktion zu lernen, wenn der Agent sich entscheidet, gar nicht zu lenken (z.\,B. bei der Wahl von \emph{Noop} oder \emph{Direct Route}). In solchen Fällen ist der ausgegebene Lenkwert jedoch für die Umgebung bedeutungslos.
+Ohne Anpassung würde der Algorithmus dennoch Gradienten für diese inaktiven Komponenten berechnen und das Netzwerk entsprechend aktualisieren. Dies verschwendet nicht nur Trainingskapazität, sondern kann den Lernprozess stören, da das Netzwerk versucht, Zusammenhänge zu lernen, wo keine sind. Im Folgenden wird eine Methode vorgestellt, die diese Abhängigkeiten berücksichtigt und sicherstellt, dass der Optimierungsschritt nur auf tatsächlich relevanten Aktionen basiert.
+\vspace{\baselineskip}
 
-\section{Gradient\hyp{}Gating im PPO\hyp{}Algorithmus}
+\section{Verwandte Arbeiten und Abgrenzung}
+
+Die Problematik gemischter Aktionsräume wird in der Literatur oft als \textit{Parameterized Action Space} bezeichnet. Masson et al. \cite{masson2016reinforcement} nutzen hierfür Q-Learning-Verfahren. Dabei gehen sie davon aus, dass zu jeder diskreten Aktion immer ein passender kontinuierlicher Parameter gehört, der mitgelernt werden muss.
+Im vorliegenden Szenario erfordern Aktionen wie \emph{Noop} hingegen keinen Parameter. Der hier vorgestellte Ansatz verzichtet daher auf die Optimierung dieser irrelevanten Ausgabegrößen. Durch den Einsatz von Gradient-Gating wird sichergestellt, dass die entsprechenden Parameter vom Trainingsprozess ausgeschlossen werden, sofern sie für die getroffene diskrete Entscheidung keine Relevanz besitzen.
+\vspace{\baselineskip}
+
+Ein weiterer verwandter Ansatz ist das \emph{Invalid Action Masking} \cite{invalid_Action_Masking}. Dort kommt ein zustandsabhängiges Gating zum Einsatz, um ungültige Aktionen bereits während der Rollout\hyp{}Phase zu maskieren. Für das hier vorliegende Problem lässt sich dieser Ansatz jedoch nicht direkt übertragen. Die Relevanz der kontinuierlichen Aktion hängt nicht allein vom Zustand ab, sondern primär von der im selben Zeitschritt erst noch zu wählenden diskreten Aktion. Da diese Entscheidung zum Zeitpunkt einer potenziellen Maskierung noch nicht feststeht, ist ein präemptives Gating ausgeschlossen.
+
+\section{Theoretische Fundierung der Anpassungen}
+
+Ein Blick auf die mathematischen Grundlagen verdeutlicht, warum die Standard\hyp{}Implementierung hier unzureichend ist. Die ursprüngliche Implementierung geht davon aus, dass die logarithmischen Wahrscheinlichkeiten der Teilaktionen einfach addiert werden können. Wegen der Rechenregel $\log(p_1) + \log(p_2) = \log(p_1 \cdot p_2)$ entspricht dies einer Multiplikation der eigentlichen Wahrscheinlichkeiten. Diese Multiplikation setzt jedoch voraus, dass die Ereignisse unabhängig voneinander sind – eine Annahme, die in diesem Szenario verletzt ist, da die Relevanz der kontinuierlichen Aktion direkt von der diskreten Entscheidung abhängt.
+\vspace{\baselineskip}
+
+Um diese Abhängigkeit korrekt abzubilden, nutzt die Implementierung (siehe Abschnitt \ref{sc:ppo_anpassung}) eine \glqq Null-Maskierung\grqq{}. Dabei wird der Log\hyp{}Wahrscheinlichkeitswert einer irrelevanten Aktion künstlich auf 0 gesetzt. Das entspricht einer Wahrscheinlichkeit von $1$ (da $\log(1) = 0$). Da die Multiplikation mit 1 das Ergebnis nicht verändert, wird die irrelevante Aktion so effektiv aus der Gesamtgleichung genommen, ohne die Verteilung zu verfälschen.
+\vspace{\baselineskip}
+
+Dasselbe Prinzip wird auf die Entropie-Berechnung angewandt. Eine einfache Addition der Entropiewerte würde die Unsicherheit des Agenten künstlich aufblähen, da auch irrelevante Aktionen zur Unsicherheit beitragen würden. Stattdessen wird die Entropie der kontinuierlichen Aktion gewichtet: Sie fließt nur anteilig in die Berechnung ein, basierend auf der Wahrscheinlichkeit, dass die Aktion tatsächlich ausgeführt wird. Dies setzt das Konzept der \textit{bedingten Entropie} praktisch um \cite[Kap. 2.2]{bedinteEndropie}.
+
+\section{Implementierung des Gradient-Gatings}
 \label{sc:ppo_anpassung}
-
-Der gewählte Lösungsansatz weist Parallelen zu dem in \cite{invalid_Action_Masking} vorgestellten \emph{Invalid Action Masking} auf. Dort wird ein zustandsabhängiges Gating verwendet, um ungültige Aktionen bereits während der Rollout\hyp{}Phase zu maskieren.
-Dieser Ansatz ist für das vorliegende Problem jedoch nicht direkt übertragbar, da die Relevanz der kontinuierlichen Aktion nicht allein vom Zustand, sondern von der im gleichen Schritt gesampelten diskreten Aktion abhängt. Da zum Zeitpunkt des Maskierens im Rollout die Aktion noch nicht feststeht, ist ein solches präemptives Gating nicht möglich.
-\vspace{\baselineskip}
-
-Stattdessen wird in dieser Arbeit ein Gradient\hyp{}Gating implementiert. Dabei werden alle Aktionen zunächst gesampelt, jedoch wird die Gradientenberechnung für die kontinuierliche Aktion nachträglich unterdrückt, falls diese sich als irrelevant erweist. Die maskierte Ausführung in der Umgebung stellt dabei sicher, dass irrelevante Aktionen auch tatsächlich keine Zustandsänderung bewirken.
+Um die spezifischen Anforderungen des bedingten Aktionsraums zu erfüllen, wurde statt einer Maskierung der Aktionen selbst ein aktionsabhängiges Gradient\hyp{}Gating implementiert. Dabei werden zunächst alle Aktionen gesampelt, die Gradientenberechnung für die kontinuierliche Komponente wird jedoch nachträglich unterdrückt, sofern diese sich als irrelevant erweist. Die maskierte Ausführung innerhalb der Umgebung garantiert dabei, dass wirkungslose Aktionen tatsächlich keine Zustandsänderung hervorrufen.
 \vspace{\baselineskip}
 
 Die technische Umsetzung erfolgt durch gezielte Anpassungen der SB3\hyp{}Plus Bibliothek \cite{sb3_plus}. Die vollständigen Änderungen an der Implementierung sind im Anhang in Abschnitt \ref{sc:ppo_code} zu finden.
 Das Verfahren greift in drei zentrale Komponenten des PPO\hyp{}Algorithmus ein, deren theoretische Fundierung in Abschnitt \ref{ch:rl_grundlagen} erläutert wurde.
+\vspace{\baselineskip}
 
-Da der Policy\hyp{}Loss $L_t^{CLIP}$ (siehe Gleichung \ref{eq:clip_loss}) über das Wahrscheinlichkeitsverhältnis $r_t(\theta)$ direkt von den logarithmischen Wahrscheinlichkeiten der Aktionen abhängt, ist an dieser Stelle ein Eingriff notwendig, um den Einfluss irrelevanter Aktionskomponenten auf den Gradienten zu eliminieren. Analog muss der Entropie\hyp{}Term $S[\pi_\theta]$ angepasst werden, um eine Belohnung für die Variation wirkungsloser Aktionen zu verhindern. Der Term der Wertfunktion $L_t^{VF}(\phi)$ (siehe Gleichung \ref{eq:value_loss}) hingegen bleibt von diesen Modifikationen unberührt, da der Critic $V_\phi(s_t)$ den Wert eines Zustandes unabhängig von der spezifischen Struktur des im gleichen Zeitschritt gewählten Aktionsvektors schätzt.
+Da der Policy\hyp{}Loss $L_t^{CLIP}$ (siehe Gleichung \ref{eq:clip_loss}) über das Wahrscheinlichkeitsverhältnis $r_t(\theta)$ direkt von den logarithmischen Wahrscheinlichkeiten der Aktionen abhängt, ist hier ein Eingriff erforderlich, um den Einfluss irrelevanter Aktionskomponenten auf den Gradienten zu eliminieren. Analog muss der Entropie\hyp{}Term $S[\pi_\theta]$ angepasst werden, um eine Belohnung für die Variation wirkungsloser Aktionen zu verhindern. Der Term der Wertfunktion $L_t^{VF}(\phi)$ (siehe Gleichung \ref{eq:value_loss}) bleibt von diesen Modifikationen hingegen unberührt, da der Critic $V_\phi(s_t)$ den Zustandswert unabhängig von der spezifischen Struktur des gewählten Aktionsvektors schätzt.
+\vspace{\baselineskip}
 
 Die konkrete technische Umsetzung dieser theoretischen Überlegungen erfordert Eingriffe an drei Stellen der Implementierung: der Definition der Wahrscheinlichkeitsverteilung, der Evaluationsmethode für das Training und dem Vorwärtsschritt für die Datensammlung. Im Folgenden werden diese Anpassungen im Detail beschrieben.
 
 \subsection*{Wahrscheinlichkeitsverteilung}
-Die Klasse der Wahrscheinlichkeitsverteilung wurde erweitert, um logarithmische Wahrscheinlichkeiten (\texttt{log\_prob()}) und Entropien (\texttt{entropy()}) getrennt für diskrete und kontinuierliche Aktionen auszuwerten. Während die Basisimplementierung diese Werte sofort summiert, ermöglicht die Modifikation den Zugriff auf separierte Tensoren. Dies ist die Voraussetzung, um im nächsten Schritt eine selektive Maskierung vornehmen zu können.
+Eine Erweiterung der Wahrscheinlichkeitsverteilungs\hyp{}Klasse ermöglicht es, logarithmische Wahrscheinlichkeiten (\texttt{log\_prob()}) und Entropien (\texttt{entropy()}) getrennt für diskrete und kontinuierliche Aktionen auszuwerten. Während die Basisimplementierung diese Werte sofort summiert, gewährt die Modifikation Zugriff auf separierte Tensoren. Dies ist die Voraussetzung, um im nächsten Schritt eine selektive Maskierung vornehmen zu können.
 
 \subsection*{Evaluation}
 In der Methode \texttt{evaluate\_actions()}, welche während der Optimierungsphase aufgerufen wird (siehe Algorithmus \ref{alg:ppo_training}, Zeile 20), werden die Komponenten der PPO\hyp{}Verlustfunktion berechnet. Hier erfolgt das eigentliche Gradient\hyp{}Gating.
@@ -61,11 +75,8 @@ Algorithmus \ref{alg:gradient_gating} zeigt die Implementierung dieser Logik.
 \end{algorithm}
 \vspace{\baselineskip}
 
-In Zeile 5 wird für die logarithmischen Wahrscheinlichkeiten eine explizite Null\hyp{}Maskierung vorgenommen.
-Der Aufruf \texttt{th.zeros\_like()} erzeugt dabei einen neuen Tensor, der standardmäßig nicht Teil des Berechnungsgraphen ist (\texttt{requires\_grad=False}).
-Dies stellt technisch sicher, dass für die maskierten Einträge keine Gradienten zurückfließen.
-Mathematisch bedeutet dies, dass die irrelevante kontinuierliche Aktion als deterministisch betrachtet wird (Wahrscheinlichkeit 1, $\log(1)=0$) und somit keinen Beitrag zur Gesamt\hyp{}Log\hyp{}Likelihood leistet.
-Auf diese Weise wird verhindert, dass irrelevante Aktionen die Update\hyp{}Schritte des PPO verfälschen.
+Zeile 5 nimmt für die logarithmischen Wahrscheinlichkeiten eine explizite Null\hyp{}Maskierung vor. Der Aufruf \texttt{th.zeros\_like()} erzeugt dabei einen neuen Tensor, der standardmäßig nicht Teil des Berechnungsgraphen ist (\texttt{requires\_grad=False}). Dies stellt technisch sicher, dass für die maskierten Einträge keine Gradienten zurückfließen.
+Mathematisch betrachtet wird die irrelevante kontinuierliche Aktion dadurch deterministisch (Wahrscheinlichkeit 1, $\log(1)=0$) und leistet somit keinen Beitrag zur Gesamt\hyp{}Log\hyp{}Likelihood. Dies verhindert effektiv, dass irrelevante Aktionen die Update\hyp{}Schritte des PPO verfälschen.
 \vspace{\baselineskip}
 
 Für die Regularisierung durch Entropie (Zeile 12) wird das Konzept der bedingten Entropie umgesetzt. Die Gesamtentropie berechnet sich als Summe der diskreten Entropie und der mit ihrer Auftrittswahrscheinlichkeit gewichteten kontinuierlichen Entropie:
@@ -82,18 +93,20 @@ Analog zur Evaluation muss das Gradient\hyp{}Gating auch im Vorwärtsschritt ang
 
 \section{Herausforderungen in bedingten Aktionsräumen}
 
-Die Verwendung bedingter Aktionsräume stellt das Training von Reinforcement-Learning-Agenten vor spezifische Herausforderungen, die über rein technische Implementierungsdetails hinausgehen. Ein zentrales Problem ergibt sich aus der Kopplung von Aktionen und der daraus resultierenden Häufigkeit von Feedback Signalen für die einzelnen Aktionskomponenten. Wenn relevante Aktionen aufgrund der hierarchischen Struktur nur selten ausgeführt werden, kann dies den Lernprozess erheblich beeinträchtigen.
+Die Verwendung bedingter Aktionsräume stellt das Training von Reinforcement\hyp{}Learning\hyp{}Agenten vor spezifische Herausforderungen, die über rein technische Implementierungsdetails hinausgehen. Ein zentrales Problem resultiert aus der Kopplung von Aktionen und der daraus folgenden unterschiedlichen Häufigkeit von Feedback\hyp{}Signalen für die jeweiligen Komponenten. Werden relevante Aktionen bedingt durch die hierarchische Struktur nur selten ausgeführt, leidet der Lernprozess darunter.
 
-\subsection*{Sparsity-Problematik der abhängigen Aktion}
-In der frühen Trainingsphase neigen Agenten oft dazu, initial suboptimale Strategien zu verfolgen. Wählt der Agent überwiegend Aktionen, die abhängigen Aktion blockieren (z.\,B. \emph{Noop}), erhält das Netzwerk für die abhängige Aktion (\emph{Steer}) kaum Gradienteninformationen. Ein unoptimierter Steer-Wert führt bei seiner seltenen Ausführung häufig zu negativem Feedback, was den Agenten wiederum dazu verleitet, die Nutzung dieser Aktion weiter zu vermeiden. Dieser Rückkopplungseffekt kann dazu führen, dass die Wahrscheinlichkeitsverteilung für die Aktivierung der kontinuierlichen Komponente gegen Null geht, bevor der Agent genügend Erfahrungen sammeln konnte, um eine effektive Lenkstrategie zu erlernen.
+\subsection*{Sparsity\hyp{}Problematik der abhängigen Aktion}
+Gerade zu Beginn des Trainings neigen Agenten häufig zu suboptimalen Strategien. Wählt der Agent überwiegend Aktionen, welche die abhängige Komponente blockieren (z.\,B. \emph{Noop}), erhält das Netzwerk für die abhängige Aktion (\emph{Steer}) kaum Gradienteninformationen. Ein unoptimierter Steer\hyp{}Wert führt bei seiner seltenen Ausführung oft zu negativem Feedback, was den Agenten wiederum dazu verleitet, diese Aktion künftig zu meiden. Dieser Rückkopplungseffekt kann dazu führen, dass die Wahrscheinlichkeit für die Aktivierung der kontinuierlichen Komponente gegen Null geht, noch bevor der Agent ausreichend Erfahrung für eine effektive Lenkstrategie sammeln konnte.
 
 \subsection*{Destruktive Interferenz und Lokale Optima}
-Szenarien, in denen die übergeordnete diskrete Aktion (z.\,B. \emph{Noop}) die Ausführung des abhängigen Pfades dominiert, können zudem zu einem Phänomen führen, das als \textit{destruktive Interferenz} bezeichnet wird. Da sich beide Aufgaben gemeinsame Schichten im neuronalen Netz teilen, werden diese primär zur Minimierung des Fehlers der häufigeren diskreten Aktion optimiert. Dies kann dazu führen, dass die für die kontinuierliche Aktion notwendigen Merkmale überschrieben werden oder gar nicht erst entstehen. Der Agent verharrt folglich in einem lokalen Optimum, da der kontinuierliche Pfad aufgrund unpassender Repräsentationen keine sinnvollen Vorhersagen liefern kann.
+Szenarien, in denen die übergeordnete diskrete Aktion (z.\,B. \emph{Noop}) dominiert, begünstigen zudem das Phänomen der \textit{destruktiven Interferenz}. Da sich beide Aufgaben gemeinsame Schichten im neuronalen Netz teilen, werden diese primär auf die Minimierung des Fehlers der häufigeren diskreten Aktion hin optimiert. Dies kann dazu führen, dass Merkmale, die für die kontinuierliche Aktion essentiell sind, überschrieben werden oder gar nicht erst entstehen. Der Agent verharrt folglich in einem lokalen Optimum, da der kontinuierliche Pfad aufgrund unpassender Repräsentationen keine sinnvollen Vorhersagen liefern kann.
 
 \subsection{Architektonischer Lösungsansatz: Branching Network}
-Um diesen strukturellen Problemen entgegenzuwirken und ein robustes Lernen beider Aktionskomponenten zu gewährleisten, wird in dieser Arbeit eine angepasste Netzarchitektur verwendet. Anstatt eines vollständig verbundenen Netzwerks (\textit{Fully Connected}), bei dem sich alle Schichten Parameter teilen, wird eine Verzweigung der Pfade eingeführt. 
+Um diesen strukturellen Problemen entgegenzuwirken und ein robustes Lernen beider Aktionskomponenten zu gewährleisten, kommt in dieser Arbeit eine angepasste Netzarchitektur zum Einsatz. Anstatt eines vollständig verbundenen Netzwerks (\textit{Fully Connected}), bei dem sich alle Schichten Parameter teilen, wird eine Verzweigung der Pfade eingeführt. 
+\vspace{\baselineskip}
 
-Wie in den folgenden Abbildungen dargestellt, erfolgt das Aufspalten der Pfade in dieser Arbeit bereits unmittelbar nach der Eingabeschicht. Das Netzwerk verzweigt sich also direkt in zwei komplett getrennte Äste (Heads). Einen für die diskrete Entscheidung und einen separaten für den kontinuierlichen Wert. Es existieren somit keine gemeinsamen Hidden-Layers (\textit{Shared Layers}).
+Wie die folgenden Abbildungen verdeutlichen, erfolgt die Aufspaltung der Pfade hier bereits unmittelbar nach der Eingabeschicht. Das Netzwerk verzweigt sich direkt in zwei vollständig getrennte Äste (Heads): einen für die diskrete Entscheidung und einen separaten für den kontinuierlichen Wert. Es existieren somit keine gemeinsamen Hidden\hyp{}Layers (\textit{Shared Layers}).
+\vspace{\baselineskip}
 
 Diese vollständige Entkopplung, oft als \textit{Branching Architecture} bezeichnet, hat zwei wesentliche Vorteile:
 \begin{enumerate}
@@ -101,11 +114,19 @@ Diese vollständige Entkopplung, oft als \textit{Branching Architecture} bezeich
     \item \textbf{Stabilisierung des Lernens:} Selbst wenn der kontinuierliche Pfad seltener aktiviert wird, bleiben seine spezifischen Gewichte von den starken Updates des häufiger genutzten diskreten Pfades ungestört, was das Risiko von destruktiver Interferenz mindert.
 \end{enumerate}
 
-Gleichwohl geht diese strikte topologische Trennung mit einer Reduktion der Modellkomplexität einher. Da Verbindungen zwischen den getrennten Pfaden fehlen, sinkt die Gesamtzahl der lernbaren Parameter im Vergleich zu einem vollständig verbundenen Netzwerk gleicher Größe signifikant. Da die Anzahl der effektiven Verbindungen jedoch maßgeblich die Approximationsfähigkeit des Netzwerks bestimmt, ist eine naive Halbierung der Neuronen pro Pfad oft unzureichend, um die ursprüngliche Leistungsfähigkeit beizubehalten.
-Des Weiteren verhindert die vollständige Separation das Teilen von Repräsentationen (\textit{Feature Sharing}). Während in vollständig verbundenen Netzwerk Architekturen frühe Schichten universelle Merkmale extrahieren, die für beide Aufgaben relevant sind, erfordert der \textit{Split}-Ansatz, dass jeder Pfad diese Merkmale redundant und unabhängig voneinander erlernt. Dies kann, insbesondere bei begrenzten Datenmengen, zu einer geringeren Lerneffizienz führen, da das Netzwerk gezwungen ist, ähnliche Konzepte an mehreren Stellen parallel zu entwickeln.
+Diese strikte Trennung reduziert jedoch die Modellkomplexität. Da Verbindungen zwischen den getrennten Pfaden fehlen, sinkt die Gesamtzahl der lernbaren Parameter im Vergleich zu einem vollständig verbundenen Netzwerk gleicher Größe signifikant. Da die Anzahl der effektiven Verbindungen jedoch maßgeblich die Approximationsfähigkeit des Netzwerks bestimmt, ist eine naive Halbierung der Neuronen pro Pfad oft unzureichend, um die ursprüngliche Leistungsfähigkeit beizubehalten.
 \vspace{\baselineskip}
 
-Es sei angemerkt, dass auch Mischformen denkbar und durchaus sinnvoll sein können \cite{branching_architectures}, bei denen sich die Pfade erst nach einigen gemeinsamen Schichten trennen (um beispielsweise grundlegende visuelle Features gemeinsam zu extrahieren). Eine solche hybride Architektur ist in Abbildung \ref{fig:nn_architektur_hybrid} visualisiert. Aufgrund des signifikant erhöhten Aufwands, der für die systematische Evaluation verschiedener Split-Punkte und Architekturvarianten nötig gewesen wäre, wurde in dieser Arbeit jedoch auf solche Hybrid-Ansätze verzichtet und die klare Trennung präferiert.
+Um die Komplexität des Netzwerks in Bezug auf die Anzahl der freien Parameter im Vergleich zur Basisarchitektur der Breite $N$ (z.\,B. $N=64$) annähernd konstant zu halten, wurde die Breite $x$ der $k$ getrennten Pfade (im hier vorliegenden Fall $k=2$) gemäß folgender Gleichung bestimmt:
+\begin{equation}
+    N^2 \approx k \cdot x^2 \quad \Longrightarrow \quad x \approx \frac{N}{\sqrt{k}}
+    \label{eq:complexity_approx}
+\end{equation}
+Dabei ist jedoch zu beachten, dass es sich hierbei lediglich um eine Approximation handelt. Ein mathematisch exakter Vergleich würde zusätzlich die Berücksichtigung der Bias-Terme sowie der Parameter der Ein- und Ausgabeschichten erfordern, weshalb diese Formel lediglich als Näherung für die verborgenen Schichten dient. Ein vollständig fairer Vergleich der Architekturen ist ohnehin nicht zwingend sinnvoll, da nicht von vornherein feststeht, dass jede zu lernende Aktionskomponente die gleiche Komplexität aufweist und somit die gleiche Anzahl an Parametern benötigt.
+Des Weiteren verhindert die vollständige Separation das Teilen von Repräsentationen (\textit{Feature Sharing}). Während in vollständig verbundenen Netzwerkarchitekturen frühe Schichten universelle Merkmale extrahieren, die für beide Aufgaben relevant sind, erfordert der \textit{Split}\hyp{}Ansatz, dass jeder Pfad diese Merkmale redundant und unabhängig voneinander erlernt. Dies bindet Netzwerkkapazitäten an mehreren Stellen für identische Merkmale.
+\vspace{\baselineskip}
+
+Auch Mischformen sind denkbar \cite{branching_architectures}, bei denen sich die Pfade erst nach einigen gemeinsamen Schichten trennen (um beispielsweise grundlegende visuelle Features gemeinsam zu extrahieren). Eine solche hybride Architektur ist in Abbildung \ref{fig:nn_architektur_hybrid} visualisiert. Aufgrund des signifikant erhöhten Aufwands, der für die systematische Evaluation verschiedener Split\hyp{}Punkte und Architekturvarianten nötig gewesen wäre, wurde in dieser Arbeit jedoch auf solche Hybrid\hyp{}Ansätze verzichtet und die klare Trennung präferiert.
 
 \begin{figure}[htbp]
     \centering
