@@ -4,5 +4,12 @@
 \begin{otherlanguage}{ngerman}
 	\pdfbookmark[0]{Zusammenfassung}{Zusammenfassung}
 	\chapter*{Zusammenfassung}
-
+Die Automatisierung der Adjacent-Lotsen-Position in der Flugverkehrskontrolle stellt eine vielversprechende Möglichkeit dar, die Ausbildung von Fluglotsen in Simulationsumgebungen der DFS Deutschen Flugsicherung GmbH effizienter zu gestalten.
+In dieser Arbeit wird hierfür ein Reinforcement Learning (RL) Ansatz entwickelt.
+Ein zentrales Defizit bestehender Methoden ist jedoch das unruhige Steuerungsverhalten (,,Jittering``), das durch unnötige Kurskorrekturen die Akzeptanz und Realitätsnähe mindert.
+Zur Lösung dieses Problems wird ein hybrider Aktionsraum konzipiert, der diskrete Entscheidungen über das Eingreifen (\emph{No-Operation}) mit kontinuierlichen Steuergrößen für Kursänderungen kombiniert.
+Technisch wird dies durch eine Modifikation des Proximal Policy Optimization (PPO) Algorithmus mittels ,,Gradient Gating`` realisiert, um die bedingten Abhängigkeiten im Aktionsraum stabil zu lernen.
+Die Evaluation in einer vereinfachten Simulationsumgebung demonstriert die technische Machbarkeit der Architektur und vergleicht sie mit klassischen diskreten Handlungsräumen.
+Die Ergebnisse zeigen, dass der vorgestellte Ansatz insbesondere durch die Verbindung kontinuierlicher Aktionen mit explizit diskreten Nicht-Eingriffen (\emph{Noops}) das Potenzial für ein effizienteres und menschlicheres Steuerungsverhalten bietet. Damit liefert die Arbeit einen Proof of Concept für den Einsatz gemischter Aktionsräume im Flugverkehrsmanagement.
+	
 \end{otherlanguage}

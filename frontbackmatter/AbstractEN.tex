@@ -6,5 +6,12 @@
 
 \begin{otherlanguage}{american}
 	\chapter*{Abstract}
+The automation of the Adjacent Controller position in air traffic control offers a promising opportunity to make the training of air traffic controllers in simulation environments of DFS Deutsche Flugsicherung GmbH more efficient.
+In this thesis, a Reinforcement Learning (RL) approach is developed for this purpose.
+A central deficit of existing methods is the unsteady control behavior (``jittering''), which reduces acceptance and realism due to unnecessary course corrections.
+To solve this problem, a hybrid action space is designed that combines discrete decisions on intervention (\emph{No-Operation}) with continuous control variables for course changes.
+Technically, this is realized by modifying the Proximal Policy Optimization (PPO) algorithm using ``Gradient Gating'' to stably learn the conditional dependencies in the action space.
+The evaluation in a simplified simulation environment demonstrates the technical feasibility of the architecture and compares it with classical discrete action spaces.
+The results show that the presented approach, especially by combining continuous actions with explicitly discrete non-interventions (\emph{Noops}), offers the potential for more efficient and human-like control behavior. Thus, this work provides a proof of concept for the use of mixed action spaces in air traffic management.
 
 \end{otherlanguage}

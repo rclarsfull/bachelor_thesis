@@ -1,5 +1,7 @@
 \chapter{Code}
 
+Der vollständige Quellcode dieser Arbeit steht im zugehörigen Repository zur Verfügung \cite{meinCode}.
+
 \section{PPO-Anpassungen}
 \label{sc:ppo_code}
 
@@ -49,15 +51,6 @@ class Masked_MultiOutputDistribution(MultiOutputDistribution):
 
 \begin{lstlisting}[language=Python, caption={Maskierung in der Aktionsauswertung}, label=lst:evaluate_actions]
 def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
-        """
-        Evaluate actions according to the current policy,
-        given the observations.
-        :param obs:
-        :param actions:
-        :return: estimated value, log likelihood of taking those actions
-            and entropy of the action distribution.
-        """
-        # Preprocess the observation if needed
         features = self.extract_features(obs)
         if self.share_features_extractor:
             latent_pi, latent_vf = self.mlp_extractor(features)
@@ -67,37 +60,37 @@ def evaluate_actions(self, obs: th.Tensor, actions: th.Tensor) -> Tuple[th.Tenso
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
             
         distribution = self._get_action_dist_from_latent(latent_pi)
+        values = self.value_net(latent_vf)
+        assert(isinstance(distribution, Masked_MultiOutputDistribution))
 
-        # Masking logic
-        assert(isinstance(distribution, Masked_MultiOutputDistribution), "This should be a Masked Distribution")
-        type_action = actions[:, 0]
-        steer_action = actions[:, 1]
-        mask = (type_action == STEER_INDEX).bool()
+        
+        split_actions = th.split(actions, distribution.action_dims, dim=1)
+        act_type = split_actions[0].squeeze(-1)
         
         stack_log_prob = distribution.stack_log_prob(actions)
-        action_type_log_prob = stack_log_prob[:,0]
-        steer_log_prob = th.where(mask, stack_log_prob[:,1], stack_log_prob[:,1].detach())
-        masked_log_prob = action_type_log_prob + steer_log_prob
+        lp_type = stack_log_prob[:, 0]
+        lp_steer = stack_log_prob[:, 1]
         
-        values = self.value_net(latent_vf)
+        mask_steer = (act_type.round().long() == STEER_INDEX)
+        masked_lp_steer = th.where(mask_steer, lp_steer, th.zeros_like(lp_steer))
+        masked_log_prob = lp_type + masked_lp_steer
+        
         
         stack_entropy = distribution.stack_entropy()
-        action_type_entropy = stack_entropy[:,0]
-        steer_entropy = th.where(mask, stack_entropy[:,1], stack_entropy[:,1].detach())
-        masked_entropy = action_type_entropy + steer_entropy
+        ent_type = stack_entropy[:, 0]
+        ent_steer = stack_entropy[:, 1]
         
+        with th.no_grad():
+            type_probs = distribution.distribution[0].distribution.probs
+            p_steer = type_probs[:, STEER_INDEX]
+        masked_ent_steer = p_steer * ent_steer
+        masked_entropy = ent_type + masked_ent_steer
+    
         return values, masked_log_prob, masked_entropy
 \end{lstlisting}
 
 \begin{lstlisting}[language=Python, caption={Maskierung im Forwardschritt}, label=lst:forward]
-def forward(self, obs: th.Tensor, deterministic: bool = False) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
-        """
-        Forward pass in all the networks (actor and critic)
-        :param obs: Observation
-        :param deterministic: Whether to sample or use deterministic actions
-        :return: action, value and log probability of the action
-        """
-        # Preprocess the observation if needed
+ def forward(self, obs: th.Tensor, deterministic: bool = False) -> Tuple[th.Tensor, th.Tensor, th.Tensor]:
         features = self.extract_features(obs)
         if self.share_features_extractor:
             latent_pi, latent_vf = self.mlp_extractor(features)
@@ -105,151 +98,29 @@ def forward(self, obs: th.Tensor, deterministic: bool = False) -> Tuple[th.Tenso
             pi_features, vf_features = features
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
-        # Evaluate the values for the given observations
+            
         values = self.value_net(latent_vf)
         distribution = self._get_action_dist_from_latent(latent_pi)
         actions = distribution.get_actions(deterministic=deterministic)
-        log_prob = distribution.log_prob(actions)
+        assert(isinstance(distribution, Masked_MultiOutputDistribution))
         
-        # Masking logic
-        assert(isinstance(distribution, Masked_MultiOutputDistribution), "This should be a Masked Distribution")
-        type_action = actions[:, 0]
-        steer_action = actions[:, 1]
-        mask = (type_action == STEER_INDEX).bool()
+        split_actions = th.split(actions, distribution.action_dims, dim=1)
+        act_type = split_actions[0].squeeze(-1)
         
         stack_log_prob = distribution.stack_log_prob(actions)
-        action_type_log_prob = stack_log_prob[:,0]
-        steer_log_prob = th.where(mask, stack_log_prob[:,1], stack_log_prob[:,1].detach())
-        masked_log_prob = action_type_log_prob + steer_log_prob
+        lp_type = stack_log_prob[:, 0]
+        lp_steer = stack_log_prob[:, 1]
+        
+        mask_steer = (act_type.round().long() == STEER_INDEX)
+        masked_lp_steer = th.where(mask_steer, lp_steer, th.zeros_like(lp_steer))
+        masked_log_prob = lp_type + masked_lp_steer
         
         actions = actions.reshape((-1, *get_action_shape(self.action_space)))
+        
         return actions, values, masked_log_prob
 \end{lstlisting}
 
-\section{LunarLander}
-
-\begin{lstlisting}[language=Python, caption={LunarLander wrapper}, label=lst:lunar_lander_wrapper]
-"""
-LunarLanderContinuous wrapper to test MaskedHybridPPO with a standard environment
-"""
-import gymnasium as gym
-from gymnasium import spaces
-import numpy as np
-
-
-class LunarLanderContinuousMultiOutput(gym.Wrapper):
-    """
-    Wraps LunarLanderContinuous to have a Dict action space matching the MaskedHybridPPO structure.
-    
-    Original LunarLanderContinuous actions:
-    Box(-1, +1, (2,), dtype=np.float32)
-    Action[0]: Main engine
-        - < 0: Off
-        - 0..1: Throttle 50%..100%
-    Action[1]: Lateral boosters
-        - -0.5..0.5: Off
-        - < -0.5: Left booster (Throttle scales 50%..100%)
-        - > 0.5: Right booster (Throttle scales 50%..100%)
-    
-    Multi-output structure (sorted alphabetically):
-    - main_opt_switch: Discrete(2)
-        0: Off
-        1: On
-    - main_val_power: Box(0, 1)
-        Throttle value.
-        clipped to 0..1. 
-        Note: PPO outputs centered at 0. So init will be around 0 (Min Power).
-    - side_opt_switch: Discrete(3)
-        0: Off
-        1: Left
-        2: Right
-    - side_val_power: Box(0, 1)
-        Throttle value
-        
-    """
-    
-    def __init__(self, env):
-        super().__init__(env)
-        
-        # Create multi-output action space
-        # Keys named to ensure alphabetical sorting aligns with logic:
-        # 1. main_opt_switch
-        # 2. main_val_power
-        # 3. side_opt_switch
-        # 4. side_val_power
-        self.action_space = spaces.Dict({
-            'main_opt_switch': spaces.Discrete(2),
-            'main_val_power': spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32),
-            'side_opt_switch': spaces.Discrete(3),
-            'side_val_power': spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)
-        })
-        
-    def step(self, action):
-        """
-        Map multi-output action to original LunarLanderContinuous action
-        """
-        if isinstance(action, dict):
-            main_switch = action['main_opt_switch']
-            main_power = action['main_val_power']
-            side_switch = action['side_opt_switch']
-            side_power = action['side_val_power']
-        else:
-            main_switch = int(action[0])
-            main_power = float(action[1])
-            side_switch = int(action[2])
-            side_power = float(action[3])
-            
-        if isinstance(main_switch, np.ndarray):
-            main_switch = main_switch.item()
-        if isinstance(side_switch, np.ndarray):
-            side_switch = side_switch.item()
-
-        # Map Box(0, 1) handling from PPO Gaussian(0, std)
-        # We simply clip. 
-        # Mean 0 -> 0 -> Min throttle (50% real world)
-        main_p = np.clip(main_power, 0.0, 1.0)
-        side_p = np.clip(side_power, 0.0, 1.0)
-        
-        if isinstance(main_p, np.ndarray):
-             main_p = main_p.item()
-        if isinstance(side_p, np.ndarray):
-             side_p = side_p.item()
-            
-        # 1. Handle Main Engine
-        # Env logic: main < 0 is off. 0..1 is on.
-        if main_switch == 0:
-            actual_main = -1.0 # Safe off
-        else:
-            actual_main = main_p
-                
-        # 2. Handle Side Engines
-        # Env logic: -0.5 < x < 0.5 off
-        # x < -0.5 Left
-        # x > 0.5 Right
-        if side_switch == 0:
-            actual_side = 0.0
-        elif side_switch == 1: # Left
-            # Map 0..1 to -0.5..-1.0
-            actual_side = -0.5 - (side_p * 0.5)
-        elif side_switch == 2: # Right
-            # Map 0..1 to 0.5..1.0
-            actual_side = 0.5 + (side_p * 0.5)
-        else:
-            actual_side = 0.0
-
-        real_action = np.array([actual_main, actual_side], dtype=np.float32)
-        
-        obs, reward, terminated, truncated, info = self.env.step(real_action)
-        
-        return obs, reward, terminated, truncated, info
-        
-    def reset(self, **kwargs):
-        return self.env.reset(**kwargs)
-
-
-\end{lstlisting}
-
-\begin{lstlisting}[caption={LunarLander Hyperparameter}, label=lst:lunar_lander_hyperparams]
+\begin{lstlisting}[caption={LunarLander Hyperparameter \& Seeds}, label=lst:lunar_lander_hyperparams]
 LunarLanderContinuous-v3:
   n_envs: 16
   n_timesteps: !!float 3e6
@@ -285,47 +156,7 @@ LunarLander-v3:
   env_wrapper:
     - custom_envs.lunarlander_multioutput.LunarLanderMultiOutput
 
+Seeds: [66, 133, 42, 202, 7, 1234, 999, 2021, 31415, 2718, 1618, 8675, 11235, 3141, 16180]
+
 \end{lstlisting}
 
-\begin{lstlisting}[caption={LunarLander testscript}, label=lst:lunar_lander_script]
-#!/bin/bash
-
-set -euo pipefail
-
-SEEDS=(66 133 42 202 7 1234 999 2021 31415 2718 1618 8675 11235 3141 16180)
-ALGOS=(ppo masked_hybrid_ppo multioutputppo masked_hybrid_ppo_split_net) 
-ENV_ID="LunarLanderContinuous-v3"
-LOG_ROOT="logs"
-
-EVAL_FREQ="${EVAL_FREQ:-50000}"
-EVAL_EPISODES="${EVAL_EPISODES:-60}"
-N_EVAL_ENVS="${N_EVAL_ENVS:-6}"
-
-ITERATIONS=${#SEEDS[@]}
-RUN_IDX=0
-
-for SEED in "${SEEDS[@]}"; do
-  RUN_IDX=$((RUN_IDX + 1))
-  echo "----------------------------------------------------------"
-  echo "Lunar: Lauf ${RUN_IDX} von ${ITERATIONS} mit Seed: ${SEED}"
-  echo "----------------------------------------------------------"
-
-  for ALGO in "${ALGOS[@]}"; do
-    echo "Starte ${ALGO}..."
-    python train.py \
-      --algo "${ALGO}" \
-      --verbose 0 \
-      --env "${ENV_ID}" \
-      --vec-env subproc \
-      --device cpu \
-      --num-threads 4 \
-      --tensorboard-log "${LOG_ROOT}/tensorboard" \
-      -P --eval-episodes "${EVAL_EPISODES}" --n-eval-envs "${N_EVAL_ENVS}" \
-      --eval-freq "${EVAL_FREQ}" \
-      --seed "${SEED}"
-  done
-
-done
-
-python scripts/evaluate_results.py --logs "${LOG_ROOT}" --env "${ENV_ID}" --algos "${ALGOS[@]}"
-\end{lstlisting}

@@ -52,10 +52,10 @@ Zudem konnte auf Vorarbeiten des Projekts Bluesky\hyp{}Gym \cite{bluesky-gym} au
 Ein kritischer, oft unterschätzter Faktor im Reinforcement Learning ist die Ausführungsgeschwindigkeit der Umgebung. Da moderne RL-Algorithmen wie PPO typischerweise Millionen von Interaktionsschritten benötigen, um zu konvergieren, summieren sich selbst minimale Verzögerungen pro Zeitschritt zu erheblichen Wartezeiten. Eine performante Implementierung ist daher nicht nur eine Frage der Effizienz, sondern bestimmt maßgeblich die Entwicklungsgeschwindigkeit, da sie schnellere Iterationszyklen und damit häufigeres Testen von Hypothesen ermöglicht.
 \vspace{\baselineskip}
 
-Um diesem Anspruch gerecht zu werden, wurde der Python-Code der Umgebung gezielt auf Performance optimiert. Ein Nadelöhr in Python-basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen. Zur Beschleunigung kam die Just-in-Time (JIT) Compiler-Bibliothek \textbf{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode, was insbesondere bei mathematischen Berechnungen – wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum – zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen führt.
+Um diesem Anspruch gerecht zu werden, wurde der Python-Code der Umgebung gezielt auf Performance optimiert. Ein Nadelöhr in Python-basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen. Zur Beschleunigung kam die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode, was insbesondere bei mathematischen Berechnungen – wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum – zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen führt.
 \vspace{\baselineskip}
 
-Zusätzlich wurden Berechnungen wo immer möglich \textbf{vektorisiert}. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \textit{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne CPU-Instruktionen (SIMD) effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
+Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne CPU-Instruktionen (SIMD) effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
 
 \section{Visualisierung}
 Zur Validierung und Analyse des Agentenverhaltens wurde eine Echtzeit\hyp{}Visualisierung implementiert.
@@ -157,13 +157,16 @@ Eine übermäßig komplexe Reward\hyp{}Struktur kann die Konvergenz des Modells 
 
 Die implementierte Belohnungsfunktion setzt sich aus folgenden Komponenten zusammen:
 \begin{itemize}
-    \item \textbf{Drift Reward:} Belohnung für das Einhalten des direkten Kurses zum Ziel. Die Belohnung skaliert quadratisch mit der Verringerung der Kursabweichung, um präzises Navigieren zu fördern.
+    \item \textbf{Drift Reward:} Belohnung für das Einhalten des direkten Kurses zum Ziel. Die Funktion skaliert quadratisch mit der Kursabweichung, um signifikante Abweichungen überproportional stärker zu bestrafen als minimale, wodurch eine hohe Präzision gefördert wird. Dieser Mechanismus sorgt dafür, dass die grobe Richtung stets stimmt, der Agent jedoch nicht zu übermäßigem Mikromanagement bei kleinsten Abweichungen verleitet wird.
     \item \textbf{Action Age Reward:} Belohnung für Stabilität. Je länger der Agent ohne neue Intervention auskommt, desto höher fällt diese Belohnung aus.
     \item \textbf{Noop Bonus:} Ein fester Belohnungswert für jeden Zeitschritt, in dem keine aktive Steuerungsänderung (Noop) vorgenommen wird.
     \item \textbf{Collision Avoidance Cost:} Negative Belohnung (Strafe) basierend auf der aktuellen Konfliktsituation. Die Strafe steigt mit der Nähe zum Konflikt.
     \item \textbf{Waypoint Bonus:} Ein einmaliger, positiver Belohnungswert beim Erreichen eines Wegpunktes.
     \item \textbf{Collision Penalty:} Eine signifikante Strafe bei Verursachung eines Konflikts (Unterschreitung der Mindestdistanz).
 \end{itemize}
+
+Explizit wurde auf eine distanzbasierte Belohnung (\textit{Proximity Reward}) verzichtet, da diese anfällig für \textit{Reward Hacking} ist: Agenten könnten lernen, das Ziel lediglich zu umkreisen, um kontinuierlich Belohnung zu sammeln, ohne es zu erreichen. Die Ausrichtung auf das Ziel (Heading Alignment) löst dieses Navigationsproblem robuster und impliziert zudem eine natürliche Gewichtung der Präzision: Je näher das Flugzeug dem Ziel kommt, desto empfindlicher reagiert der relative Winkel auf Positionsänderungen, was automatisch eine höhere Genauigkeit im Endanflug einfordert.
+\vspace{\baselineskip}
 
 Es wurde Wert auf die Verwendung von sogenannten \emph{Dense Rewards} gelegt, also kontinuierlichen Rückmeldungen in jedem Zeitschritt. 
 Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Qualität seiner Zustandsänderungen erhält, im Gegensatz zu \emph{Sparse Rewards}, die nur in unregelmäßigen Abständen vergeben werden.
@@ -179,7 +182,7 @@ Folgende Schlüsselmetriken werden erhoben:
     \item \textbf{isSuccess:} Binärer Indikator für den erfolgreichen Abschluss einer Episode (alle Wegpunkte erreicht, keine Konflikte verursacht).
     \item \textbf{Cumulative Reward:} Die aufsummierte Belohnung über eine gesamte Episode, zusätzlich aufgeschlüsselt nach den einzelnen Reward\hyp{}Komponenten zur detaillierten Analyse.
     \item \textbf{Total Noop Instructions:} Anzahl der Zeitschritte ohne aktive Steuerbefehle.
-    \item \textbf{Total Direct Route Instructions:} Häufigkeit, mit der der Befehl \glqq Direct Route\grqq{} gewählt wurde.
+    \item \textbf{Total Direct Route Instructions:} Häufigkeit, mit der der Befehl \enquote{Direct Route} gewählt wurde.
     \item \textbf{Total Steer Instructions:} Anzahl der aktiven Kursänderungen. Diese Metrik ist ein Indikator für die Arbeitslast des Lotsen und sollte minimiert werden.
     \item \textbf{Average Drift:} Die durchschnittliche Kursabweichung vom Idealweg über die gesamte Episode.
 \end{itemize}
@@ -198,7 +201,7 @@ Zusätzlich sind im \textit{sb3\hyp{}contrib}\hyp{}Ökosystem Erweiterungen wie 
 Off\hyp{}Policy\hyp{}Verfahren wurden in dieser Arbeit bewusst nicht eingesetzt.
 Ein wesentlicher Grund ist, dass in SB3 kein allgemein einsetzbarer Standardalgorithmus verfügbar ist, der sich wahlweise für diskrete und kontinuierliche Aktionen konfigurieren lässt.
 Zudem war die von Off\hyp{}Policy\hyp{}Verfahren häufig versprochene Sample\hyp{}Effizienz im vorliegenden Experiment nicht ausschlaggebend, da die Simulationsumgebung eine schnelle Datengenerierung erlaubte.
-Off\hyp{}Policy\hyp{}Algorithmen wurden in Vorversuchen dennoch evaluiert. Aufgrund zusätzlichen I/O\hyp{}Overheads lagen ihre Wall\hyp{}Clock\hyp{}Trainingszeiten\footnote{Mit \glqq Wall\hyp{}Clock\hyp{}Trainingszeit\grqq{} ist die tatsächlich verstrichene Echtzeit gemeint, also wie lange das Training auf der Uhr dauert.} jedoch über denen von PPO.
+Off\hyp{}Policy\hyp{}Algorithmen wurden in Vorversuchen dennoch evaluiert. Aufgrund zusätzlichen I/O\hyp{}Overheads lagen ihre Wall\hyp{}Clock\hyp{}Trainingszeiten\footnote{Mit \enquote{Wall\hyp{}Clock\hyp{}Trainingszeit} ist die tatsächlich verstrichene Echtzeit gemeint, also wie lange das Training auf der Uhr dauert.} jedoch über denen von PPO.
 Unter diesen Randbedingungen erwies sich PPO als die zweckmäßigere Wahl im Hinblick auf Stabilität, Durchsatz und Entwicklungsaufwand.
 \vspace{\baselineskip}
 
