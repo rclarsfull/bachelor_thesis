@@ -7,19 +7,20 @@ Die Motivation für diese Untersuchung resultiert, wie bereits in der Einleitung
 
 Um diesem Anspruch gerecht zu werden, wurde in Kapitel \ref{ch:konzeption} ein gemischter Aktionsraum konzipiert, der dem Agenten die explizite Entscheidungsmöglichkeit gibt, nicht einzugreifen (\emph{Noop}), aber dennoch die präzise Steuerung der Kursänderung mittels Gleitkommazahlen ermöglicht. Da Standard-Algorithmen wie PPO strukturelle Schwierigkeiten mit solchen Abhängigkeiten haben, wurde in Kapitel \ref{ch:ppo_bedingt} das \emph{Gradient Gating} als technische Lösung eingeführt.
 
-Die Evaluation konzentriert sich daher auf zwei Hauptaspekte:
+Die Evaluation konzentriert sich daher auf Drei Hauptaspekte:
 \begin{enumerate}
     \item \textbf{Technische Validierung:} Funktioniert der implementierte Gradient-Gating-Mechanismus wie beabsichtigt? Es muss nachgewiesen werden, dass die Anpassung des Algorithmus die fehlerhafte Gradientenberechnung für irrelevante Aktionen unterbindet, ohne die Lernstabilität in Standard\hyp{}Problemen zu gefährden.
+    \item \textbf{Architektonischer Vergleich:} Welche Architecktur des Neuralen Netzwerks ist am besten geeignet, um die bedingten Abhängigkeiten im gemischten Aktionsraum zu handhaben? Zeigen sich die in Abschnit 
     \item \textbf{Operativer Vergleich:} Führt der Mehraufwand des gemischten Aktionsraums tatsächlich zu einem besseren Verhalten? Hierzu wird der neue Ansatz gegen einen klassischen Agenten mit rein diskreten Aktionen verglichen, insbesondere im Hinblick auf die Effizienz der Konfliktlösung und die Frequenz der Steuerbefehle.
 \end{enumerate}
 
-Dazu werden zunächst synthetische und standardisierte Tests durchgeführt, um die Korrektheit der Implementierung zu bestätigen. Anschließend erfolgt die Evaluation in der realistischen Flugverkehrssimulation.
+Dazu werden zunächst Tests in standartisierten Umgebungen durchgeführt, um die Korrektheit der Implementierung zu bestätigen. Anschließend erfolgt die Evaluation in der realistischen Flugverkehrssimulation.
 
 \section{Methodik der Auswertung}
 Die Bewertung erfolgt auf Basis der in Kapitel \ref{ch:Statistische_Auswertung} beschriebenen statistischen Methoden.
 Da \ac{RL}-Training stochastischen Schwankungen unterliegt, reicht die Betrachtung einzelner Trainingsläufe nicht aus.
 Als primäre Metrik zur Bewertung der Leistung wird daher der \emph{Interquartile Mean} (IQM) der episodischen Belohnungen (Rewards) verwendet. Dieser ist robuster gegenüber Ausreißern als der arithmetische Mittelwert. Ergänzend wird die \emph{Success Rate} (SR) als sekundäre Metrik herangezogen, um den operativen Erfolg (konfliktfreie Durchquerung des Sektors) zu quantifizieren.
-Alle Metriken werden mit 95\%-Konfidenzintervallen mittels \emph{Percentile-Bootstrap} ausgewertet, um die statistische Signifikanz der Ergebnisse sicherzustellen und zufällige Effekte auszuschließen.
+Alle Metriken (wenn nicht explizit anders angegeben) werden mit 95\%-Konfidenzintervallen mittels \emph{Percentile-Bootstrap} ausgewertet, um die statistische Signifikanz der Ergebnisse sicherzustellen und zufällige Effekte auszuschließen.
 
 \section{Evaluation des Gradient-Gating-Mechanismus}
 Bevor der Agent das komplexe Problem der Flugverkehrskontrolle angehen kann, muss die korrekte Funktionalität des implementierten Gradient-Gating-Mechanismus validiert werden. Dazu werden zwei Versuche durchgeführt:
@@ -39,7 +40,7 @@ Diese Umgebung wurde ausgewählt, da sie eine zum Flugverkehrskontrollproblem an
 \vspace{\baselineskip}
 
 Deadzones sind konzeptionell problematisch, da sie Plateaus in der Belohnungslandschaft erzeugen.
-In diesen Bereichen (siehe Abbildung \ref{fig:deadzone_plot}) ist der Gradient bezüglich der Aktion Null (\emph{Vanishing Gradient}), da Änderungen der Aktion keine Auswirkungen auf die Umgebung haben.
+In diesen Bereichen (siehe Abbildung \ref{fig:deadzone_plot}) ist der Gradient bezüglich der Aktion Null, da Änderungen der Aktion keine Auswirkungen auf die Umgebung haben.
 Der Algorithmus erhält somit kein Feedback, in welche Richtung die Policy verbessert werden muss, sodass der Agent nicht effektiv lernen kann, diese Bereiche zu verlassen oder gezielt zu nutzen. Eine detaillierte Beschreibung der Umgebung findet sich in der offiziellen Dokumentation \cite{lunar_lander_doc}.
 
 \begin{figure}[htbp]
@@ -87,7 +88,11 @@ Der Algorithmus erhält somit kein Feedback, in welche Richtung die Policy verbe
 \end{figure}
 \vspace{\baselineskip}
 
-Die verwendeten Hyperparameter und Seeds sind in Anhang \ref{lst:lunar_lander_hyperparams} dokumentiert.
+Um diesem Problem entgegenzwuirken, wurde ein Wrapper implementiert der die Umgebung so modifiziert, dass Aktionen innerhalb der Deadzone explizit als diskrete \emph{Noop} behandelt werden. Am Beispiel der Seitenschubdüsen bedeutet dies, dass der Agent zwischen drei diskreten Entscheidungen wählen kann: \emph{Noop}, \emph{Steer Left}  und \emph{Steer Right}. Desweiteren wählt der Agent zusätzlich die Stärke der Kursänderung als kontinuierliche Aktion, die jedoch nur dann wirksam wird, wenn die diskrete Aktion nicht \emph{Noop} ist. 
+Dies simuliert die Struktur des gemischten bedingten Aktionsraums, wie er auch im Flugverkehrskontrollproblem vorliegt, und ermöglicht die Validierung des Gradient-Gating-Mechanismus unter kontrollierten Bedingungen.
+\vspace{\baselineskip}
+
+Alle verwendeten Hyperparameter und Seeds sind im zu dieser Arbei gehörigen Reposetory dokumentiert \cite{meinCode}.
 \vspace{\baselineskip}
 
 Die zugrunde liegenden Hypothesen lauten wie folgt:
@@ -162,7 +167,7 @@ Jede Konfiguration wird mit den selben Hyperparamertern und den gleichen 15 Seed
 Die in Tabelle \ref{tab:evaluation_results} quantifizierten Daten belegen die Validität des Versuchsaufbaus und ermöglichen eine differenzierte Bewertung der beiden Testreihen.
 
 \subsubsection*{Grundlegende Validierung}
-Die Ergebnisse bestätigen, dass der experimentelle Rahmen solide ist. Der Standard-PPO erreicht mit einem IQM von 275.04 den geforderten Referenzwert (Bestätigung Hypothese \ref{hyp:baseline}). Zudem zeigt das Konfidenzintervall der Wrapper-Variante $[-18.59, 1.75]$ (Differenz zu Standard-PPO), dass die Kapselung der Umgebung selbst keinen signifikanten Einfluss auf die Leistung hat (Bestätigung Hypothese \ref{hyp:no_gating}). Dies isoliert den Gating-Mechanismus als die alleinige Ursache für die im Folgenden diskutierten Effekte.
+Die Ergebnisse bestätigen, dass der experimentelle Rahmen solide ist. Der Standard-PPO erreicht mit einem IQM von 275.04 den geforderten Referenzwert (Bestätigung Hypothese \ref{hyp:baseline}). Zudem zeigt das Konfidenzintervall der Wrapper-Variante $[-18.59, 1.75]$ (Differenz zu Standard-PPO), dass die Kapselung der Umgebung selbst keinen signifikanten Einfluss auf die Leistung hat (Bestätigung Hypothese \ref{hyp:no_gating}). Dennoch ist ein Rückgang der IQM-Werte zu verzeichnen, der sich auf die gestiegene Komplexität des Aktionsraums zurückführen lässt. Dies erlaubt es, den Gating-Mechanismus als isolierte Ursache für die im Folgenden diskutierten positiven Effekte zu betrachten.
 
 \subsubsection*{Testreihe 1: Wirksamkeit des Gradient Gating}
 Der Vergleich zwischen Standard-PPO und PPO mit Gating offenbart den postulierten Trade-off (Hypothese \ref{hyp:convergence}):
@@ -287,7 +292,7 @@ Im Gegensatz dazu beweisen die Gradient-Gating-Varianten eine deutlich höhere R
 
 Um die Divergenz zwischen der Instabilität des PPO und der Robustheit der Gating-Varianten zu erklären, ist eine Analyse der zugrunde liegenden Verhaltensstrategien notwendig. Diese zeigt, dass Gradient Gating das Lernverhalten des Agenten fundamental verändert.
 
-\paragraph{Strategische Unterschiede und Noop-Verhalten}
+\subsubsection*{Strategische Unterschiede und Noop-Verhalten}
 Abbildung \ref{fig:steering_behavior} visualisiert die Nutzung der Inaktivitäts-Aktion (Noop). Während der PPO-Algorithmus stark zu inaktivem Verhalten tendiert, zeigen die Gating-Varianten eine balanciertere Strategie.
 
 \begin{figure}[htbp]
@@ -310,8 +315,8 @@ Der PPO-Algorithmus versucht, die resultierende Diskrepanz durch große Updates 
 
 Damit bestätigt sich Hypothese \ref{hyp:atc_stability} (\textbf{Lernstabilität}): Der Gradient-Gating-Mechanismus verhindert effektiv den bei Standard-PPO beobachteten Zusammenbruch der Policy (\emph{Policy Degradation}) und gewährleistet auch in der hochdimensionalen ATC-Umgebung ein stabiles Training.
 
-\paragraph{Explorationsverhalten und Entropie-Verlauf}
-Im Gegensatz zur Instabilität des PPO-Algorithmus neigen die Gating-Varianten zu einer frühen Festlegung auf suboptimale Strategien.
+\subsubsection*{Explorationsverhalten und Entropie-Verlauf}
+Im Gegensatz zur Instabilität des PPO-Algorithmus neigen die Gating\hyp{}Varianten zu einer frühen Festlegung auf suboptimale Strategien.
 Die Analyse des \emph{Entropy Loss} (Abbildung \ref{fig:entropy_loss}) belegt dies: Die Werte der Gating-Varianten konvergieren bereits nach ca. 2,5 Millionen Schritten gegen Null, was das Ende der effektiven Exploration signalisiert.
 \vspace{\baselineskip}
 
@@ -319,6 +324,7 @@ Im Kontrast dazu weist der PPO-Algorithmus (Grau) ein anomales Verhalten mit rap
 \vspace{\baselineskip}
 
 Bezüglich Hypothese \ref{hyp:atc_performance} (\textbf{Performance-Gewinn}) ergibt sich ein uneinheitliches Bild. Zwar erreicht die beste Gating-Architektur (Shared \& Split) numerisch den höchsten Endwert, jedoch weisen die großen Überlappungen der Konfidenzintervalle darauf hin, dass dieser Unterschied statistisch nicht signifikant ist. Die Hypothese kann somit weder eindeutig bestätigt noch abgelehnt werden. Es zeigt sich jedoch, dass der Gating-Mechanismus trotz der komplexeren Struktur keine Performance-Einbußen verursacht und das Potenzial für stabilere langfristige Ergebnisse bietet.
+\vspace{\baselineskip}
 
 Ergänzend ist festzustellen, dass auch die Gating-Varianten marginale Abweichungen in den positiven Wertebereich zeigen. Theoretisch sollte auch dies ausgeschlossen sein, was auf eine verbleibende Inpräzision in der Entropieberechnung der maskierten Distributionen hinweist. Eine detaillierte mathematische Analyse und Korrektur dieses Aspekts überschreitet jedoch den zeitlichen Rahmen dieser Arbeit und verbleibt somit als Gegenstand zukünftiger Untersuchungen.
 \vspace{\baselineskip}
@@ -332,8 +338,11 @@ Ergänzend ist festzustellen, dass auch die Gating-Varianten marginale Abweichun
 
 In komplexen Szenarien wie diesem könnte ein expliziter Entropie-Bonus entscheidend sein, um das beobachtete verfrühte Konvergieren der Gating-Modelle zu verhindern und das volle Potential der Strategie auszuschöpfen.
 
-\paragraph{Operatives Potential}
-Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), dass der PPO-Algorithmus trotz instabileren Policy operativ relativ erfolgreich ist. Er vermeidet effektiv Kollisionen, wenn auch vermutlich mit weniger eleganter Strategie. Alle Agenten weisen zum Trainingsende eine positive Tendenz auf, was nahelegt, dass eine Verlängerung der Trainingsdauer weitere Verbesserungen bringen würde.
+\subsubsection*{Vergleich der Gating-Architekturen}
+Ein Blick auf die unterschiedlichen Gating-Architekturen beantwortet schließlich Hypothese \ref{hyp:atc_architecture} (\textbf{Architektureffizienz}). Während die einfache \emph{Split Net}-Variante (IQM 201.58) nur eine geringfügige Verbesserung gegenüber dem Standard-Gating (IQM 197.41) zeigt, erzielt die komplexere \emph{Shared \& Split}-Architektur mit einem IQM von 216.82 den höchsten Wert aller untersuchten Modelle. Dies bestätigt die Annahme, dass eine spezialisierte Verarbeitung von diskreten und kontinuierlichen Pfaden vorteilhaft ist – allerdings scheint im komplexen Flugverkehrsszenario ein gemeinsamer Feature-Extractor (Shared Layer) gewinnbringend zu sein, um Synergien in der Zustandsrepräsentation zu nutzen. Die Hypothese kann somit insofern bestätigt werden, als dass spezialisierte Architekturen (insbesondere Shared \& Split) die Leistungsfähigkeit steigern.
+
+\subsubsection*{Operatives Potential}
+Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), dass alle Algorithmus-Typen operativ sehr erfolgreich sind. Sie vermeiden effektiv Kollisionen, trotz der instabiltität und fehlenden Exporation. Alle Agenten weisen zum Trainingsende eine positive Tendenz auf, was nahelegt, dass eine Verlängerung der Trainingsdauer weitere Verbesserungen bringen würde.
 
 \begin{figure}[htbp]
     \centering
@@ -341,8 +350,6 @@ Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), 
     \caption{Entwicklung der Success Rate (geglätteter Mittelwert über alle Läufe). Konfliktfreie Episoden werden als Success gewertet.}
     \label{fig:success_rate}
 \end{figure}
-
-Ein Blick auf die unterschiedlichen Gating-Architekturen beantwortet schließlich Hypothese \ref{hyp:atc_architecture} (\textbf{Architektureffizienz}). Während die einfache \emph{Split Net}-Variante (IQM 201.58) nur eine geringfügige Verbesserung gegenüber dem Standard-Gating (IQM 197.41) zeigt, erzielt die komplexere \emph{Shared \& Split}-Architektur mit einem IQM von 216.82 den höchsten Wert aller untersuchten Modelle. Dies bestätigt die Annahme, dass eine spezialisierte Verarbeitung von diskreten und kontinuierlichen Pfaden vorteilhaft ist – allerdings scheint im komplexen Flugverkehrsszenario ein gemeinsamer Feature-Extractor (Shared Layer) gewinnbringend zu sein, um Synergien in der Zustandsrepräsentation zu nutzen. Die Hypothese kann somit insofern bestätigt werden, als dass spezialisierte Architekturen (insbesondere Shared \& Split) die Leistungsfähigkeit steigern.
 
 \subsubsection*{Zusammenfassung der Erkenntnisse}
 Dieser Versuch bestätigt die fundamentale Wirksamkeit und Notwendigkeit des Gradient-Gating-Mechanismus in komplexen, hochdimensionalen Umgebungen. Es konnte gezeigt werden, dass der Standard-PPO-Algorithmus zwar kurzfristig hohe Belohnungen erzielt, langfristig jedoch unter einer \emph{Policy Degradation} leidet, die durch fehlerhafte Gradienten aus dem Noop-Aktionsraum verursacht wird. 
@@ -356,26 +363,138 @@ Für den operativen Einsatz in der Flugverkehrskontrolle ist diese Verlässlichk
 
 
 \section{Evaluation des Aktionsraum-Designs}
-\subsection{Vergleich: Gemischter vs. Diskreter Aktionsraum}
-In diesem zentralen Experiment werden die Leistungsunterschiede zwischen dem neu konzipierten Agenten mit gemischtem Aktionsraum und einem klassischen Referenz-Agenten untersucht. 
-Ziel dieses Experiments ist die Beantwortung der vierten und letzten Forschungsfrage nach dem \textit{Operativen Mehrwert} (siehe Abschnitt \ref{sec:intro:goal}). Es soll geklärt werden, ob der erhöhte architektonische Aufwand des hybriden Designs und des Gradient-Gating-Mechanismus zu signifikanten Verbesserungen in der realen Flugführung führt – insbesondere im Hinblick auf Konfliktraten, Routeneffizienz und das Vermeiden unnötiger Eingriffe.
-
-Als Repräsentant für den neuen Ansatz wurde die \textit{Shared \& Split}-Architektur ausgewählt, da diese im vorangegangenen Test (siehe Tabelle \ref{tab:atc_evaluation_results}) die besten finalen IQM-Werte erzielte und somit das höchste Leistungspotential verspricht. 
-Ihr gegenübergestellt wird ein \textit{Diskreter Agent}, der einen klassischen Aktionsraum nutzt. Dieser Agent verfügt über eine feste Menge an diskreten Kursänderungen (z.B. -5°, -1°, 0°, +1°, +5°).
-
-\subsubsection*{Experimenteller Aufbau}
-Um sicherzustellen, dass beide Ansätze genügend Zeit haben, um stabile Ergebnisse zu liefern, wurde die Trainingsdauer für dieses finale Experiment auf 10 Millionen Zeitschritte verlängert. Dies berücksichtigt die Beobachtung aus Versuch 2, dass die komplexeren Modelle am Ende der ursprünglichen Trainingszeit noch weitere Verbesserungen zeigten und noch nicht vollständig ausgelernt hatten.
+Nachdem im vorangegangenen Abschnitt die technische Validität des Gradient-Gating-Mechanismus sowie die Überlegenheit der \textit{Shared \& Split}-Architektur empirisch belegt wurden, fokussiert dieser letzte Teil der Evaluation die operative Kernfrage dieser Arbeit. Es ist zu prüfen, ob die erhöhte Komplexität des hybriden Aktionsraum-Designs zu einer quantifizierbaren Verbesserung führt.
+Zur Beantwortung der vierten Forschungsfrage nach dem \textit{Operativen Mehrwert} (vgl. Abschnitt \ref{sec:intro:goal}) ein \textit{Masked Agent} gegen einen Agent mit diskreten Aktionsraum evaluiert. Besonderes Augenmerk liegt dabei auf der Konfliktrate, der Routeneffizienz sowie der Vermeidung unnötiger Interventionen.
 \vspace{\baselineskip}
 
-Eine besondere Herausforderung stellt der faire Vergleich der Hyperparameter dar. Da sich die Aktionsräume in ihrer Struktur grundlegend unterscheiden, ist davon auszugehen, dass für jeden Agenten andere Einstellungen optimal sind.
-Der methodisch beste Weg wäre eine umfassende automatisierte Suche nach den optimalen Werten, beispielsweise mit dem Framework Optuna \cite{Optuna}. Dies würde jedoch bedeuten, hunderte von Modellen zu trainieren, um die besten Kombinationen zu finden. Da die Simulation des Flugverkehrs sehr rechenaufwendig ist und die Ressourcen begrenzt sind, ist eine solche vollständige Suche im Rahmen dieser Arbeit nicht möglich.
-Stattdessen wurden die Hyperparameter auf Basis von Erfahrungswerten aus vorherigen Tests ausgewählt. Dabei wurden sie leicht an die jeweiligen Agenten angepasst, um einen fairen Vergleich zu ermöglichen, auch wenn die Einstellungen theoretisch nicht das absolute Optimum darstellen.
+Als Repräsentant \textit{Masked Agents} wurde die \textit{Shared \& Split}-Architektur gewählt, da diese in den vorangegangenen Tests (siehe Tabelle \ref{tab:atc_evaluation_results}) die robustesten IQM-Werte erzielte und somit die höchste Leistungsfähigkeit indiziert.
+Als Baseline dient ein \textit{Diskreter Agent} mit einem klassischen Aktionsraum. Dieser operiert mit einer fixierten Menge diskreter Kursänderungen (z.B. $\{-5^\circ, -1^\circ, 0^\circ, +1^\circ, +5^\circ\}$), wie sie in vergleichbaren Studien üblich sind.
+
+\subsubsection*{Experimenteller Aufbau}
+Um sicherzustellen, dass beide Ansätze ihr volles Potential entfalten können, wurde die Trainingsdauer für dieses finale Experiment auf 10 Millionen Zeitschritte verlängert. Dies berücksichtigt die Beobachtung aus Versuch 2, dass die komplexeren Modelle am Ende der ursprünglichen Trainingszeit noch Lernfortschritte zeigten.
+\vspace{\baselineskip}
+
+Parallel dazu wurden die Hyperparameter beider Modelle optimiert, um die Stabilität zu maximieren. Konkret wurde die Batchsize drastisch erhöht, was zu selteneren, aber statistisch fundierteren Updates führt, da die Gradienten auf einer größeren Stichprobe basieren und weniger anfällig für Ausreißer sind. Zusätzlich wurde der Gamma-Parameter angehoben, um die langfristige Belohnung stärker zu gewichten und nachhaltige Strategien zu fördern. Obwohl diese Anpassungen theoretisch bereits in früheren Phasen vorteilhaft gewesen wären, trat die Notwendigkeit für diese erhöhte Stabilität erst durch die Ergebnisse der Vorversuche klar zu Tage.
+\vspace{\baselineskip}
+
+Eine besondere Herausforderung stellt der faire Vergleich der Hyperparameter dar, da sich die Aktionsräume strukturell unterscheiden. Während eine umfassende automatisierte Suche (z.B. mittels Optuna \cite{Optuna}) das methodische Optimum wäre, ist dies aufgrund der enormen Rechenkomplexität der Flugverkehrssimulation nicht realisierbar. Stattdessen wurden die Parameter basierend auf Erfahrungswerten gewählt und für den Gating-Ansatz spezifisch ergänzt: Um dessen beobachtete Tendenz zur verfrühten Konvergenz (siehe Versuch 2) entgegenzuwirken, wurde hier ein expliziter Entropie-Bonus eingeführt. Der Diskrete Agent benötigt diesen Eingriff nicht, da er inhärent eine höhere Entropie aufweist und sein Aktionsaum leichter zu explorieren ist. So wird ein fairer Vergleich unter jeweils "bestmöglichen" Bedingungen angestrebt, auch wenn ein globales Optimum nicht garantiert werden kann.
+
+\subsubsection*{Hypothesen}
+Dieser letzte Versuch zielt darauf ab, die operative Überlegenheit des hybriden Aktionsraum-Designs zu belegen. Die zugrunde liegenden Hypothesen lauten:
+\begin{enumerate}
+    \item \textbf{Konfliktrate:} Der masked Agent erzielt eine signifikant niedrigere Konfliktrate als der Diskrete Agent, da er feinere Steuerbefehle erlernen kann, um kritische Situationen zu entschärfen.
+    \item \textbf{Routeneffizienz:} Der masked Agent erreicht eine höhere Routeneffizienz, gemessen an der durchschnittlichen Flugzeit. Dies resultiert aus der Fähigkeit, präzisere Kursänderungen vorzunehmen, die zu kürzeren und direkteren Flugrouten führen.
+    \item \textbf{Interventionsrate:} Der masked Agent führt weniger unnötige Interventionen durch, da er in der Lage ist, kleinere Kursänderungen vorzunehmen, um Konflikte zu vermeiden, anstatt auf grobe diskrete Aktionen zurückgreifen zu müssen.
+\end{enumerate}
 
 \subsubsection*{Ergebnisse}
 
+\begin{table}[htbp]
+    \centering
+    \caption{Vergleich der operativen Metriken (IQM mit 95\%\hyp{}Konfidenzintervall)}
+    \label{tab:final_evaluation_results}
+    \resizebox{\textwidth}{!}{%
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{cl|ccc|ccc}
+        \toprule
+        & & \multicolumn{3}{c}{\textbf{Last Eval (Reward)}} & \multicolumn{3}{c}{\textbf{Mean Eval (Reward)}} \\ 
+        \multicolumn{2}{l|}{\textbf{Metrik}} & \textbf{Low} & \textbf{IQM} & \textbf{High} & \textbf{Low} & \textbf{IQM} & \textbf{High} \\
+        \midrule
+        \multirow{2}{*}{\rotatebox{90}{\shortstack{\textbf{Abs.}}}}
+        & Diskreter Agent & 185.04 & 209.63 & 233.89 & 210.39 & 214.61 & 221.38 \\
+        & Masked Agent & 202.17 & 213.66 & 245.88 & 218.80 & 225.71 & 230.74 \\
+        \midrule
+        \multicolumn{2}{c|}{\textbf{Diff.} (Masked Agent - Diskreter Agent)} & -10.50 & 6.63 & 26.24 & 7.34 & 10.45 & 12.73 \\
+        \bottomrule
+        \toprule
+        & & \multicolumn{3}{c}{\textbf{Success Rate}} & \multicolumn{3}{c}{\textbf{Mean Ep Length}} \\ 
+        \multicolumn{2}{l|}{\textbf{Metrik}} & \textbf{Low} & \textbf{IQM} & \textbf{High} & \textbf{Low} & \textbf{IQM} & \textbf{High} \\
+        \midrule
+        \multirow{2}{*}{\rotatebox{90}{\shortstack{\textbf{Abs.}}}}
+        & Diskreter Agent & 0.95 & 0.97 & 1.00 & 122.85 & 126.23 & 131.17 \\
+        & Masked Agent & 0.97 & 0.98 & 0.98 & 127.15 & 131.51 & 134.34 \\
+        \midrule
+        \multicolumn{2}{c|}{\textbf{Diff.} (Masked Agent - Diskreter Agent)} & -0.02 & 0.00 & 0.03 & 1.68 & 5.18 & 7.33 \\
+        \bottomrule
+        \toprule
+        & & \multicolumn{3}{c}{\textbf{Actions Noop}} & \multicolumn{3}{c}{} \\ 
+        \multicolumn{2}{l|}{\textbf{Metrik}} & \textbf{Low} & \textbf{IQM} & \textbf{High} & & & \\
+        \midrule
+        \multirow{2}{*}{\rotatebox{90}{\shortstack{\textbf{Abs.}}}}
+        & Diskreter Agent & 7.50 & 9.73 & 11.16 & & & \\
+        & Masked Agent & 30.91 & 32.56 & 33.08 & & & \\
+        \midrule
+        \multicolumn{2}{c|}{\textbf{Diff.} (Masked Agent - Diskreter Agent)} & 20.65 & 22.80 & 24.87 & & & \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+Die in Tabelle \ref{tab:final_evaluation_results} und den nachfolgenden Abbildungen dargestellten Ergebnisse erlauben eine detaillierte Prüfung dieser Hypothesen.
+\vspace{\baselineskip}
+
+Ein erster Blick auf die allgemeinen Leistungsmetriken offenbart dabei eine interessante Dynamik: Während sich die finale Leistung beider Agenten kaum unterscheidet (Last Eval Reward), erzielt der \textit{Masked Agent} einen signifikant höheren durchschnittlichen Ertrag über das gesamte Training hinweg (\emph{Mean Eval Reward}). Die Differenz der Mittelwerte liegt mit einem 95\%-Konfidenzintervall von $[7.34, 12.73]$ deutlich im positiven Bereich.
+Dies deutet auf eine wesentlich schnellere Konvergenz hin, da der masked Agent früher ein hohes Leistungsniveau erreicht als sein diskretes Gegenstück.
+\vspace{\baselineskip}
+
+Dieses Ergebnis ist bemerkenswert, da diskrete Aktionsräume aufgrund ihrer geringeren Komplexität üblicherweise als leichter zu erlernen gelten \cite[Kapitel 13.1]{sutton2018rl}. Im vorliegenden Fall scheint jedoch der in Abschnitt \ref{sc:action_extraction} beschriebene \textit{Fluch der Dimensionalität} \cite{lillicrap2015continuous} den Diskreten Agenten auszubremsen. Um eine hinreichend feine Steuerung zu gewährleisten, umfasst der hier verwendete diskrete Aktionsraum bereits 37 verschiedene Einzelaktionen. Viele dieser Aktionen liefern jedoch sehr ähnliche Belohnungen, was die Differenzierung für den Agenten erschwert. Der kontinuierliche Pfad des Masked Agents umgeht dieses Problem durch die direkte Ausgabe von Gleitkommazahlen und ermöglicht so einen effizienteren Lernprozess.
+\vspace{\baselineskip}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth, trim=0 35mm 0 0, clip]{chapters/bilder/thirdTest/perf_profile_all_last_eval_mean.png}
+    \caption{Performance Profile der finalen Trainingsleistung (Last Eval). Der Plot visualisiert die Wahrscheinlichkeit $P(X \ge \tau)$, mit der ein Agent am Ende des Trainings einen bestimmten Belohnungswert $\tau$ (X-Achse) überschreitet. Der enge Verlauf beider Kurven belegt, dass Masked Agent (orange) und Diskreter Agent (blau) eine fast identische Leistungsverteilung am Trainingsende aufweisen.}
+    \label{fig:perf_profile_final_last_eval}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth, trim=0 35mm 0 0, clip]{chapters/bilder/thirdTest/perf_profile_all_mean_eval_mean.png}
+    \caption{Performance Profile der durchschnittlichen Trainingsleistung (Mean Eval). Der Masked Agent (orange) dominiert stochastisch über den gesamten Wertebereich. Dies bedeutet, dass er für jeden beliebigen Schwellenwert $\tau$ mit einer höheren Wahrscheinlichkeit eine durchschnittliche Belohnung $\ge \tau$ erzielt als der Diskrete Agent (blau).}
+    \label{fig:perf_profile_final_mean_eval}
+\end{figure}
+
+Hinsichtlich der \textbf{Konfliktrate} (Hypothese 1) zeigen die Daten, dass beide Agenten auf einem extrem hohen Sicherheitsniveau operieren. Die \emph{Success Rate} liegt sowohl für den Diskreten Agenten (IQM 0.97) als auch für den Masked Agenten (IQM 0.98) im nahezu perfekten Bereich. Da die Differenz statistisch nicht signifikant ist (Konfidenzintervall $[-0.02, 0.03]$), muss die Hypothese abgelehnt werden. Der diskrete Basis-Agent löst das Problem bereits so zuverlässig, dass der hybride Ansatz keinen messbaren Sicherheitsgewinn erzielen kann.
+Positiv hervorzuheben ist jedoch die deutlich geringere Varianz des hybriden Agenten: Während das 95\%-Konfidenzintervall des PPO-Agenten eine Spanne von $[0.95, 1.00]$ aufweist, liegt das Intervall des Shared \& Split-Agenten extrem eng bei $[0.97, 0.98]$. Dies indiziert eine wesentlich konsistentere Strategie und höhere Verlässlichkeit, da die Leistung weniger stark zwischen den einzelnen Trainingsläufen schwankt.
+\vspace{\baselineskip}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth, trim=0 15mm 0 0, clip]{chapters/bilder/thirdTest/success_rate_all.png}
+    \caption{Verlauf der Success Rate im dritten Test: Beide Agenten konvergieren gegen eine nahezu perfekte Lösung.}
+    \label{fig:third_success_rate}
+\end{figure}
+
+Auch die Hypothese zur \textbf{Routeneffizienz} (Hypothese 2) bestätigt sich nicht. Entgegen der Annahme führt die präzisere Steuerung nicht zu effizienteren Pfaden. Stattdessen ist die durchschnittliche Episodenlänge beim hybriden Agenten signifikant höher (+5.18 Zeitschritte). Dies legt nahe, dass der Agent zwar Konflikte löst, dafür aber weiträumigere oder zeitintensivere Manöver wählt, anstatt die direkte Route zu optimieren.
+\vspace{\baselineskip}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth, trim=0 15mm 0 0, clip]{chapters/bilder/thirdTest/mean_ep_length_all.png}
+    \caption{Verlauf der durchschnittlichen Episodenlänge: Der hybride Agent (Shared \& Split) benötigt konsistent mehr Zeit zur Lösung der Szenarien.}
+    \label{fig:third_ep_length}
+\end{figure}
+
+Bezüglich der \textbf{Interventionsrate} (Hypothese 3) liefert der Versuch ein positives Ergebnis. Das primäre Ziel, die Eingriffshäufigkeit zu minimieren und somit die Phasen der Inaktivität (\emph{Noops}) zu maximieren, wurde eindeutig erreicht.
+Der Shared \& Split-Agent wählt signifikant häufiger die \emph{Noop}-Aktion (IQM 32.56) als der diskrete Referenz-Agent (IQM 9.73).
+Dies belegt, dass der hybride Ansatz in der Lage ist, Konflikte effizienter zu antizipieren und mit weniger Eingriffen über längere Zeiträume stabil zu fliegen, was dem gewünschten menschlichen Verhalten eines Lotsen – "Eingreifen nur wenn nötig" – deutlich näher kommt.
+\vspace{\baselineskip}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth, trim=0 15mm 0 0, clip]{chapters/bilder/thirdTest/actions_noop_all.png}
+    \caption{Verlauf der durchschnittlichen Anzahl an Noop-Aktionen: Der hybride Agent (Shared \& Split) wählt signifikant häufiger die Noop-Aktion.}
+    \label{fig:third_noop_actions}
+\end{figure}
+
+\subsubsection*{Zusammenfassende Bewertung}
+Der operative Vergleich offenbart, dass der kontinuierliche Aktionsraum zwar zu einer etwas längeren Flugzeit führt, aber das Kernziel der Arbeit hervorragend erfüllt: Die massive Reduktion von unnötigen Eingriffen.
+Während der diskrete Agent häufiger korrigieren muss, nutzt der hybride Agent die \emph{Noop}-Strategie effektiv. Er beweist damit eine höhere operative "Gelassenheit", die für die Akzeptanz in der Mensch-Maschine-Interaktion essenziell ist. Die Hypothese der reduzierten Interventionsrate kann somit als bestätigt angesehen werden.
 
 
-\section{Fazit der Ergebnisse}
+
+
+
 
 
 

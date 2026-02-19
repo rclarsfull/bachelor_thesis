@@ -5,12 +5,10 @@ Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwi
 
 \section{Einführung in Reinforcement Learning}
 
-Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, das sich besonders für komplexe sequentielle Entscheidungsprobleme eignet, bei denen ein explizites Lehren des korrekten Verhaltens (\enquote{Supervised Learning}) aufgrund der Vielschichtigkeit der Aufgabe schwierig ist. Da in der vorliegenden Arbeit eine Steuerung für ein dynamisches System automatisiert werden soll, bietet \ac{RL} den passenden methodischen Rahmen. Eines der Standardwerke \cite{sutton2018rl} definiert \ac{RL} wie folgt: 
+Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, das sich besonders für komplexe sequentielle Entscheidungsprobleme eignet, bei denen ein explizites Lehren des korrekten Verhaltens (\enquote{Supervised Learning}) aufgrund der Vielschichtigkeit der Aufgabe schwierig ist. Da in der vorliegenden Arbeit eine Steuerung für ein dynamisches System automatisiert werden soll, bietet \ac{RL} den passenden methodischen Rahmen. Eines der Standardwerke \cite[Kap. 1.1]{sutton2018rl} definiert \ac{RL} wie folgt: 
 \\
 
-\textit{\enquote{Beim verstärkenden Lernen geht es darum, zu lernen, was zu tun ist – wie Situationen auf Handlungen abgebildet werden können –, um
-ein numerisches Belohnungssignal zu maximieren. Dem Lernenden wird nicht gesagt, welche Handlungen er ausführen soll,
-sondern er muss durch Ausprobieren herausfinden, welche Handlungen die größte Belohnung bringen.}}
+\textit{\enquote{Reinforcement learning is learning what to do—how to map situations to actions—so as to maximize a numerical reward signal. The learner is not told which actions to take, but instead must discover which actions yield the most reward by trying them. In the most interesting and challenging cases, actions may affect not only the immediate reward but also the next situation and, through that, all subsequent rewards. These two characteristics—trial-and-error search and delayed reward—are the two most important distinguishing features of reinforcement learning.}}
 \\
 
 Im \ac{RL} werden also Agenten bzw. Policies durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
@@ -86,7 +84,7 @@ Stable Baselines3 \cite{sb3} modelliert diskrete Aktionsräume mittels einer kat
 Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen. Bei mehrdimensionalen Aktionsräumen (z.\,B. Lenken und Beschleunigen) wächst die Anzahl der benötigten Kombinationen exponentiell an (kartesisches Produkt der Einzelaktionen), was das Training ineffizient macht \cite{lillicrap2015continuous}.
 
 \subsubsection*{Kontinuierliche Aktionsräume}
-Analog zu den diskreten Räumen modelliert Stable Baselines3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß-Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
+Analog zu den diskreten Räumen modelliert Stable Baselines3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
 Für einen $n$-dimensionalen kontinuierlichen Aktionsvektor benötigt das Netzwerk somit lediglich $2n$ Ausgangsneuronen.
 
 \section{Differenzierung verschiedener RL\hyp{}Algorithmen}

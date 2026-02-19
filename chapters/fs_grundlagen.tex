@@ -47,8 +47,13 @@ Dies ist die Aufgabe der sogenannten \textit{Adjacent\hyp{}Position}.
 Der \textit{Adjacent-Lotse} agiert als Schnittstelle zur Außenwelt des trainierenden Sektors.
 Zu seinen Aufgaben gehören:
 \begin{itemize}
-    \item Die Simulation der Piloten aller Flugzeuge in den Nachbarsektoren mittels \textit{Pilot Commands}.
+    \item Die Steuerung aller Flugzeuge außerhalb des trainierenden Sektors mittels \textit{Pilot Commands}\footnote{Pilot Commands sind Anweisungen an das System, die das Verhalten eines Flugzeugs steuern, beispielsweise Änderungen der Geschwindigkeit, der Flughöhe oder des Headings.}.
     \item Die Durchführung von Koordinierungsgesprächen mit den Trainees (z.B. bei Abweichungen von Übergabebedingungen).
 \end{itemize}
 
-Im Rahmen dieser Arbeit soll diese Rolle durch einen \ac{RL}\hyp{}Agenten automatisiert werden, um insbesondere für Selbstlernphasen (z.B. im Web-Simulator) eine realistische Interaktion ohne menschlichen Gegenpart zu ermöglichen. Kernherausforderung ist hierbei die Entwicklung eines Agenten, der nicht nur Konflikte zuverlässig erkennt und löst, sondern dies auch auf eine Weise tut, die für menschliche Trainees nachvollziehbar und akzeptabel ist. Dies Arbeit konzentriert sich daher auf die Entwicklung eines Agenten, der durch gezielte Kursänderungen Konflikte vermeidet, ohne dabei unnötige oder verwirrende Manöver durchzuführen.
+Im Rahmen dieser Arbeit soll diese Rolle durch einen \ac{RL}\hyp{}Agenten automatisiert werden, um insbesondere für Selbstlernphasen (z.B. im Web-Simulator) eine realistische Interaktion ohne menschlichen Gegenpart zu ermöglichen.
+Die primäre Aufgabe des Agenten besteht darin, Konflikte in den benachbarten Sektoren zu vermeiden und den Verkehrsfluss sicherzustellen.
+Dies umfasst zwei wesentliche Phasen: Zunächst müssen Flugzeuge sicher von ihrem Startpunkt (Spawn\hyp{}Punkt) zu dem im \textit{Letter of Agreement} (LoA) definierten Übergabepunkt am Rand des Trainingssektors navigiert werden.
+Anschließend übernimmt der Agent die Flugzeuge wieder am Ausflugpunkt des Sektors und führt sie konfliktfrei zu einem Endpunkt (Despawn\hyp{}Punkt) außerhalb des Sichtbereichs des Lotsen.
+Kernherausforderung ist hierbei die Entwicklung eines Agenten, der diese Aufgaben nicht nur zuverlässig erfüllt, sondern dabei auch ein für menschliche Trainees nachvollziehbares und akzeptables Verhalten zeigt.
+Diese Arbeit konzentriert sich daher auf die Entwicklung eines Agenten, der durch gezielte Kursänderungen Konflikte vermeidet, ohne dabei unnötige oder verwirrende Manöver durchzuführen.

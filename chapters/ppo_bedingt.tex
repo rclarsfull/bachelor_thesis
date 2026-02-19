@@ -92,16 +92,20 @@ Durch die Verwendung von \texttt{no\_grad()} wirkt die Wahrscheinlichkeit ledigl
 Analog zur Evaluation muss das Gradient\hyp{}Gating auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (siehe Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls null\hyp{}maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
 
 \section{Herausforderungen in bedingten Aktionsräumen}
+\label{sc:Herausforderungen_bedingte_Aktionsräume}
 
 Die Verwendung bedingter Aktionsräume stellt das Training von Reinforcement\hyp{}Learning\hyp{}Agenten vor spezifische Herausforderungen, die über rein technische Implementierungsdetails hinausgehen. Ein zentrales Problem resultiert aus der Kopplung von Aktionen und der daraus folgenden unterschiedlichen Häufigkeit von Feedback\hyp{}Signalen für die jeweiligen Komponenten. Werden relevante Aktionen bedingt durch die hierarchische Struktur nur selten ausgeführt, leidet der Lernprozess darunter.
 
-\subsection*{Sparsity\hyp{}Problematik der abhängigen Aktion}
+\subsection{Sparsity\hyp{}Problematik der abhängigen Aktion}
 Gerade zu Beginn des Trainings neigen Agenten häufig zu suboptimalen Strategien. Wählt der Agent überwiegend Aktionen, welche die abhängige Komponente blockieren (z.\,B. \emph{Noop}), erhält das Netzwerk für die abhängige Aktion (\emph{Steer}) kaum Gradienteninformationen. Ein unoptimierter Steer\hyp{}Wert führt bei seiner seltenen Ausführung oft zu negativem Feedback, was den Agenten wiederum dazu verleitet, diese Aktion künftig zu meiden. Dieser Rückkopplungseffekt kann dazu führen, dass die Wahrscheinlichkeit für die Aktivierung der kontinuierlichen Komponente gegen Null geht, noch bevor der Agent ausreichend Erfahrung für eine effektive Lenkstrategie sammeln konnte.
 
-\subsection*{Destruktive Interferenz und Lokale Optima}
+\subsection*{Erzwungene Exporation als Lösungsansatz}
+Um diesem Problem entgegenzuwirken, könnte eine gezielte Erhöhung der Explorationsrate hilfreich sein. Dies kann durch die Erhöhung der Entropie-Belohnung erreicht werden, wodurch Agenten gezwungen werden, auch seltene Aktionen auszuprobieren. Wenn ein agent zunächst häufiger die \emph{Steer}\hyp{}Aktion wählt, erhält er mehr Feedback für diese Komponente, was die Lernkurve stabilisiert. Allerdings muss die Erhöhung der Explorationsrate sorgfältig kalibriert werden, um nicht zu einer übermäßigen Zufälligkeit zu führen, die den Lernfortschritt insgesamt beeinträchtigen könnte.
+
+\subsection{Destruktive Interferenz und Lokale Optima}
 Szenarien, in denen die übergeordnete diskrete Aktion (z.\,B. \emph{Noop}) dominiert, begünstigen zudem das Phänomen der \textit{destruktiven Interferenz}. Da sich beide Aufgaben gemeinsame Schichten im neuronalen Netz teilen, werden diese primär auf die Minimierung des Fehlers der häufigeren diskreten Aktion hin optimiert. Dies kann dazu führen, dass Merkmale, die für die kontinuierliche Aktion essentiell sind, überschrieben werden oder gar nicht erst entstehen. Der Agent verharrt folglich in einem lokalen Optimum, da der kontinuierliche Pfad aufgrund unpassender Repräsentationen keine sinnvollen Vorhersagen liefern kann.
 
-\subsection{Architektonischer Lösungsansatz: Branching Network}
+\subsection*{Architektonischer Lösungsansatz: Branching Network}
 Um diesen strukturellen Problemen entgegenzuwirken und ein robustes Lernen beider Aktionskomponenten zu gewährleisten, kommt in dieser Arbeit eine angepasste Netzarchitektur zum Einsatz. Anstatt eines vollständig verbundenen Netzwerks (\textit{Fully Connected}), bei dem sich alle Schichten Parameter teilen, wird eine Verzweigung der Pfade eingeführt. 
 \vspace{\baselineskip}
 
@@ -126,7 +130,7 @@ Dabei ist jedoch zu beachten, dass es sich hierbei lediglich um eine Approximati
 Des Weiteren verhindert die vollständige Separation das Teilen von Repräsentationen (\textit{Feature Sharing}). Während in vollständig verbundenen Netzwerkarchitekturen frühe Schichten universelle Merkmale extrahieren, die für beide Aufgaben relevant sind, erfordert der \textit{Split}\hyp{}Ansatz, dass jeder Pfad diese Merkmale redundant und unabhängig voneinander erlernt. Dies bindet Netzwerkkapazitäten an mehreren Stellen für identische Merkmale.
 \vspace{\baselineskip}
 
-Auch Mischformen sind denkbar \cite{branching_architectures}, bei denen sich die Pfade erst nach einigen gemeinsamen Schichten trennen (um beispielsweise grundlegende visuelle Features gemeinsam zu extrahieren). Eine solche hybride Architektur ist in Abbildung \ref{fig:nn_architektur_hybrid} visualisiert. Aufgrund des signifikant erhöhten Aufwands, der für die systematische Evaluation verschiedener Split\hyp{}Punkte und Architekturvarianten nötig gewesen wäre, wurde in dieser Arbeit jedoch auf solche Hybrid\hyp{}Ansätze verzichtet und die klare Trennung präferiert.
+Alternativ sind hybride Ansätze denkbar \cite{branching_architectures}, bei denen die Pfade zunächst gemeinsame Schichten durchlaufen, bevor die Aufspaltung erfolgt. Diese gemeinsamen Schichten, in der Literatur als \textit{Feature Extraction Layers} bezeichnet \cite{featureextraction}, dienen der Extraktion grundlegender Merkmale, die für beide Aufgaben relevant sind. Eine Visualisierung dieser Architektur findet sich in Abbildung \ref{fig:nn_architektur_hybrid}. 
 
 \begin{figure}[htbp]
     \centering
