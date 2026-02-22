@@ -4,7 +4,7 @@
 Nachdem die theoretischen Fundamente der Flugsicherung und des Reinforcement Learning gelegt sind, widmet sich dieses Kapitel der konkreten Überführung der Problemstellung in ein trainierbares System. Die Konzeption der Lernumgebung ist der entscheidende Entwicklungsschritt, in dem abstrakte Anforderungen in ein mathematisch greifbares \ac{MDP} übersetzt werden.
 \vspace{\baselineskip}
 
-Die Qualität der hier getroffenen Designentscheidungen – von der Auswahl der Zustandsmerkmale bis zur Ausgestaltung der Belohnungsfunktion – bestimmt maßgeblich, ob der Agent in der Lage sein wird, nicht nur konfliktfreie, sondern auch operativ sinnvolle und effiziente Strategien zu entwickeln. Ein besonderer Schwerpunkt liegt dabei auf der Modellierung des Aktionsraums, da hier der zentrale Hebel zur Reduktion unnötiger Steuerbefehle (Jittering) vermutet wird. Zu diesem Zweck werden zwei konkurrierende Ansätze vorgestellt: ein klassischer diskreter Aktionsraum und ein neuartiger gemischter Ansatz.
+Die Qualität der hier getroffenen Designentscheidungen, von der Auswahl der Zustandsmerkmale bis zur Ausgestaltung der Belohnungsfunktion, bestimmt maßgeblich, ob der Agent in der Lage sein wird, nicht nur konfliktfreie, sondern auch operativ sinnvolle und effiziente Strategien zu entwickeln. Ein besonderer Schwerpunkt liegt dabei auf der Modellierung des Aktionsraums, da hier der zentrale Hebel zur Reduktion unnötiger Steuerbefehle (Jittering) vermutet wird. Zu diesem Zweck werden zwei konkurrierende Ansätze vorgestellt: ein klassischer diskreter Aktionsraum und ein neuartiger gemischter Ansatz.
 \vspace{\baselineskip}
 
 Im Folgenden wird zunächst die technische Integration des Flugsimulators Bluesky sowie die Generierung relevanter Trainingsszenarien erläutert. Darauf aufbauend erfolgt die detaillierte Definition der MDP-Komponenten, bevor abschließend die Wahl des PPO-Algorithmus als geeignetes Lernverfahren begründet wird.
@@ -52,7 +52,7 @@ Zudem konnte auf Vorarbeiten des Projekts Bluesky\hyp{}Gym \cite{bluesky-gym} au
 Ein kritischer, oft unterschätzter Faktor im Reinforcement Learning ist die Ausführungsgeschwindigkeit der Umgebung. Da moderne RL-Algorithmen wie PPO typischerweise Millionen von Interaktionsschritten benötigen, um zu konvergieren, summieren sich selbst minimale Verzögerungen pro Zeitschritt zu erheblichen Wartezeiten. Eine performante Implementierung ist daher nicht nur eine Frage der Effizienz, sondern bestimmt maßgeblich die Entwicklungsgeschwindigkeit, da sie schnellere Iterationszyklen und damit häufigeres Testen von Hypothesen ermöglicht.
 \vspace{\baselineskip}
 
-Um diesem Anspruch gerecht zu werden, wurde der Python-Code der Umgebung gezielt auf Performance optimiert. Ein Nadelöhr in Python-basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen. Zur Beschleunigung kam die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode, was insbesondere bei mathematischen Berechnungen – wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum – zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen führt.
+Um diesem Anspruch gerecht zu werden, wurde der Python-Code der Umgebung gezielt auf Performance optimiert. Ein Nadelöhr in Python-basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen. Zur Beschleunigung kam die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode, was insbesondere bei mathematischen Berechnungen (wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum) zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen führt.
 \vspace{\baselineskip}
 
 Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne CPU-Instruktionen (SIMD) effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
@@ -128,10 +128,10 @@ Diese Eingrenzung dient der Reduktion der Komplexität des Modells.
 Obgleich operative Fluglotsen auch über Geschwindigkeits\hyp{} und Höhenänderungen verfügen, bleibt die Integration dieser Freiheitsgrade zukünftigen Untersuchungen vorbehalten.
 \vspace{\baselineskip}
 
-Ein rein kontinuierlicher Aktionsraum erwies sich für die Anforderungen als unzureichend, da er die Modellierung einer expliziten \emph{Noop}-Aktion (No Operation) – also den bewussten Verzicht auf einen Eingriff – erschwert. 
+Ein rein kontinuierlicher Aktionsraum erwies sich für die Anforderungen als unzureichend, da er die Modellierung einer expliziten \emph{Noop}-Aktion (No Operation) erschwert, also den bewussten Verzicht auf einen Eingriff. 
 Ein kontinuierlicher Output von $0^\circ$ ist funktional nicht äquivalent zu \emph{Noop}, insbesondere unter Berücksichtigung der Latenz bei der Befehlsumsetzung. 
 Wenn im vorangegangenen Zeitschritt eine signifikante Kursänderung eingeleitet wurde, ermöglicht \emph{Noop} dem Agenten, dieses Manöver ohne weitere Störimpulse abzuschließen.
-Ein zentrales Lernziel ist die Minimierung der Interventionsrate: Der Agent soll idealerweise nur zwei Aktionen pro Konflikt ausführen – das Ausweichmanöver und die anschließende Rückkehr auf die Route (Direct Route).
+Ein zentrales Lernziel ist die Minimierung der Interventionsrate. Der Agent soll idealerweise nur zwei Aktionen pro Konflikt ausführen, das Ausweichmanöver und die anschließende Rückkehr auf die Route (Direct Route).
 \vspace{\baselineskip}
 
 Der Aktionsraum wurde in zwei Varianten implementiert:

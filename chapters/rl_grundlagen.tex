@@ -1,7 +1,7 @@
 \chapter{Reinforcement Learning}
 \label{ch:rl_grundlagen}
 
-Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte – insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (PPO) – ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient Gating) für gemischte Aktionsräume nachvollziehen zu können.
+Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (PPO), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient Gating) für gemischte Aktionsräume nachvollziehen zu können.
 
 \section{Einführung in Reinforcement Learning}
 
@@ -73,18 +73,18 @@ Obwohl in der Literatur diverse Modellierungen existieren, beschränkt sich die 
 
 Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hybride und bedingte Aktionsräume. Während der hybride Aspekt die Mischung aus diskreten und kontinuierlichen Aktionen beschreibt, führt der bedingte Charakter hierarchische Abhängigkeiten ein. Das bedeutet, die Auswahl einer übergeordneten diskreten Aktion bestimmt, welche untergeordneten Aktionen (oft kontinuierlich) zur Verfügung stehen. In der Literatur werden solche Strukturen auch als parametrisierte Aktionsräume bezeichnet. Ansätze wie sie in \cite{bamford2021generalising} vorgestellt werden, nutzen eine explizite Baumstruktur, um diese Abhängigkeiten im Kontext von Echtzeit\hyp{}Strategiespielen (RTS) zu modellieren um eine Reduktion der Modellkomplexität zu erreichen. Die vorliegende Arbeit überträgt diesen Grundgedanken auf den Luftverkehrskontext. Um die kausalen Abhängigkeiten während des Trainings zu wahren, wird im weiteren Verlauf die Methode des \textit{Gradient Gating} eingesetzt.
 
-\subsection{Extraktion von Aktionen aus neuronalen Netzen}
+\subsection*{Extraktion von Aktionen aus neuronalen Netzen}
 \label{sc:action_extraction}
 Die Wahl der Aktionsraumklasse hat direkte Auswirkungen auf die Architektur der Ausgabeschicht (Output Layer) des neuronalen Netzes und die Art und Weise, wie Aktionen aus den Netzwerkausgaben abgeleitet werden.
 
 \subsubsection*{Diskrete Aktionsräume}
-Stable Baselines3 \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
+Stable Baselines3\footnote{Stable Baselines3 (SB3) ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
 \vspace{\baselineskip}
 
 Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen. Bei mehrdimensionalen Aktionsräumen (z.\,B. Lenken und Beschleunigen) wächst die Anzahl der benötigten Kombinationen exponentiell an (kartesisches Produkt der Einzelaktionen), was das Training ineffizient macht \cite{lillicrap2015continuous}.
 
 \subsubsection*{Kontinuierliche Aktionsräume}
-Analog zu den diskreten Räumen modelliert Stable Baselines3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
+Analog zu den diskreten Räumen modelliert Stable Baselines 3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
 Für einen $n$-dimensionalen kontinuierlichen Aktionsvektor benötigt das Netzwerk somit lediglich $2n$ Ausgangsneuronen.
 
 \section{Differenzierung verschiedener RL\hyp{}Algorithmen}
@@ -92,8 +92,7 @@ Für einen $n$-dimensionalen kontinuierlichen Aktionsvektor benötigt das Netzwe
 Nach der Formalisierung des Problems als MDP stellt sich die Frage nach dem geeigneten Lösungsverfahren. Die Wahl des Algorithmus ist dabei maßgeblich von den Eigenschaften des Problems, wie der Beschaffenheit des Zustands- und Aktionsraums, abhängig.
 Algorithmen des \ac{RL} lassen sich grundlegend in modellbasierte und modellfreie Ansätze unterteilen \cite[Kap. 8]{sutton2018rl}. 
 Während modellbasierte Verfahren ein internes Abbild der Systemdynamik (\textit{Transition Model}) erlernen, 
-operieren modellfreie Algorithmen ausschließlich auf Basis der durch Interaktion gesammelten Erfahrungen. Da die Modellierung 
-komplexer Umgebungen wie der Flugverkehrssteuerung oft mit hohen Unsicherheiten behaftet ist, fokussiert sich diese Arbeit auf modellfreie Ansätze.
+operieren modellfreie Algorithmen ausschließlich auf Basis der durch Interaktion gesammelten Erfahrungen. Diese Arbeit fokussiert sich auf modellfreie Ansätze, da diese sowohl einfacher zu optimieren als auch in der Praxis weiter verbreitet sind \cite{SpinningUp2018}.
 \vspace{\baselineskip}
 
 Innerhalb der modellfreien Algorithmen wird primär zwischen wertbasierten Methoden (z.\,B. Q\hyp{}Learning) und \textit{Policy\hyp{}Gradient}\hyp{}Methoden unterschieden. 
@@ -102,8 +101,8 @@ geeignet sind und eine direktere Optimierung des angestrebten Verhaltens erlaube
 
 \subsection{Funktionsweise von Policy\hyp{}Gradient\hyp{}Methoden}
 Im Gegensatz zu wertbasierten Ansätzen, die zunächst eine Wertfunktion lernen und daraus eine Policy ableiten, optimieren \textit{Policy\hyp{}Gradient}\hyp{}Methoden die Strategie $\pi_\theta$ des Agenten unmittelbar. 
-Die Policy wird dabei als differenzierbares, parametrisiertes Modell — in der Regel ein künstliches neuronales Netzwerk — aufgefasst, 
-das für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das Aktionsspektrum ausgibt.
+Die Policy wird dabei als differenzierbares, parametrisiertes Modell aufgefasst, das in der Regel durch ein künstliches neuronales Netzwerk dargestellt wird und 
+für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das Aktionsspektrum ausgibt.
 \vspace{\baselineskip}
 
 Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Die Anpassung der Parameter $\theta$ erfolgt durch den 
@@ -120,17 +119,17 @@ Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und der
 \textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im PPO\hyp{}Algorithmus} \\
 \hline
 $\theta$          & Policy\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Actor). \\
-$\pi_\theta$      & Policy & Liefert Wahrscheinlichkeiten über Aktionen; Parameter $\theta$ werden trainiert \\
-$V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Reward ab einem Zustand; Parameter $\phi$ werden trainiert \\
+$\pi_\theta$      & Policy & Liefert Wahrscheinlichkeiten über Aktionen, wobei die Parameter $\theta$ trainiert werden \\
+$V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Reward ab einem Zustand, wobei die Parameter $\phi$ trainiert werden \\
 $J(\theta)$       & Performance Objective & Die Zielfunktion (erwarteter kumulierter Return), die maximiert werden soll \\
 $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
 $\gamma$          & Dis\-kont\-ie\-rungs\-faktor & Bestimmt die Gewichtung zukünftiger Belohnungen im Return $R_t$ \\
-$A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$ \\
-$\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde; dient zur Berechnung des Probability Ratio \\
+$A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine konzeptionelle Vereinfachung. \ac{SB3} implementiert in der Praxis die \textit{Generalized Advantage Estimation} (GAE) \cite{sb3}). \\
+$\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
 $\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy: $\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ \\
 $L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy\hyp{}Updates zu vermeiden \\
 $L^{VF}_t(\phi)$  & Value Function Loss & Der quadratische Fehler (MSE) zwischen der Schätzung des Critics $V_\phi$ und dem realisierten Return $R_t$. \\
-$H[\pi_\theta](s_t)$ & Entropie\hyp{}Bonus & Ein Maß für die Unvorhersehbarkeit der Policy; verhindert eine zu frühe Konvergenz auf ein lokales Optimum. \\
+$H[\pi_\theta](s_t)$ & Entropie\hyp{}Bonus & Ein Maß für die Unvorhersehbarkeit der Policy, das eine zu frühe Konvergenz auf ein lokales Optimum verhindert. \\
 $L_t^{total}$     & Totale Verlustfunktion & Die gewichtete Kombination aller Verlustkomponenten, die vom Optimierer minimiert wird ($\approx -J$). \\
 $c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Einfluss von Value Loss und Entropie auf die kombinierte Verlustfunktion \\
 $\epsilon$         & Clipping\hyp{}Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
@@ -295,12 +294,13 @@ Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch 
 
 Die Optimierung der Actor\hyp{} und Critic\hyp{}Netzwerke zielt darauf ab, die jeweilige Verlustfunktion $L_t^{VF}(\phi)$ zu minimieren.
 Die Anpassung der Netzwerkparameter $\theta$ erfolgt dabei iterativ entlang des negativen Gradienten. Die Berechnung dieser Gradienten wird in Frameworks wie PyTorch
-über das \textit{Autograd}\hyp{}System realisiert, welches auf dem Prinzip der automatischen Differenzierung basiert \cite[Kap. 2]{PyTorch_Fundamentals}.
+über automatische Differenzierung\footnote{PyTorch bezeichnet sein System der automatischen Differenzierung als \textit{Autograd} (\textit{Automatic Gradient}). Es nutzt einen dynamischen Rechengraphen, um Gradienten automatisch zu berechnen.} realisiert \cite[Kap. 2]{PyTorch_Fundamentals}.
 
 
-\subsubsection*{Computational Graph und Kettenregel} Während des Forward\hyp{}Passes werden alle mathematischen Operationen auf den Tensoren in 
-einem dynamischen, gerichteten Graphen – dem sogenannten \textit{Computational Graph} – aufgezeichnet. Dieser Graph bildet die funktionale 
+\subsubsection*{Rechengraph und Kettenregel} Während des Forward\hyp{}Passes werden alle mathematischen Operationen auf den Tensoren in 
+einem dynamischen, gerichteten Graphen aufgezeichnet, der als \textit{Rechengraph} bezeichnet wird. Dieser Graph bildet die funktionale 
 Abhängigkeit der Verlustgröße $L_t^{total}$ von den trainierbaren Parametern $\theta$ ab.
+\vspace{\baselineskip}
 
 Um die Gewichte im Backward\hyp{}Pass zu aktualisieren, muss der Einfluss jedes Parameters auf den Gesamtfehler bestimmt werden. 
 Da neuronale Netzwerke mathematisch als Komposition geschachtelter Funktionen betrachtet werden können, findet die Kettenregel der Differentialrechnung

@@ -1,7 +1,7 @@
 \chapter{Statistische Auswertung}
 \label{ch:Statistische_Auswertung}
 
-Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderungen an die statistische Auswertung. Aufgrund der inhärenten Stochastik des Trainingsprozesses – bedingt durch zufällige Initialisierungen und probabilistische Policies – besitzen einzelne Trainingsläufe nur begrenzte Aussagekraft. Um dennoch belastbare Schlussfolgerungen über die Leistungsfähigkeit der entwickelten Methoden ziehen zu können, führt dieses Kapitel robuste statistische Metriken ein. Die hier vorgestellte Methodik, insbesondere die Berechnung von Konfidenzintervallen mittels Bootstrap, bildet die analytische Basis für die in Kapitel \ref{ch:evaluation} durchgeführte Validierung der Ergebnisse.
+Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderungen an die statistische Auswertung. Aufgrund der inhärenten Stochastik des Trainingsprozesses, die durch zufällige Initialisierungen und probabilistische Policies bedingt ist, besitzen einzelne Trainingsläufe nur begrenzte Aussagekraft. Um dennoch belastbare Schlussfolgerungen über die Leistungsfähigkeit der entwickelten Methoden ziehen zu können, führt dieses Kapitel robuste statistische Metriken ein. Die hier vorgestellte Methodik, insbesondere die Berechnung von Konfidenzintervallen mittels Bootstrap, bildet die analytische Basis für die in Kapitel \ref{ch:evaluation} durchgeführte Validierung der Ergebnisse.
 
 \section{Konfidenzintervalle und Bootstrap nach \citet{statistical_rl_evaluation}}
 
@@ -23,13 +23,13 @@ Die Bestimmung der Konfidenzintervalle erfolgt mittels Percentile-Bootstrap. \ci
 
 \section{Robuste Lagekennzahl: Interquartile Mean (IQM)}
 
-Statt einfacher Mittelwerte wird der Interquartile Mean (IQM) als robuste Lagekennzahl der episodischen Rewards genutzt. Der IQM mittelt nur über das mittlere 50\%-Quantil und dämpft damit Ausreißer deutlich \citep{statistical_rl_evaluation}. Für jede Variante wird der IQM der \emph{last\_eval\_mean}-Werte berechnet; das 95\%-Konfidenzintervall resultiert aus dem Percentile-Bootstrap mit \(B=5000\).
+Statt einfacher Mittelwerte wird der Interquartile Mean (IQM) als robuste Lagekennzahl der episodischen Rewards genutzt. Der IQM mittelt nur über das mittlere 50\%-Quantil und dämpft damit Ausreißer deutlich \citep{statistical_rl_evaluation}. Für jede Variante wird der IQM der \emph{last\_eval\_mean}-Werte berechnet, wobei das 95\%-Konfidenzintervall aus dem Percentile-Bootstrap mit \(B=5000\) resultiert.
 
 \section{Vergleich zweier Varianten}
 
 Um zu beurteilen, ob ein Algorithmus A signifikant besser ist als ein Algorithmus B, genügt es nicht, lediglich zu prüfen, ob sich die individuellen Konfidenzintervalle der beiden Varianten überschneiden. \citet{statistical_rl_evaluation} weisen im Anhang A ihrer Arbeit explizit darauf hin, dass dieses Vorgehen irreführend sein kann. Selbst wenn sich Intervalle überlappen, kann ein signifikanter Unterschied vorliegen. Um die Unsicherheit korrekt zu erfassen, muss stattdessen das Konfidenzintervall der \emph{Differenz} berechnet werden (vgl. Figure A.15 in \citet{statistical_rl_evaluation}).
 
-Daher wird das Verfahren der Bootstrap-Differenzen verwendet. Hierfür werden – wie oben beschrieben – Bootstrap-Verteilungen für beide Varianten erzeugt. In jeder Bootstrap-Iteration \(i\) wird die Differenz der Kennzahlen berechnet: \(\Delta_i = IQM_{A,i} - IQM_{B,i}\). Dies liefert eine empirische Verteilung der Differenzen. Das 95\%-Konfidenzintervall dieser Differenz-Verteilung ermöglicht eine präzise Aussage:
+Daher wird das Verfahren der Bootstrap-Differenzen verwendet. Hierfür werden, wie oben beschrieben, Bootstrap-Verteilungen für beide Varianten erzeugt. In jeder Bootstrap-Iteration \(i\) wird die Differenz der Kennzahlen berechnet: \(\Delta_i = IQM_{A,i} - IQM_{B,i}\). Dies liefert eine empirische Verteilung der Differenzen. Das 95\%-Konfidenzintervall dieser Differenz-Verteilung ermöglicht eine präzise Aussage:
 \begin{itemize}
     \item Liegt das gesamte Intervall oberhalb von 0, ist Algorithmus A signifikant besser.
     \item Liegt das gesamte Intervall unterhalb von 0, ist Algorithmus B signifikant besser.

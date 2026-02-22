@@ -26,6 +26,7 @@ Alle Metriken (wenn nicht explizit anders angegeben) werden mit 95\%-Konfidenzin
 Bevor der Agent das komplexe Problem der Flugverkehrskontrolle angehen kann, muss die korrekte Funktionalität des implementierten Gradient-Gating-Mechanismus validiert werden. Dazu werden zwei Versuche durchgeführt:
 
 \subsection{Versuch 1: Validierung der Funktionalität}
+\label{Versuch1}
 Um sicherzustellen, dass die Änderungen am PPO-Kern keine negativen Seiteneffekte auf die generelle Lernfähigkeit haben, wird der Mechanismus in einer bekannten Standard-Umgebung untersucht. Hierfür wird die OpenAI Gym Umgebung \texttt{LunarLanderContinuous-v3} gewählt.
 In dieser Umgebung steuert der Agent ein Landefahrzeug, das sanft auf einer Plattform landen muss. 
 
@@ -211,6 +212,7 @@ Bezüglich der Netzwerkarchitektur zeigte sich, dass in dieser vergleichsweise e
 Diese Ergebnisse validieren das technische Fundament und rechtfertigen die Anwendung des Verfahrens auf das hochdimensionale Problem der Flugverkehrskontrolle im nächsten Schritt.
 
 \subsection{Versuch 2: Validierung in der Flugverkehrsumgebung}
+\label{Versuch2}
 
 \begin{figure}[H]
     \centering
@@ -285,7 +287,7 @@ Zwar zeigen die Konfidenzintervalle der Paar-Differenzen bei der finalen Leistun
     \label{fig:iqm_atc_avg_eval}
 \end{figure}
 
-Der PPO-Algorithmus erzielt zwar den höchsten durchschnittlichen Trainingswert (IQM 224.84), bricht jedoch gegen Ende leistungstechnisch ein (Last Eval 202.21). Dies indiziert eine \emph{Policy Degradation} – das Verlernen bereits erworbenen Wissens.
+Der PPO-Algorithmus erzielt zwar den höchsten durchschnittlichen Trainingswert (IQM 224.84), bricht jedoch gegen Ende leistungstechnisch ein (Last Eval 202.21). Dies indiziert eine \emph{Policy Degradation}, also das Verlernen bereits erworbenen Wissens.
 Im Gegensatz dazu beweisen die Gradient-Gating-Varianten eine deutlich höhere Robustheit. Trotz flacherer anfänglicher Lernkurve (niedrigerer Mean Eval) stabilisieren sie ihr Leistungsniveau und übertreffen den PPO-Algorithmus am Ende des Trainings (Last Eval 216.82).
 
 \subsubsection*{Analyse der Lern- und Verhaltensdynamik}
@@ -339,7 +341,7 @@ Ergänzend ist festzustellen, dass auch die Gating-Varianten marginale Abweichun
 In komplexen Szenarien wie diesem könnte ein expliziter Entropie-Bonus entscheidend sein, um das beobachtete verfrühte Konvergieren der Gating-Modelle zu verhindern und das volle Potential der Strategie auszuschöpfen.
 
 \subsubsection*{Vergleich der Gating-Architekturen}
-Ein Blick auf die unterschiedlichen Gating-Architekturen beantwortet schließlich Hypothese \ref{hyp:atc_architecture} (\textbf{Architektureffizienz}). Während die einfache \emph{Split Net}-Variante (IQM 201.58) nur eine geringfügige Verbesserung gegenüber dem Standard-Gating (IQM 197.41) zeigt, erzielt die komplexere \emph{Shared \& Split}-Architektur mit einem IQM von 216.82 den höchsten Wert aller untersuchten Modelle. Dies bestätigt die Annahme, dass eine spezialisierte Verarbeitung von diskreten und kontinuierlichen Pfaden vorteilhaft ist – allerdings scheint im komplexen Flugverkehrsszenario ein gemeinsamer Feature-Extractor (Shared Layer) gewinnbringend zu sein, um Synergien in der Zustandsrepräsentation zu nutzen. Die Hypothese kann somit insofern bestätigt werden, als dass spezialisierte Architekturen (insbesondere Shared \& Split) die Leistungsfähigkeit steigern.
+Ein Blick auf die unterschiedlichen Gating-Architekturen beantwortet schließlich Hypothese \ref{hyp:atc_architecture} (\textbf{Architektureffizienz}). Während die einfache \emph{Split Net}-Variante (IQM 201.58) nur eine geringfügige Verbesserung gegenüber dem Standard-Gating (IQM 197.41) zeigt, erzielt die komplexere \emph{Shared \& Split}-Architektur mit einem IQM von 216.82 den höchsten Wert aller untersuchten Modelle. Dies bestätigt die Annahme, dass eine spezialisierte Verarbeitung von diskreten und kontinuierlichen Pfaden vorteilhaft ist. Allerdings scheint im komplexen Flugverkehrsszenario ein gemeinsamer Feature-Extractor (Shared Layer) gewinnbringend zu sein, um Synergien in der Zustandsrepräsentation zu nutzen. Die Hypothese kann somit insofern bestätigt werden, als dass spezialisierte Architekturen (insbesondere Shared \& Split) die Leistungsfähigkeit steigern.
 
 \subsubsection*{Operatives Potential}
 Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), dass alle Algorithmus-Typen operativ sehr erfolgreich sind. Sie vermeiden effektiv Kollisionen, trotz der instabiltität und fehlenden Exporation. Alle Agenten weisen zum Trainingsende eine positive Tendenz auf, was nahelegt, dass eine Verlängerung der Trainingsdauer weitere Verbesserungen bringen würde.
@@ -355,7 +357,7 @@ Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), 
 Dieser Versuch bestätigt die fundamentale Wirksamkeit und Notwendigkeit des Gradient-Gating-Mechanismus in komplexen, hochdimensionalen Umgebungen. Es konnte gezeigt werden, dass der Standard-PPO-Algorithmus zwar kurzfristig hohe Belohnungen erzielt, langfristig jedoch unter einer \emph{Policy Degradation} leidet, die durch fehlerhafte Gradienten aus dem Noop-Aktionsraum verursacht wird. 
 \vspace{\baselineskip}
 
-Die Gating-Varianten hingegen – insbesondere die \emph{Shared \& Split}-Architektur – demonstrierten eine signifikant höhere Lernstabilität und Robustheit. Zwar neigen sie zu einer früheren Konvergenz der Entropie, verhindern jedoch zuverlässig den Leistungseinbruch gegen Ende des Trainings.
+Die Gating-Varianten hingegen, insbesondere die \emph{Shared \& Split}-Architektur, demonstrierten eine signifikant höhere Lernstabilität und Robustheit. Zwar neigen sie zu einer früheren Konvergenz der Entropie, verhindern jedoch zuverlässig den Leistungseinbruch gegen Ende des Trainings.
 Für den operativen Einsatz in der Flugverkehrskontrolle ist diese Verlässlichkeit von kritischer Bedeutung, weshalb die \emph{Masked shared \& split\_net PPO}-Architektur als präferierte Basis für die weiteren Untersuchungen ausgewählt wird.
 
 
@@ -363,6 +365,8 @@ Für den operativen Einsatz in der Flugverkehrskontrolle ist diese Verlässlichk
 
 
 \section{Evaluation des Aktionsraum-Designs}
+\label{Versuch3}
+
 Nachdem im vorangegangenen Abschnitt die technische Validität des Gradient-Gating-Mechanismus sowie die Überlegenheit der \textit{Shared \& Split}-Architektur empirisch belegt wurden, fokussiert dieser letzte Teil der Evaluation die operative Kernfrage dieser Arbeit. Es ist zu prüfen, ob die erhöhte Komplexität des hybriden Aktionsraum-Designs zu einer quantifizierbaren Verbesserung führt.
 Zur Beantwortung der vierten Forschungsfrage nach dem \textit{Operativen Mehrwert} (vgl. Abschnitt \ref{sec:intro:goal}) ein \textit{Masked Agent} gegen einen Agent mit diskreten Aktionsraum evaluiert. Besonderes Augenmerk liegt dabei auf der Konfliktrate, der Routeneffizienz sowie der Vermeidung unnötiger Interventionen.
 \vspace{\baselineskip}
@@ -477,7 +481,7 @@ Auch die Hypothese zur \textbf{Routeneffizienz} (Hypothese 2) bestätigt sich ni
 
 Bezüglich der \textbf{Interventionsrate} (Hypothese 3) liefert der Versuch ein positives Ergebnis. Das primäre Ziel, die Eingriffshäufigkeit zu minimieren und somit die Phasen der Inaktivität (\emph{Noops}) zu maximieren, wurde eindeutig erreicht.
 Der Shared \& Split-Agent wählt signifikant häufiger die \emph{Noop}-Aktion (IQM 32.56) als der diskrete Referenz-Agent (IQM 9.73).
-Dies belegt, dass der hybride Ansatz in der Lage ist, Konflikte effizienter zu antizipieren und mit weniger Eingriffen über längere Zeiträume stabil zu fliegen, was dem gewünschten menschlichen Verhalten eines Lotsen – "Eingreifen nur wenn nötig" – deutlich näher kommt.
+Dies belegt, dass der hybride Ansatz in der Lage ist, Konflikte effizienter zu antizipieren und mit weniger Eingriffen über längere Zeiträume stabil zu fliegen, was dem gewünschten menschlichen Verhalten eines Lotsen ("Eingreifen nur wenn nötig") deutlich näher kommt.
 \vspace{\baselineskip}
 
 \begin{figure}[htbp]

@@ -22,7 +22,7 @@ die den Trainees zusätzlich zu den im Vorhinein speziell gebauten Szenarien zur
 \section{Ziel der Arbeit}
 \label{sec:intro:goal}
 
-Ziel dieser Arbeit ist die Entwicklung eines \ac{RL}-Agenten für die Adjacent-Position, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und vor allem ruhiges Steuerungsverhalten zeigt. Im Gegensatz zu klassischen Ansätzen soll das häufige \enquote{Jittering} – also unnötige, kleinteilige Kurskorrekturen – durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option minimiert werden.
+Ziel dieser Arbeit ist die Entwicklung eines \ac{RL}-Agenten für die Adjacent-Position, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und vor allem ruhiges Steuerungsverhalten zeigt. Im Gegensatz zu klassischen Ansätzen soll das häufige \enquote{Jittering}, unnötige, kleinteilige Kurskorrekturen, durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option minimiert werden.
 
 Die zentrale Forschungsfrage lautet daher:
 \begin{itemize}
@@ -34,7 +34,7 @@ Zur Beantwortung dieser Frage werden vier konkrete Untersuchungsziele definiert,
     \item \textbf{Abbildung von Noops:} In welcher Form lässt sich eine explizite Repräsentation von Nicht-Eingriffen (\emph{No-Operation}) im Aktionsraum realisieren, die zur Vermeidung redundanter Steuerbefehle führt?
     \item \textbf{Architektonische Machbarkeit:} Ermöglicht eine Architektur mit hybridem Aktionsraum (diskret und kontinuierlich) dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe?
     \item \textbf{Algorithmische Machbarkeit:} Lässt sich der Proximal-Policy-Optimization-Algorithmus (PPO) durch die Integration von \emph{Gradient Gating} derart modifizieren, dass ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum ohne Beeinträchtigung der Konvergenz gewährleistet ist?
-    \item \textbf{Operativer Mehrwert:} Resultiert aus dem erhöhten architektonischen Aufwand ein quantifizierbarer operativer Mehrwert – insbesondere im Hinblick auf eine reduzierte Eingriffsfrequenz, effizientere Flugführung oder gesteigerte Erfolgsrate – im Vergleich zu einem Agenten mit rein diskretem Aktionsraum?
+    \item \textbf{Operativer Mehrwert:} Resultiert aus dem erhöhten architektonischen Aufwand ein quantifizierbarer operativer Mehrwert (insbesondere im Hinblick auf eine reduzierte Eingriffsfrequenz, effizientere Flugführung oder gesteigerte Erfolgsrate) im Vergleich zu einem Agenten mit rein diskretem Aktionsraum?
 \end{itemize}
 
 
