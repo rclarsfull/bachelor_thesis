@@ -1,7 +1,7 @@
 \chapter{Reinforcement Learning}
 \label{ch:rl_grundlagen}
 
-Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (PPO), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient Gating) für gemischte Aktionsräume nachvollziehen zu können.
+Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (PPO), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Gating) für gemischte Aktionsräume nachvollziehen zu können.
 
 \section{Einführung in Reinforcement Learning}
 
@@ -11,7 +11,7 @@ Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, da
 \textit{\enquote{Reinforcement learning is learning what to do—how to map situations to actions—so as to maximize a numerical reward signal. The learner is not told which actions to take, but instead must discover which actions yield the most reward by trying them. In the most interesting and challenging cases, actions may affect not only the immediate reward but also the next situation and, through that, all subsequent rewards. These two characteristics—trial-and-error search and delayed reward—are the two most important distinguishing features of reinforcement learning.}}
 \\
 
-Im \ac{RL} werden also Agenten bzw. Policies durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
+Im \ac{RL} werden also Agenten bzw. Policies\footnote{Ein \textit{Agent} bezeichnet das lernende System im Reinforcement Learning. Das Verhalten eines Agenten wird durch eine \textit{Policy} beschrieben, welche festlegt, welche Aktion in einem gegebenen Zustand ausgeführt werden soll. Eine Policy kann dabei deterministisch (eindeutige Zuordnung von Zuständen zu Aktionen) oder stochastisch (Wahrscheinlichkeitsverteilung über mögliche Aktionen) sein \cite[Kap. 3.1]{sutton2018rl}.} durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
 Dies unterscheidet \ac{RL} von überwachten Lernverfahren, bei denen Modelle anhand von gekennzeichneten Beispieldaten trainiert werden \cite[Kap. 1]{sutton2018rl}.
 Um einen \ac{RL}\hyp{}Agenten zu trainieren, muss eine Umgebung definiert werden, in der der Agent Erfahrungen sammeln kann \cite{gymnasium_basic_usage}.
 
@@ -38,11 +38,11 @@ wobei:
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.6\textwidth]{chapters/bilder/Agent_Env_Interaktion.png}
-    \caption{Interaktion zwischen Agent und Umgebung im Reinforcement Learning (Quelle: \cite[Kap. 3.1]{sutton2018rl})}
+    \caption[Agent-Umgebung Interaktion]{Interaktion zwischen Agent und Umgebung im Reinforcement Learning (Quelle: \cite[Kap. 3.1]{sutton2018rl})}
     \label{fig:rl_agent_environment}
 \end{figure}
 
-Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy\footnote{Eine Policy beschreibt das Verhalten des Agenten. Sie ordnet jedem Zustand eine Aktion bzw. eine Wahrscheinlichkeitsverteilung über mögliche Aktionen zu.} \(\pi\) aus,
+Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy \(\pi\) aus,
 führt die Aktion aus und erhält eine Belohnung \(r_t = R(s_t, a_t)\). Die Umgebung wechselt dann in einen neuen Zustand \(s_{t+1}\) basierend auf der Übergangswahrscheinlichkeit \(P(s_{t+1}|s_t, a_t)\).
 Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.B. eine maximale Anzahl von Schritten oder das Erreichen eines Zielzustands).
 Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als Trajektorie bezeichnet wird \cite[Kap. 3.1]{sutton2018rl}:
@@ -71,7 +71,7 @@ Obwohl in der Literatur diverse Modellierungen existieren, beschränkt sich die 
     Dies lässt sich am Beispiel eines Autos mit Schaltgetriebe verdeutlichen: Das Einlegen eines Gangs ist eine diskrete Entscheidung (z.\,B. 1., 2. Gang), während das Gasgeben und Lenken kontinuierliche Eingaben sind.
 \end{itemize}
 
-Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hybride und bedingte Aktionsräume. Während der hybride Aspekt die Mischung aus diskreten und kontinuierlichen Aktionen beschreibt, führt der bedingte Charakter hierarchische Abhängigkeiten ein. Das bedeutet, die Auswahl einer übergeordneten diskreten Aktion bestimmt, welche untergeordneten Aktionen (oft kontinuierlich) zur Verfügung stehen. In der Literatur werden solche Strukturen auch als parametrisierte Aktionsräume bezeichnet. Ansätze wie sie in \cite{bamford2021generalising} vorgestellt werden, nutzen eine explizite Baumstruktur, um diese Abhängigkeiten im Kontext von Echtzeit\hyp{}Strategiespielen (RTS) zu modellieren um eine Reduktion der Modellkomplexität zu erreichen. Die vorliegende Arbeit überträgt diesen Grundgedanken auf den Luftverkehrskontext. Um die kausalen Abhängigkeiten während des Trainings zu wahren, wird im weiteren Verlauf die Methode des \textit{Gradient Gating} eingesetzt.
+Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hybride und bedingte Aktionsräume. Während der hybride Aspekt die Mischung aus diskreten und kontinuierlichen Aktionen beschreibt, führt der bedingte Charakter hierarchische Abhängigkeiten ein. Das bedeutet, die Auswahl einer übergeordneten diskreten Aktion bestimmt, welche untergeordneten Aktionen (oft kontinuierlich) zur Verfügung stehen. In der Literatur werden solche Strukturen auch als parametrisierte Aktionsräume bezeichnet. Ansätze wie sie in \cite{bamford2021generalising} vorgestellt werden, nutzen eine explizite Baumstruktur, um diese Abhängigkeiten im Kontext von Echtzeit\hyp{}Strategiespielen (RTS) zu modellieren um eine Reduktion der Modellkomplexität zu erreichen. Die vorliegende Arbeit überträgt diesen Grundgedanken auf den Luftverkehrskontext. Um die kausalen Abhängigkeiten während des Trainings zu wahren, wird im weiteren Verlauf die Methode des \textit{Gradient\hyp{}Gating} eingesetzt.
 
 \subsection*{Extraktion von Aktionen aus neuronalen Netzen}
 \label{sc:action_extraction}
@@ -100,13 +100,13 @@ Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy\hyp{}Gradient}\
 geeignet sind und eine direktere Optimierung des angestrebten Verhaltens erlauben \cite[Kap. 13.2]{sutton2018rl}.
 
 \subsection{Funktionsweise von Policy\hyp{}Gradient\hyp{}Methoden}
-Im Gegensatz zu wertbasierten Ansätzen, die zunächst eine Wertfunktion lernen und daraus eine Policy ableiten, optimieren \textit{Policy\hyp{}Gradient}\hyp{}Methoden die Strategie $\pi_\theta$ des Agenten unmittelbar. 
+Im Gegensatz zu wertbasierten Ansätzen, die zunächst eine Wertfunktion lernen und daraus eine Policy ableiten, optimieren \textit{Policy\hyp{}Gradient}\hyp{}Methoden die Policy $\pi_\theta$ des Agenten unmittelbar. 
 Die Policy wird dabei als differenzierbares, parametrisiertes Modell aufgefasst, das in der Regel durch ein künstliches neuronales Netzwerk dargestellt wird und 
-für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das Aktionsspektrum ausgibt.
+für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das alle möglichen Aktionen ausgibt.
 \vspace{\baselineskip}
 
-Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Die Anpassung der Parameter $\theta$ erfolgt durch den 
-Aufstieg entlang des Gradienten $\nabla_\theta J(\theta)$, wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
+Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Da Optimierungs-Frameworks wie PyTorch standardmäßig auf Gradientenabstieg (Minimierung) ausgelegt sind, wird dies äquivalent als Minimierung von $-J(\theta)$ formuliert. 
+Die Anpassung der Parameter $\theta$ erfolgt durch Gradientenabstieg (siehe Abbildung \ref{fig:gradient_descent_3d}), wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
 führen, systematisch erhöht wird \cite[Kap. 13.2]{sutton2018rl}.
 \vspace{\baselineskip}
 
@@ -119,7 +119,7 @@ Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und der
 \textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im PPO\hyp{}Algorithmus} \\
 \hline
 $\theta$          & Policy\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Actor). \\
-$\pi_\theta$      & Policy & Liefert Wahrscheinlichkeiten über Aktionen, wobei die Parameter $\theta$ trainiert werden \\
+$\pi_\theta$      & Policy (Actor)& Liefert Wahrscheinlichkeiten über Aktionen, wobei die Parameter $\theta$ trainiert werden \\
 $V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Reward ab einem Zustand, wobei die Parameter $\phi$ trainiert werden \\
 $J(\theta)$       & Performance Objective & Die Zielfunktion (erwarteter kumulierter Return), die maximiert werden soll \\
 $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
@@ -163,10 +163,10 @@ PPO bietet gegenüber verwandten Methoden wie TRPO (\textit{Trust Region Policy 
 
 Die Wahl von PPO für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
 diskret\hyp{}kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \textit{Stable Baselines3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
-was für das in dieser Arbeit vorgestellte \textit{Gradient Gating} essentiell ist.
+was für das in dieser Arbeit vorgestellte \textit{Gradient\hyp{}Gating} essentiell ist.
 
 \subsection{Trainingsablauf}
-Der in Algorithmus \ref{alg:ppo_training} dargestellte Ablauf verdeutlicht die Trennung zwischen Datenerhebung und Optimierung, die für das Verständnis des später implementierten \textit{Gradient Gating} essenziell ist.
+Der in Algorithmus \ref{alg:ppo_training} dargestellte Ablauf verdeutlicht die Trennung zwischen Datenerhebung und Optimierung, die für das Verständnis des später implementierten \textit{Gradient\hyp{}Gating} essenziell ist.
 Der PPO\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Rollout\hyp{}Phase} und der \textit{Optimierungsphase}.
 
 \begin{algorithm}[H]
@@ -205,15 +205,15 @@ Der PPO\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Rollout
 \end{algorithm}
 
 
-Während der Rollout\hyp{}Phase (Zeilen 3--13) wird die \textit{logarithmische Wahrscheinlichkeit} der gewählten Aktionen direkt im Buffer gespeichert. 
-Dies ist essenziell, da diese Werte im späteren Verlauf als Referenz für die \textit{Alte Policy} ($\pi_{\text{old}}$) dienen.
+Während der Rollout\hyp{}Phase (Zeilen 5--13) interagiert der Agent mit der Umgebung und sammelt Erfahrungen in Form von Trajektorien.
+Dabei werden für jeden Zeitschritt die Zustände, ausgeführten Aktionen, erhaltenen Belohnungen sowie die \textit{logarithmischen Wahrscheinlichkeiten} der gewählten Aktionen unter der aktuellen Policy im Buffer gespeichert.
 \vspace{\baselineskip}
 
 In der Optimierungsphase (Zeilen 14--27) findet die eigentliche Anpassung der Netzwerkgewichte statt. Hierbei werden die im Vorfeld berechneten 
 Advantage\hyp{}Werte genutzt, um das \textit{Clipped Surrogate Objective} zu berechnen. 
 
 \subsection{Die kombinierte Verlustfunktion}
-Ein zentraler Bestandteil der Optimierungsphase ist die Verlustfunktion. Sie stellt zugleich den entscheidenden Eingriffspunkt für das in Kapitel \ref{ch:ppo_bedingt} vorgestellte \textit{Gradient Masking} dar, weshalb eine detaillierte Aufschlüsselung ihrer Komponenten für das Verständnis der späteren Modifikationen unerlässlich ist.
+Ein zentraler Bestandteil der Optimierungsphase ist die Verlustfunktion. Sie stellt zugleich den entscheidenden Eingriffspunkt für das in Kapitel \ref{ch:ppo_bedingt} vorgestellte \textit{Gradient\hyp{}Gating} dar, weshalb eine detaillierte Aufschlüsselung ihrer Komponenten für das Verständnis der späteren Modifikationen unerlässlich ist.
 In der praktischen Implementierung von \ac{PPO} werden die Parameter des Actors ($\theta$) und des Critics ($\phi$) simultan über eine solche kombinierte Funktion optimiert. Die totale Verlustfunktion ergibt sich als gewichtete Summe \cite[Glg. 9]{OriginalPPO}:
 
 \begin{equation}
@@ -288,29 +288,22 @@ Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch 
         \legend{Verlustfunktion $L_t^{total}$, Optimierungspfad}
         \end{axis}
     \end{tikzpicture}
-    \caption{Visualisierung des Gradientenabstiegs auf einer zweidimensionalen Verlustfunktion. (Abbildung in Anlehung an \cite{gradientenabstieg_visio} erstellt.)}
+    \caption[Gradientenabstieg Visualisierung]{Visualisierung des Gradientenabstiegs auf einer zweidimensionalen Verlustfunktion. (Abbildung in Anlehung an \cite{gradientenabstieg_visio} erstellt.)}
     \label{fig:gradient_descent_3d}
 \end{figure}
 
 Die Optimierung der Actor\hyp{} und Critic\hyp{}Netzwerke zielt darauf ab, die jeweilige Verlustfunktion $L_t^{VF}(\phi)$ zu minimieren.
-Die Anpassung der Netzwerkparameter $\theta$ erfolgt dabei iterativ entlang des negativen Gradienten. Die Berechnung dieser Gradienten wird in Frameworks wie PyTorch
+Die Anpassung der Netzwerkparameter $\theta$ erfolgt dabei iterativ entlang des negativen Gradienten. Die Berechnung dieser Gradienten wird in Frameworks wie PyTorch\footnote{PyTorch ist eine quelloffene Python\hyp{}Bibliothek zur Entwicklung und zum Training neuronaler Netzwerke. Sie bietet umfangreiche Funktionen für Tensoroperationen und automatische Differenzierung.}
 über automatische Differenzierung\footnote{PyTorch bezeichnet sein System der automatischen Differenzierung als \textit{Autograd} (\textit{Automatic Gradient}). Es nutzt einen dynamischen Rechengraphen, um Gradienten automatisch zu berechnen.} realisiert \cite[Kap. 2]{PyTorch_Fundamentals}.
 
 
-\subsubsection*{Rechengraph und Kettenregel} Während des Forward\hyp{}Passes werden alle mathematischen Operationen auf den Tensoren in 
-einem dynamischen, gerichteten Graphen aufgezeichnet, der als \textit{Rechengraph} bezeichnet wird. Dieser Graph bildet die funktionale 
-Abhängigkeit der Verlustgröße $L_t^{total}$ von den trainierbaren Parametern $\theta$ ab.
-\vspace{\baselineskip}
-
-Um die Gewichte im Backward\hyp{}Pass zu aktualisieren, muss der Einfluss jedes Parameters auf den Gesamtfehler bestimmt werden. 
-Da neuronale Netzwerke mathematisch als Komposition geschachtelter Funktionen betrachtet werden können, findet die Kettenregel der Differentialrechnung
-Anwendung. Für eine beispielhafte Kette von Operationen ergibt sich der Gradient des Verlustes L bezüglich eines Parameters $\theta$ als Produkt der lokalen Ableitungen \cite[Kap. 1]{PyTorch_Fundamentals}:
+\subsubsection*{Rechengraph und Kettenregel} 
+PyTorch zeichnet während der Vorwärtspropagierung (Forward Pass), bei der die Eingaben Schicht für Schicht durch das Netzwerk geleitet werden, alle Operationen in einem dynamischen Rechengraphen auf. Dieser Graph bildet die Abhängigkeit der Verlustfunktion $L_t^{total}$ von den Parametern $\theta$ und $\phi$ ab. In der anschließenden Rückwärtspropagierung (Backward Pass) werden durch wiederholte Anwendung der Kettenregel die Gradienten berechnet \cite[Kap. 1]{PyTorch_Fundamentals}. Für eine beispielhafte Kette von Operationen ergibt sich:
 \begin{equation} 
     \frac{\partial \mathcal{L}}{\partial \theta} = \frac{\partial \mathcal{L}}{\partial y} \cdot \frac{\partial y}{\partial g} \cdot \frac{\partial g}{\partial \theta} 
 \end{equation}
 
-Das Autograd\hyp{}System traversiert den Graphen ausgehend vom Loss\hyp{}Knoten rückwärts (Backpropagation). An jedem Knoten wird der akkumulierte Gradient mit 
-der lokalen partiellen Ableitung der jeweiligen Operation multipliziert.
+Die resultierenden Gradienten $\frac{\partial L_t^{total}}{\partial \theta}$ und $\frac{\partial L_t^{total}}{\partial \phi}$ geben an, wie stark jeder Parameter den Fehler beeinflusst. Diese nutzt der Optimierer, um die Gewichte zu aktualisieren (Zeile 26 in Algorithmus \ref{alg:ppo_training}).
 
 \subsubsection*{Steuerung des Gradientenflusses} 
 Für die Implementierung komplexer Architekturen ist eine präzise Steuerung dieses Flusses notwendig.
@@ -325,7 +318,7 @@ Ergänzend dazu ermöglichen Kontextmanager wie \texttt{with torch.no\_grad():},
 \vspace{\baselineskip}
 
 In dieser Arbeit werden diese Mechanismen genutzt,
-um ein \textit{Gradient Masking} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
+um ein \textit{Gradient\hyp{}Gating} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
 Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehloptimierung inaktiver Netzwerkzweige verhindert wird.
 
 \begin{figure}[htbp]
@@ -371,7 +364,7 @@ Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehlo
         \legend{Verlustfunktion $L_t^{total}$, Pfad bei Gating von $\theta_1$}
         \end{axis}
     \end{tikzpicture}
-    \caption{Auswirkung von Gradient Gating auf den Optimierungspfad. Da der Parameter $\theta_1$ vom Rückfluss der Gradienten ausgeschlossen ist, erfolgt die Optimierung ausschließlich entlang der Achse $\theta_2$. Der Parameter $\theta_1$ verharrt auf seinem Initialwert.}
+    \caption[Gradient\hyp{}Gating Auswirkung]{Auswirkung von Gradient\hyp{}Gating auf den Optimierungspfad. Da der Parameter $\theta_1$ vom Rückfluss der Gradienten ausgeschlossen ist, erfolgt die Optimierung ausschließlich entlang der Achse $\theta_2$. Der Parameter $\theta_1$ verharrt auf seinem Initialwert.}
     \label{fig:gradient_descent_gated}
 \end{figure}
 \vspace{\baselineskip}

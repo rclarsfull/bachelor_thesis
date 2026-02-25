@@ -1,4 +1,4 @@
-\chapter{Umgebungs-Konzeption}
+\chapter{Konzeption der Lernumgebung}
 \label{ch:konzeption}
 
 Nachdem die theoretischen Fundamente der Flugsicherung und des Reinforcement Learning gelegt sind, widmet sich dieses Kapitel der konkreten Überführung der Problemstellung in ein trainierbares System. Die Konzeption der Lernumgebung ist der entscheidende Entwicklungsschritt, in dem abstrakte Anforderungen in ein mathematisch greifbares \ac{MDP} übersetzt werden.
@@ -20,7 +20,7 @@ Der \ac{RL}\hyp{}Agent soll daher lernen, Konflikte unter Minimierung von Steuer
 Die Anwendung von Reinforcement Learning im Kontext der Flugverkehrskontrolle ist ein aktives Forschungsfeld, das sich mit der Automatisierung von Entscheidungsprozessen in komplexen, dynamischen Umgebungen beschäftigt.
 Viele Arbeiten konzentrieren sich auf die Entwicklung von Agenten, die in der Lage sind, Konflikte zu erkennen und zu lösen, wobei jedoch die Effizienz der Steuerbefehle oft nicht explizit adressiert wird.
 
-Die Arbeit von Groot et al. \cite{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}Gym\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
+Die Arbeit von \citet{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}Gym\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
 Diese Arbeit erweitert die bisherigen Ansätze, indem sie nicht nur die Konfliktlösung, sondern auch die Minimierung von Steuerbefehlen in den Fokus stellt. 
 Die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option stellt eine innovative Erweiterung dar, die es dem Agenten ermöglicht, zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe zu differenzieren, was in der Literatur bisher wenig Beachtung gefunden hat.
 
@@ -33,7 +33,7 @@ Es werden vier grundlegende Szenarientypen im Training unterschieden:
     \item \textbf{Merging:} Simulation von zusammenlaufendem Verkehr, bei dem Flugzeuge von individuellen Startpunkten auf einen gemeinsamen Zielpunkt oder Wegpunkt zufliegen.
     \item \textbf{Diverging:} Simulation von auseinanderlaufendem Verkehr. Flugzeuge starten gestaffelt auf einer identischen Route, die sich im weiteren Verlauf aufzweigt.
     \item \textbf{Scenariofiles:} Verwendung vordefinierter Szenarien aus externen Dateien, die auf realen Übungen der Fluglotsenausbildung basieren. 
-    Diese Szenarien wurden für die Simulation abstrahiert, da das aktuelle Modell ausschließlich laterale Steuerung (Kursänderungen) betrachtet und Höhen\hyp{} oder Geschwindigkeitsanpassungen ausgeklammert werden.
+    Diese Szenarien wurden für die Simulation abstrahiert, da das aktuelle Modell ausschließlich Vectoring (Kursänderungen) betrachtet und Höhen\hyp{} oder Geschwindigkeitsanpassungen ausgeklammert werden.
 \end{itemize}
 
 Die Auswahl des Szenariotyps während des Trainings erfolgt randomisiert, wobei Crossing\hyp{} und Merging\hyp{}Szenarien aufgrund ihrer höheren Komplexität bei der Konfliktlösung häufiger priorisiert werden.
@@ -60,7 +60,7 @@ Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über List
 \section{Visualisierung}
 Zur Validierung und Analyse des Agentenverhaltens wurde eine Echtzeit\hyp{}Visualisierung implementiert.
 Diese stellt neben der Verkehrslage auch erweiterte Diagnoseinformationen dar, darunter prognostizierte Konfliktpunkte, die aktuellen Entscheidungen des Agenten sowie relevante Merkmale des Zustandsraums.
-Die technische Umsetzung erfolgte mittels der Bibliothek Pygame, welche eine effiziente und plattformunabhängige Erstellung von 2D\hyp{}Grafiken innerhalb des Python\hyp{}Ökosystems ermöglicht.
+Die technische Umsetzung erfolgte mittels der Bibliothek Pygame \cite{pygame}, welche eine plattformunabhängige Erstellung von 2D\hyp{}Grafiken innerhalb des Python\hyp{}Ökosystems ermöglicht.
 
 \section{Definition der RL\hyp{}Umgebung}
 Die Umgebung (Environment) bildet die Schnittstelle zwischen dem \ac{RL}\hyp{}Agenten und der Simulation. 
@@ -123,7 +123,7 @@ Der Zustandsraum beider Umgebungen umfasst folgende Merkmale:
 Die Berechnung zukünftiger Konflikte basiert auf dem \ac{CPA}\hyp{}Verfahren (Closest Point of Approach) \cite{CPA}, wobei die Zeit bis zum Konflikt (\emph{Time to CPA}) als Maß für die Kritikalität dient.
 \subsection{Aktionsraum}
 \label{sc:aktionsraum}
-Die entwickelte Lernumgebung beschränkt sich auf die Konfliktlösung mittels Kursänderungen (Lateralsteuerung). 
+Die entwickelte Lernumgebung beschränkt sich auf die Konfliktlösung mittels Vectoring (Kursänderungen). 
 Diese Eingrenzung dient der Reduktion der Komplexität des Modells. 
 Obgleich operative Fluglotsen auch über Geschwindigkeits\hyp{} und Höhenänderungen verfügen, bleibt die Integration dieser Freiheitsgrade zukünftigen Untersuchungen vorbehalten.
 \vspace{\baselineskip}
@@ -169,7 +169,7 @@ Explizit wurde auf eine distanzbasierte Belohnung (\textit{Proximity Reward}) ve
 \vspace{\baselineskip}
 
 Es wurde Wert auf die Verwendung von sogenannten \emph{Dense Rewards} gelegt, also kontinuierlichen Rückmeldungen in jedem Zeitschritt. 
-Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Qualität seiner Zustandsänderungen erhält \cite[Kap. 17.4]{sutton2018rl}, im Gegensatz zu \emph{Sparse Rewards}, die nur in unregelmäßigen Abständen vergeben werden.
+Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Qualität seiner Zustandsänderungen erhält \cite[Kap. 17.4]{sutton2018rl}, im Gegensatz zu \emph{Sparse Rewards}, die nur selten vergeben werden.
 
 \subsection{Metriken}
 \label{sc:env_metrics}

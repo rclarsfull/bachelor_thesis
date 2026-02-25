@@ -1,4 +1,4 @@
-\chapter{PPO mit bedingtem Aktionsraum}
+\chapter{Algorithmische Anpassungen von PPO}
 \label{ch:ppo_bedingt}
 
 Dieses Kapitel widmet sich der Anpassung des PPO-Algorithmus an die spezifische Struktur des hybriden und bedingten Aktionsraums. Eine zentrale Herausforderung besteht hierbei in der hierarchischen Abhängigkeit zwischen den Teilaktionen, welche von Standard-Implementierungen oft nicht korrekt abgebildet wird.
@@ -10,7 +10,7 @@ Ohne Anpassung würde der Algorithmus dennoch Gradienten für diese inaktiven Ko
 
 \section{Verwandte Arbeiten und Abgrenzung}
 
-Die Problematik gemischter Aktionsräume wird in der Literatur oft als \textit{Parameterized Action Space} bezeichnet. Masson et al. \cite{masson2016reinforcement} nutzen hierfür Q-Learning-Verfahren. Dabei gehen sie davon aus, dass zu jeder diskreten Aktion immer ein passender kontinuierlicher Parameter gehört, der mitgelernt werden muss.
+Die Problematik gemischter Aktionsräume wird in der Literatur oft als \textit{Parameterized Action Space} bezeichnet. \citet{masson2016reinforcement} nutzen hierfür Q-Learning-Verfahren. Dabei gehen sie davon aus, dass zu jeder diskreten Aktion immer ein passender kontinuierlicher Parameter gehört, der mitgelernt werden muss.
 Im vorliegenden Szenario erfordern Aktionen wie \emph{Noop} hingegen keinen Parameter. Der hier vorgestellte Ansatz verzichtet daher auf die Optimierung dieser irrelevanten Ausgabegrößen. Durch den Einsatz von Gradient-Gating wird sichergestellt, dass die entsprechenden Parameter vom Trainingsprozess ausgeschlossen werden, sofern sie für die getroffene diskrete Entscheidung keine Relevanz besitzen.
 \vspace{\baselineskip}
 
@@ -45,51 +45,49 @@ Eine Erweiterung der Wahrscheinlichkeitsverteilungs\hyp{}Klasse ermöglicht es, 
 
 \subsection*{Evaluation}
 In der Methode \texttt{evaluate\_actions()}, welche während der Optimierungsphase aufgerufen wird (siehe Algorithmus \ref{alg:ppo_training}, Zeile 20), werden die Komponenten der PPO\hyp{}Verlustfunktion berechnet. Hier erfolgt das eigentliche Gradient\hyp{}Gating.
-Mithilfe einer binären Maske wird sichergestellt, dass die kontinuierliche Verteilung nur dann Einfluss auf die Gradientenbildung hat, wenn sie entscheidungsrelevant ist.
-Algorithmus \ref{alg:gradient_gating} zeigt die Implementierung dieser Logik.
+Mithilfe einer Maske wird sichergestellt, dass die kontinuierliche Verteilung nur dann Einfluss auf die Gradientenbildung hat, wenn sie entscheidungsrelevant ist.
+Algorithmus \ref{alg:gradient_gating} zeigt die Implementierung dieser Logik in vereinfachter, schematischer Form.
 
 \begin{algorithm}
-\caption{Gradient-Gating in der Evaluationsfunktion}
+\caption{Gradient-Gating in der Evaluationsfunktion (vereinfacht)}
 \label{alg:gradient_gating}
 \begin{algorithmic}[1]
-\State \texttt{mask = (actions[:, 0] == STEER\_INDEX).bool()}
+\State \texttt{mask\_steer = (action\_type == STEERING)}
 \Statex
-\State \texttt{log\_prob = dist.stack\_log\_prob(actions)}
-\State \texttt{action\_type\_log\_prob = log\_prob[:, 0]}
-\State \texttt{steer\_log\_prob = log\_prob[:, 1]}
+\State \texttt{log\_prob\_type = log\_probability(action\_type)}
+\State \texttt{log\_prob\_steer = log\_probability(steering\_value)}
 \Statex
-\State \texttt{steer\_log\_prob = th.where(mask, steer\_log\_prob,}
-\Statex \qquad \qquad \qquad \qquad \qquad \qquad \texttt{th.zeros\_like(steer\_log\_prob))}
-\State \texttt{masked\_log\_prob = action\_type\_log\_prob + steer\_log\_prob}
+\State \texttt{log\_prob\_steer = where(mask\_steer, log\_prob\_steer, 0)}
+\State \texttt{log\_prob\_total = log\_prob\_type + log\_prob\_steer}
 \Statex
-\State \texttt{with th.no\_grad():}
-\State \quad \texttt{steer\_distribution = dist.distribution[0].distribution}
-\State \quad \texttt{p\_steer = steer\_distribution.probs[:, STEER\_INDEX]}
+\State \texttt{with no\_grad():}
+\State \quad \texttt{prob\_steer = probability(action\_type == STEERING)}
 \Statex
-\State \texttt{entropy = dist.stack\_entropy()}
-\State \texttt{action\_type\_entropy = entropy[:, 0]}
-\State \texttt{steer\_entropy = entropy[:, 1]}
+\State \texttt{entropy\_type = entropy(action\_type)}
+\State \texttt{entropy\_steer = entropy(steering\_value)}
 \Statex
-\State \texttt{masked\_entropy = action\_type\_entropy + p\_steer * steer\_entropy}
+\State \texttt{entropy\_total = entropy\_type + prob\_steer * entropy\_steer}
 \end{algorithmic}
 \end{algorithm}
 \vspace{\baselineskip}
 
-Zeile 5 nimmt für die logarithmischen Wahrscheinlichkeiten eine explizite Null\hyp{}Maskierung vor. Der Aufruf \texttt{th.zeros\_like()} erzeugt dabei einen neuen Tensor, der standardmäßig nicht Teil des Berechnungsgraphen ist (\texttt{requires\_grad=False}). Dies stellt technisch sicher, dass für die maskierten Einträge keine Gradienten zurückfließen.
-Mathematisch betrachtet wird die irrelevante kontinuierliche Aktion dadurch deterministisch (Wahrscheinlichkeit 1, $\log(1)=0$) und leistet somit keinen Beitrag zur Gesamt\hyp{}Log\hyp{}Likelihood. Dies verhindert effektiv, dass irrelevante Aktionen die Update\hyp{}Schritte des PPO verfälschen.
+Der Algorithmus zeigt die wesentlichen Schritte in vereinfachter, lesbarer Form. 
+Zeile 4 nimmt für die logarithmischen Wahrscheinlichkeiten der Lenkung eine explizite Null\hyp{}Maskierung vor. Irrelevante Lenkwerte werden auf 0 gesetzt, was einer Wahrscheinlichkeit von $1$ entspricht ($\log(1)=0$). 
+Dies stellt sicher, dass für maskierte Einträge keine Gradienten zurückfließen.
+Mathematisch wird die irrelevante kontinuierliche Aktion dadurch deterministisch und leistet keinen Beitrag zur Gesamt\hyp{}Log\hyp{}Likelihood. Dies verhindert effektiv, dass irrelevante Aktionen die Update\hyp{}Schritte des PPO verfälschen.
 \vspace{\baselineskip}
 
-Für die Regularisierung durch Entropie (Zeile 12) wird das Konzept der bedingten Entropie umgesetzt. Die Gesamtentropie berechnet sich als Summe der diskreten Entropie und der mit ihrer Auftrittswahrscheinlichkeit gewichteten kontinuierlichen Entropie:
+Für die Regularisierung durch Entropie (Zeile 10) wird das Konzept der bedingten Entropie umgesetzt. Die Gesamtentropie berechnet sich als Summe der diskreten Entropie und der mit ihrer Auftrittswahrscheinlichkeit gewichteten kontinuierlichen Entropie:
 \begin{equation}
     H_{\text{total}} = H(a_{\text{type}}) + p(a_{\text{type}}=\text{Steer}) \cdot H(a_{\text{steer}})
 \end{equation}
 
-Ein entscheidendes Detail zur Vermeidung von Fehloptimierungen (Bias) ist die Behandlung des Gewichtungsfaktors $p(\text{Steer})$ in Zeile 8. Dieser wird innerhalb eines \texttt{no\_grad}\hyp{}Blocks extrahiert und somit vom Gradientenfluss entkoppelt.
-Würde man $p(\text{Steer})$ direkt verwenden, würde der Agent lernen, die Wahrscheinlichkeit für die \emph{Steer}\hyp{}Aktion allein deshalb zu erhöhen, um den additiven Entropie\hyp{}Term zu maximieren.
+Ein entscheidendes Detail zur Vermeidung von Fehloptimierungen (Bias) ist die Behandlung des Gewichtungsfaktors $p(a_{\text{type}}=\text{Steer})$ in Zeile 7. Dieser wird innerhalb eines \texttt{no\_grad}\hyp{}Blocks extrahiert und somit vom Gradientenfluss entkoppelt.
+Würde man $p(a_{\text{type}}=\text{Steer})$ direkt verwenden, würde der Agent lernen, die Wahrscheinlichkeit für die \emph{Steer}\hyp{}Aktion allein deshalb zu erhöhen, um den additiven Entropie\hyp{}Term zu maximieren.
 Durch die Verwendung von \texttt{no\_grad()} wirkt die Wahrscheinlichkeit lediglich als konstanter Skalierungsfaktor für die kontinuierliche Entropie, wodurch dieser Bias eliminiert wird.
 
 \subsection*{Vorwärtsschritt}
-Analog zur Evaluation muss das Gradient\hyp{}Gating auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (siehe Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls null\hyp{}maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
+Analog zur Evaluation muss das Gradient\hyp{}Gating auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (siehe Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
 
 \section{Herausforderungen in bedingten Aktionsräumen}
 \label{sc:Herausforderungen_bedingte_Aktionsräume}
@@ -179,7 +177,7 @@ Alternativ sind hybride Ansätze denkbar \cite{branching_architectures}, bei den
                 \draw[arrow] (H2\h) -- (O\o);
 
     \end{tikzpicture}
-    \caption{Schematische Darstellung der ursprünglichen, fully-connected Netzarchitektur.}
+    \caption[Fully-connected Netzarchitektur]{Schematische Darstellung der ursprünglichen, fully-connected Netzarchitektur.}
     \label{fig:nn_architektur_original}
 \end{figure}
 
@@ -249,7 +247,7 @@ Alternativ sind hybride Ansätze denkbar \cite{branching_architectures}, bei den
             \draw[arrow] (H2b\h) -- (O2);
 
     \end{tikzpicture}
-    \caption{Schematische Darstellung der Netzarchitektur mit vollständig getrennten Pfaden (Separate Heads) ab der Eingabeschicht.}
+    \caption[Netzarchitektur mit separaten Pfaden]{Schematische Darstellung der Netzarchitektur mit vollständig getrennten Pfaden (Separate Heads) ab der Eingabeschicht.}
     \label{fig:nn_architektur_split}
 \end{figure}
 
@@ -310,7 +308,7 @@ Alternativ sind hybride Ansätze denkbar \cite{branching_architectures}, bei den
             \draw[arrow] (H2b\h) -- (O2);
 
     \end{tikzpicture}
-    \caption{Schematische Darstellung einer hybriden Netzarchitektur (Mischform). Die Pfade teilen sich zunächst gemeinsame Schichten (Shared Layers, hier Hidden 1), bevor sie sich trennen.}
+    \caption[Hybride Netzarchitektur]{Schematische Darstellung einer hybriden Netzarchitektur (Mischform). Die Pfade teilen sich zunächst gemeinsame Schichten (Shared Layers, hier Hidden 1), bevor sie sich trennen.}
     \label{fig:nn_architektur_hybrid}
 \end{figure}
 
