@@ -43,7 +43,7 @@ Als Simulationskern dient Bluesky \cite{bluesky}, eine Open\hyp{}Source\hyp{}Flu
 Die Interaktion zwischen der Reinforcement\hyp{}Learning\hyp{}Umgebung (\ac{GYM}) und Bluesky erfolgt über eine dedizierte Adapter\hyp{}Schicht. Diese übersetzt die Aktionen des Agenten in simulatorverständliche Steuerbefehle und extrahiert im Gegenzug die relevanten Zustandsinformationen für das Training.
 \medskip
 
-Die modulare Architektur der Adapter\hyp{}Schicht erlaubt einen potenziellen Austausch des Simulators, was im Hinblick auf eine geplante Migration auf den Simulator NewSim der DFS von Bedeutung ist.
+Die modulare Architektur der Adapter\hyp{}Schicht erlaubt einen potenziellen Austausch des Simulators, was im Hinblick auf eine geplante Migration auf den Simulator NewSim der \ac{DFS} von Bedeutung ist.
 Die Entscheidung für Bluesky fiel primär aufgrund der Implementierung in Python. 
 Dies ermöglichte eine direkte Integration in das Python\hyp{}basierte \ac{RL}\hyp{}Framework ohne die Notwendigkeit komplexer Schnittstellen für den Datenaustausch zwischen unterschiedlichen Programmiersprachen, was die Implementierungskomplexität signifikant verringerte.
 Zudem konnte auf Vorarbeiten des Projekts Bluesky\hyp{}\ac{GYM} \cite{bluesky-gym} aufgebaut werden.
@@ -62,10 +62,10 @@ Zur Validierung und Analyse des Agentenverhaltens wurde eine Echtzeit\hyp{}Visua
 Diese stellt neben der Verkehrslage auch erweiterte Diagnoseinformationen dar, darunter prognostizierte Konfliktpunkte, die aktuellen Entscheidungen des Agenten sowie relevante Merkmale des Zustandsraums.
 Die technische Umsetzung erfolgte mittels der Bibliothek Pygame \cite{pygame}, welche eine plattformunabhängige Erstellung von 2D\hyp{}Grafiken innerhalb des Python\hyp{}Ökosystems ermöglicht.
 
-\section{Definition der RL\hyp{}Umgebung}
+\section{Definition der \ac{RL}\hyp{}Umgebung}
 Die Umgebung (Environment) bildet die Schnittstelle zwischen dem \ac{RL}\hyp{}Agenten und der Simulation. 
 Sie definiert den Zustandsraum, den Aktionsraum sowie die Belohnungsfunktion.
-Die Implementierung folgt der Spezifikation von OpenAI \ac{GYM} \cite{OpenAI-Gym}, um die Kompatibilität mit etablierten \ac{RL}\hyp{}Bibliotheken wie Stable Baselines3 \cite{sb3} sicherzustellen.
+Die Implementierung folgt der Spezifikation von OpenAI \ac{GYM} \cite{OpenAI-Gym}, um die Kompatibilität mit etablierten \ac{RL}\hyp{}Bibliotheken wie \ac{SB3} \cite{sb3} sicherzustellen.
 
 \subsection{Zustandsraum}
 Das Design des Zustandsraums zielt darauf ab, dem Agenten alle relevanten Informationen zur Konflikterkennung und \hyp{}lösung bereitzustellen, ohne die Generalisierungsfähigkeit zu beeinträchtigen. 
@@ -120,7 +120,7 @@ Der Zustandsraum beider Umgebungen umfasst folgende Merkmale:
     \end{itemize}
 \end{itemize}
 
-Die Berechnung zukünftiger Konflikte basiert auf dem \ac{CPA}\hyp{}Verfahren (Closest Point of Approach) \cite{CPA}, wobei die Zeit bis zum Konflikt (\emph{Time to CPA}) als Maß für die Kritikalität dient.
+Die Berechnung zukünftiger Konflikte basiert auf dem \ac{CPA}\hyp{}Verfahren (Closest Point of Approach) \cite{CPA}, wobei die Zeit bis zum Konflikt (\emph{Time to \ac{CPA}}) als Maß für die Kritikalität dient.
 \subsection{Aktionsraum}
 \label{sc:aktionsraum}
 Die entwickelte Lernumgebung beschränkt sich auf die Konfliktlösung mittels Vectoring (Kursänderungen). 
@@ -187,13 +187,13 @@ Folgende Schlüsselmetriken werden erhoben:
     \item \textbf{Average Drift:} Die durchschnittliche Kursabweichung vom Idealweg über die gesamte Episode.
 \end{itemize}
 
-\section{Auswahl des RL\hyp{}Algorithmus}
+\section{Auswahl des \ac{RL}\hyp{}Algorithmus}
 Für das Training des Agenten wurde Proximal Policy Optimization (\ac{PPO}) gewählt.
 \ac{PPO} gehört zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (siehe Kapitel \ref{ch:rl_grundlagen}) und hat sich in zahlreichen Anwendungen als stabiler und robuster Standard etabliert \cite{OriginalPPO}.
 \medskip
 
 Ein zentrales Auswahlkriterium war die praktische Einsetzbarkeit in \textit{Stable Baselines3} (\ac{SB3}), wo \ac{PPO} als ausgereifter und weit verbreiteter Algorithmus mit belastbarer Referenzimplementierung vorliegt \cite{sb3,sb3_algos_doc}.
-Für die vorliegende Arbeit ist insbesondere die funktionale Breite relevant: Laut SB3\hyp{}Dokumentation unterstützt PPO nativ sowohl kontinuierliche als auch diskrete Aktionsräume (u.\,a. \texttt{Box}, \texttt{Discrete}, \texttt{MultiDiscrete}, \texttt{MultiBinary}) \cite{sb3_algos_doc}.
+Für die vorliegende Arbeit ist insbesondere die funktionale Breite relevant: Laut \ac{SB3}\hyp{}Dokumentation unterstützt \ac{PPO} nativ sowohl kontinuierliche als auch diskrete Aktionsräume (u.\,a. \texttt{Box}, \texttt{Discrete}, \texttt{MultiDiscrete}, \texttt{MultiBinary}) \cite{sb3_algos_doc}.
 Damit lässt sich eine einheitliche Trainingspipeline über unterschiedliche Environment\hyp{}Designs hinweg nutzen.
 Zusätzlich sind im \textit{sb3\hyp{}contrib}\hyp{}Ökosystem Erweiterungen wie \textit{Recurrent\ac{PPO}} und \textit{Maskable\ac{PPO}} verfügbar, was die methodische Anschlussfähigkeit für spätere Experimente erhöht \cite{sb3_algos_doc}.
 \medskip

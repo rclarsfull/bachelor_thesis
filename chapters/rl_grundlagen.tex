@@ -78,13 +78,13 @@ Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hy
 Die Wahl der Aktionsraumklasse hat direkte Auswirkungen auf die Architektur der Ausgabeschicht (Output Layer) des neuronalen Netzes und die Art und Weise, wie Aktionen aus den Netzwerkausgaben abgeleitet werden.
 
 \subsubsection*{Diskrete Aktionsräume}
-Stable Baselines3\footnote{Stable Baselines3 (\ac{SB3}) ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
+\ac{SB3}\footnote{\ac{SB3} ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
 \medskip
 
 Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen. Bei mehrdimensionalen Aktionsräumen (z.\,B. Lenken und Beschleunigen) wächst die Anzahl der benötigten Kombinationen exponentiell an (kartesisches Produkt der Einzelaktionen), was das Training ineffizient macht \cite{lillicrap2015continuous}.
 
 \subsubsection*{Kontinuierliche Aktionsräume}
-Analog zu den diskreten Räumen modelliert Stable Baselines3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
+Analog zu den diskreten Räumen modelliert \ac{SB3} \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
 Für einen $n$-dimensionalen kontinuierlichen Aktionsvektor benötigt das Netzwerk somit lediglich $2n$ Ausgangsneuronen.
 
 \section{Differenzierung verschiedener \ac{RL}\hyp{}Algorithmen}
@@ -162,7 +162,7 @@ Der Kern von \ac{PPO} ist das \textit{Clipped Surrogate Objective}. Durch diese 
 \medskip
 
 Die Wahl von \ac{PPO} für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
-diskret\hyp{}kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \textit{Stable Baselines3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
+diskret\hyp{}kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \ac{SB3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
 was für das in dieser Arbeit vorgestellte \textit{Gradient\hyp{}Gating} essentiell ist.
 
 \subsection{Trainingsablauf}
@@ -374,7 +374,7 @@ Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gat
 \section{Metriken im Reinforcement Learning}
 Um den Erfolg der durchgeführten Experimente und die Wirksamkeit der modifizierten Algorithmen in Kapitel \ref{ch:evaluation} quantitativ bewerten zu können, müssen geeignete Vergleichsgrößen definiert werden. Im Reinforcement Learning gibt es verschiedene Metriken, die verwendet werden, um die Leistung eines Agenten zu bewerten.
 Diese Metriken helfen dabei, den Fortschritt des Lernprozesses zu überwachen und die Effektivität verschiedener Algorithmen und Hyperparameter zu vergleichen.
-Viele dieser Metriken werden automatisch von \ac{RL}\hyp{}Bibliotheken wie Stable Baselines3 \cite{sb3} erfasst und können zur Analyse und Visualisierung verwendet werden.
+Viele dieser Metriken werden automatisch von \ac{RL}\hyp{}Bibliotheken wie \ac{SB3} \cite{sb3} erfasst und können zur Analyse und Visualisierung verwendet werden.
 Dieser Abschnitt soll sich auf diese \ac{PPO}\hyp{}spezifischen Metriken konzentrieren. Die Umgebungs\hyp{}spezifischen Metriken werden im Abschnitt \ref{sc:env_metrics} beschrieben.
 Folgende Metriken sind besonders relevant \cite{LogExplanation}:
 \begin{itemize}

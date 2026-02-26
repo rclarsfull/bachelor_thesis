@@ -227,7 +227,7 @@ Die zugrunde liegenden Hypothesen lauten:
 Aufgrund der hohen Rechenkomplexität der Interaktion mit dem externen Simulator (BlueSky) und der erforderlichen Netzgröße wird die Evaluation auf eine konsolidierte Testreihe beschränkt.
 Folgende vier Konfigurationen werden über 6 Millionen Zeitschritte mit 8 Seeds evaluiert:
 \begin{itemize}
-    \item \textbf{\ac{PPO}:} Der Multioutput-Algorithmus aus SB3-Plus \cite{sb3_plus} als Baseline.
+    \item \textbf{\ac{PPO}:} Der Multioutput-Algorithmus aus \ac{SB3}-Plus \cite{sb3_plus} als Baseline.
     \item \textbf{Masked \ac{PPO}:} Der um Gradient\hyp{}Gating erweiterte \ac{PPO}-Algorithmus.
     \item \textbf{Masked split\_net \ac{PPO}:} Die Variante mit getrennten Pfaden für diskrete und kontinuierliche Aktionen.
     \item \textbf{Masked shared \& split\_net \ac{PPO}:} Die hybride Architektur mit geteiltem Feature-Extractor.
