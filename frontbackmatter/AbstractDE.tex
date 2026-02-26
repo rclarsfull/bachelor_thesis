@@ -4,12 +4,12 @@
 \begin{otherlanguage}{ngerman}
 	\pdfbookmark[0]{Zusammenfassung}{Zusammenfassung}
 	\chapter*{Zusammenfassung}
-Die Automatisierung der Adjacent-Lotsen-Position in der Flugverkehrskontrolle stellt eine vielversprechende Möglichkeit dar, die Ausbildung von Fluglotsen in Simulationsumgebungen der DFS Deutschen Flugsicherung GmbH effizienter zu gestalten.
-In dieser Arbeit wird hierfür ein Reinforcement Learning (RL) Ansatz entwickelt.
-Ein zentrales Defizit bestehender Methoden ist jedoch das unruhige Steuerungsverhalten (,,Jittering``), das durch unnötige Kurskorrekturen die Akzeptanz und Realitätsnähe mindert.
-Zur Lösung dieses Problems wird ein hybrider Aktionsraum konzipiert, der diskrete Entscheidungen über das Eingreifen (\emph{No-Operation}) mit kontinuierlichen Steuergrößen für Kursänderungen kombiniert.
-Technisch wird dies durch eine Modifikation des Proximal Policy Optimization (PPO) Algorithmus mittels ,,Gradient\hyp{}Gating`` realisiert, um die bedingten Abhängigkeiten im Aktionsraum stabil zu lernen.
-Die Evaluation in einer vereinfachten Simulationsumgebung demonstriert die technische Machbarkeit der Architektur und vergleicht sie mit klassischen diskreten Handlungsräumen.
-Die Ergebnisse zeigen, dass der vorgestellte Ansatz insbesondere durch die Verbindung kontinuierlicher Aktionen mit explizit diskreten Nicht-Eingriffen (\emph{Noops}) das Potenzial für ein effizienteres und menschlicheres Steuerungsverhalten bietet. Damit liefert die Arbeit einen Proof of Concept für den Einsatz gemischter Aktionsräume im Flugverkehrsmanagement.
+Die Automatisierung der Adjacent-Lotsen-Position in der Flugverkehrskontrolle bietet großes Potenzial, um die Ausbildung von Fluglotsen in den Simulationsumgebungen der DFS Deutschen Flugsicherung GmbH effizienter zu gestalten. Um dies zu erreichen, wird in der vorliegenden Arbeit ein Ansatz basierend auf Reinforcement Learning (RL) entwickelt. Ein zentrales Problem bestehender RL-Methoden in diesem Bereich ist jedoch ein unruhiges Steuerungsverhalten (\enquote{Jittering}). Dieses äußert sich in unnötigen, kleinteiligen Kurskorrekturen, welche die Realitätsnähe und damit die Akzeptanz der automatisierten Lotsen erheblich mindern.
+\medskip
+
+Zur Lösung dieses Problems wird ein hybrider Aktionsraum konzipiert. Dieser kombiniert die diskrete Entscheidung, ob überhaupt eingegriffen werden soll (\emph{No-Operation}), mit kontinuierlichen Steuergrößen für die eigentliche Kursänderung. Die technische Umsetzung erfolgt durch eine gezielte Modifikation des Proximal Policy Optimization (PPO) Algorithmus: Mithilfe von \enquote{Gradient\hyp{}Gating} wird sichergestellt, dass der Agent die bedingten Abhängigkeiten innerhalb dieses gemischten Aktionsraums stabil erlernen kann.
+\medskip
+
+Die Leistungsfähigkeit und technische Machbarkeit der entwickelten Architektur wurden in mehreren Versuchsreihen evaluiert, die sowohl eine Standardumgebung als auch eine vereinfachte Flugverkehrssimulation umfassten. Die Ergebnisse zeigen, dass der Ansatz zwar nicht den finalen Reward signifikant steigert, dafür aber eine schnellere Konvergenz und eine deutlich bessere Ausnutzung von Nicht-Eingriffen (\emph{Noops}) erzielt. Die daraus resultierende Reduktion der Eingriffsfrequenz bestätigt das angestrebte ruhigere und effizientere Steuerungsverhalten. Somit liefert diese Arbeit einen erfolgreichen Proof of Concept für den Einsatz gemischter Aktionsräume zur Vermeidung redundanter Steuerbefehle im Flugverkehrsmanagement.
 	
 \end{otherlanguage}

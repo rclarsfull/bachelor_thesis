@@ -6,7 +6,7 @@ Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderu
 \section{Konfidenzintervalle und Bootstrap nach \citet{statistical_rl_evaluation}}
 
 In der Forschungspraxis des Deep Reinforcement Learning ist es aufgrund der enormen Rechenkosten üblich, Algorithmen nur auf einer sehr geringen Anzahl von unabhängigen Trainingsläufen (Seeds) zu evaluieren. \citet{statistical_rl_evaluation} stellen in ihrer Untersuchung fest, dass in der Literatur typischerweise nur 3 bis 10 Runs verwendet werden. Bei derart kleinen Stichproben sind klassische Punktschätzer (wie der Mittelwert) und parametrische Tests (wie der t-Test) oft unzuverlässig, da sie empfindlich auf Ausreißer reagieren und Normalverteilungsannahmen häufig verletzt sind.
-\vspace{\baselineskip}
+\medskip
 
 Um dennoch belastbare Aussagen über die Leistungsfähigkeit der Methoden treffen zu können, empfiehlt \citet{statistical_rl_evaluation} den Einsatz von Bootstrap-Verfahren zur Berechnung von Konfidenzintervallen. Ein \ac{KI} beschreibt den Bereich, in dem der wahre Wert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit (hier 95\%) liegt.
 
@@ -27,7 +27,7 @@ Die Bestimmung der Konfidenzintervalle erfolgt mittels Percentile-Bootstrap. \ci
 
 \section{Vergleich zwei unterschiedlicher Varianten}
 Um zu beurteilen, ob ein Algorithmus A signifikant besser ist als ein Algorithmus B, genügt es nicht, lediglich zu prüfen, ob sich die individuellen Konfidenzintervalle der beiden Varianten überschneiden. \citet{statistical_rl_evaluation} weisen im Anhang A ihrer Arbeit explizit darauf hin, dass dieses Vorgehen irreführend sein kann. Selbst wenn sich Intervalle überlappen, kann ein signifikanter Unterschied vorliegen. Um die Unsicherheit korrekt zu erfassen, muss stattdessen das Konfidenzintervall der \emph{Differenz} berechnet werden (vgl. Figure A.15 in \citet{statistical_rl_evaluation}).
-\vspace{\baselineskip}
+\medskip
 
 Um dies zu erreichen, wird aus den Originaldaten beider Algorithmen in jeder Bootstrap-Iteration \(i\) jeweils eine Stichprobe mit Zurücklegen gezogen, für jede dieser Stichproben die Kennzahl (z.B. IQM) berechnet und daraus die Differenz gebildet: \(\Delta_i = IQM_{A,i} - IQM_{B,i}\). Dies liefert eine empirische Verteilung der Differenzen. Das 95\%-Konfidenzintervall dieser Differenz-Verteilung ermöglicht eine präzise Aussage:
 \begin{itemize}

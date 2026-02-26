@@ -1,7 +1,7 @@
 \chapter{Reinforcement Learning}
 \label{ch:rl_grundlagen}
 
-Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (PPO), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Gating) für gemischte Aktionsräume nachvollziehen zu können.
+Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (\ac{PPO}), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Gating) für gemischte Aktionsräume nachvollziehen zu können.
 
 \section{Einführung in Reinforcement Learning}
 
@@ -78,22 +78,22 @@ Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hy
 Die Wahl der Aktionsraumklasse hat direkte Auswirkungen auf die Architektur der Ausgabeschicht (Output Layer) des neuronalen Netzes und die Art und Weise, wie Aktionen aus den Netzwerkausgaben abgeleitet werden.
 
 \subsubsection*{Diskrete Aktionsräume}
-Stable Baselines3\footnote{Stable Baselines3 (SB3) ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
-\vspace{\baselineskip}
+Stable Baselines3\footnote{Stable Baselines3 (\ac{SB3}) ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
+\medskip
 
 Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen. Bei mehrdimensionalen Aktionsräumen (z.\,B. Lenken und Beschleunigen) wächst die Anzahl der benötigten Kombinationen exponentiell an (kartesisches Produkt der Einzelaktionen), was das Training ineffizient macht \cite{lillicrap2015continuous}.
 
 \subsubsection*{Kontinuierliche Aktionsräume}
-Analog zu den diskreten Räumen modelliert Stable Baselines 3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
+Analog zu den diskreten Räumen modelliert Stable Baselines3 \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
 Für einen $n$-dimensionalen kontinuierlichen Aktionsvektor benötigt das Netzwerk somit lediglich $2n$ Ausgangsneuronen.
 
-\section{Differenzierung verschiedener RL\hyp{}Algorithmen}
+\section{Differenzierung verschiedener \ac{RL}\hyp{}Algorithmen}
 
-Nach der Formalisierung des Problems als MDP stellt sich die Frage nach dem geeigneten Lösungsverfahren. Die Wahl des Algorithmus ist dabei maßgeblich von den Eigenschaften des Problems, wie der Beschaffenheit des Zustands- und Aktionsraums, abhängig.
+Nach der Formalisierung des Problems als \ac{MDP} stellt sich die Frage nach dem geeigneten Lösungsverfahren. Die Wahl des Algorithmus ist dabei maßgeblich von den Eigenschaften des Problems, wie der Beschaffenheit des Zustands- und Aktionsraums, abhängig.
 Algorithmen des \ac{RL} lassen sich grundlegend in modellbasierte und modellfreie Ansätze unterteilen \cite[Kap. 8]{sutton2018rl}. 
 Während modellbasierte Verfahren ein internes Abbild der Systemdynamik (\textit{Transition Model}) erlernen, 
 operieren modellfreie Algorithmen ausschließlich auf Basis der durch Interaktion gesammelten Erfahrungen. Diese Arbeit fokussiert sich auf modellfreie Ansätze, da diese sowohl einfacher zu optimieren als auch in der Praxis weiter verbreitet sind \cite{SpinningUp2018}.
-\vspace{\baselineskip}
+\medskip
 
 Innerhalb der modellfreien Algorithmen wird primär zwischen wertbasierten Methoden (z.\,B. Q\hyp{}Learning) und \textit{Policy\hyp{}Gradient}\hyp{}Methoden unterschieden. 
 Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy\hyp{}Gradient}\hyp{}Methoden inhärent besser für kontinuierliche oder hochdimensionale Aktionsräume 
@@ -103,12 +103,12 @@ geeignet sind und eine direktere Optimierung des angestrebten Verhaltens erlaube
 Im Gegensatz zu wertbasierten Ansätzen, die zunächst eine Wertfunktion lernen und daraus eine Policy ableiten, optimieren \textit{Policy\hyp{}Gradient}\hyp{}Methoden die Policy $\pi_\theta$ des Agenten unmittelbar. 
 Die Policy wird dabei als differenzierbares, parametrisiertes Modell aufgefasst, das in der Regel durch ein künstliches neuronales Netzwerk dargestellt wird und 
 für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das alle möglichen Aktionen ausgibt.
-\vspace{\baselineskip}
+\medskip
 
 Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Da Optimierungs-Frameworks wie PyTorch standardmäßig auf Gradientenabstieg (Minimierung) ausgelegt sind, wird dies äquivalent als Minimierung von $-J(\theta)$ formuliert. 
 Die Anpassung der Parameter $\theta$ erfolgt durch Gradientenabstieg (siehe Abbildung \ref{fig:gradient_descent_3d}), wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
 führen, systematisch erhöht wird \cite[Kap. 13.2]{sutton2018rl}.
-\vspace{\baselineskip}
+\medskip
 
 Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und deren spezifische Bedeutung zusammen, die im Kontext von Policy-Gradient-Methoden und insbesondere \ac{PPO} relevant sind. Diese Variablen bilden die Grundlage für die formale Beschreibung der Lernalgorithmen und deren Anpassungen, die in den folgenden Kapiteln behandelt werden.
 
@@ -116,7 +116,7 @@ Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und der
 \centering
 \begin{tabular}{|p{2cm}|p{3cm}|p{7cm}|} 
 \hline
-\textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im PPO\hyp{}Algorithmus} \\
+\textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im \ac{PPO}\hyp{}Algorithmus} \\
 \hline
 $\theta$          & Policy\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Actor). \\
 $\pi_\theta$      & Policy (Actor)& Liefert Wahrscheinlichkeiten über Aktionen, wobei die Parameter $\theta$ trainiert werden \\
@@ -128,7 +128,7 @@ $A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
 $\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy: $\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ \\
 $L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy\hyp{}Updates zu vermeiden \\
-$L^{VF}_t(\phi)$  & Value Function Loss & Der quadratische Fehler (MSE) zwischen der Schätzung des Critics $V_\phi$ und dem realisierten Return $R_t$. \\
+$L^{VF}_t(\phi)$  & Value Function Loss & Der quadratische Fehler (\ac{MSE}) zwischen der Schätzung des Critics $V_\phi$ und dem realisierten Return $R_t$. \\
 $H[\pi_\theta](s_t)$ & Entropie\hyp{}Bonus & Ein Maß für die Unvorhersehbarkeit der Policy, das eine zu frühe Konvergenz auf ein lokales Optimum verhindert. \\
 $L_t^{total}$     & Totale Verlustfunktion & Die gewichtete Kombination aller Verlustkomponenten, die vom Optimierer minimiert wird ($\approx -J$). \\
 $c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Einfluss von Value Loss und Entropie auf die kombinierte Verlustfunktion \\
@@ -137,7 +137,7 @@ $n\_epochs$       & Anzahl der Trainings\hyp{}Epochen & Gibt an, wie oft die Pol
 \hline
 \end{tabular}
 
-\caption{Übersicht der wichtigsten Variablen im PPO\hyp{}Algorithmus}
+\caption{Übersicht der wichtigsten Variablen im \ac{PPO}\hyp{}Algorithmus}
 \label{tab:ppo_vars}
 \end{table}
 
@@ -155,19 +155,19 @@ dient als rauscharmes Signal für das Update des Actors und reduziert die Varian
 \section{Proximal Policy Optimization}
 Als konkreter Algorithmus kommt in dieser Arbeit die \ac{PPO} zum Einsatz. Er stellt eine Weiterentwicklung innerhalb der \textit{Policy\hyp{}Optimization}\hyp{}Verfahren dar.
 \ac{PPO} setzt auf eine Actor\hyp{}Critic\hyp{}Architektur und adressiert die Instabilität klassischer Gradientenverfahren, bei denen zu große Aktualisierungsschritte die Policy in Regionen des Parameterraums treiben können, aus denen eine Erholung kaum möglich ist \cite{OriginalPPO}.
-\vspace{\baselineskip}
+\medskip
 
-Der Kern von PPO ist das \textit{Clipped Surrogate Objective}. Durch diese Zielfunktion wird die Änderung der Policy pro Update\hyp{}Schritt begrenzt (Clipping).
-PPO bietet gegenüber verwandten Methoden wie TRPO (\textit{Trust Region Policy Optimization}) eine höhre Hyperparameterstabilität \cite[Abschn. 2.2]{OriginalPPO} und reduziert somit die Anfälligkeit gegenüber schlechten Hyperparametereinstellungen.
-\vspace{\baselineskip}
+Der Kern von \ac{PPO} ist das \textit{Clipped Surrogate Objective}. Durch diese Zielfunktion wird die Änderung der Policy pro Update\hyp{}Schritt begrenzt (Clipping).
+\ac{PPO} bietet gegenüber verwandten Methoden wie \ac{TRPO} (\textit{Trust Region Policy Optimization}) eine höhre Hyperparameterstabilität \cite[Abschn. 2.2]{OriginalPPO} und reduziert somit die Anfälligkeit gegenüber schlechten Hyperparametereinstellungen.
+\medskip
 
-Die Wahl von PPO für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
+Die Wahl von \ac{PPO} für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
 diskret\hyp{}kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \textit{Stable Baselines3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
 was für das in dieser Arbeit vorgestellte \textit{Gradient\hyp{}Gating} essentiell ist.
 
 \subsection{Trainingsablauf}
 Der in Algorithmus \ref{alg:ppo_training} dargestellte Ablauf verdeutlicht die Trennung zwischen Datenerhebung und Optimierung, die für das Verständnis des später implementierten \textit{Gradient\hyp{}Gating} essenziell ist.
-Der PPO\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Rollout\hyp{}Phase} und der \textit{Optimierungsphase}.
+Der \ac{PPO}\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Rollout\hyp{}Phase} und der \textit{Optimierungsphase}.
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
@@ -200,14 +200,14 @@ Der PPO\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Rollout
     \EndFor
 \EndWhile
 \end{algorithmic}
-\caption{Beispielhaft vereinfachter PPO-Trainingsablauf}
+\caption{Beispielhaft vereinfachter \ac{PPO}-Trainingsablauf}
 \label{alg:ppo_training}
 \end{algorithm}
 
 
 Während der Rollout\hyp{}Phase (Zeilen 5--13) interagiert der Agent mit der Umgebung und sammelt Erfahrungen in Form von Trajektorien.
 Dabei werden für jeden Zeitschritt die Zustände, ausgeführten Aktionen, erhaltenen Belohnungen sowie die \textit{logarithmischen Wahrscheinlichkeiten} der gewählten Aktionen unter der aktuellen Policy im Buffer gespeichert.
-\vspace{\baselineskip}
+\medskip
 
 In der Optimierungsphase (Zeilen 14--27) findet die eigentliche Anpassung der Netzwerkgewichte statt. Hierbei werden die im Vorfeld berechneten 
 Advantage\hyp{}Werte genutzt, um das \textit{Clipped Surrogate Objective} zu berechnen. 
@@ -315,7 +315,7 @@ der Ableitungen an dieser Stelle unterbrochen, sodass der Tensor für das System
 Obwohl der Tensor seine numerischen Werte für nachfolgende Berechnungen beibehält, unterbindet er 
 den Rückfluss der Gradienten zu den vorangegangenen Schichten.
 Ergänzend dazu ermöglichen Kontextmanager wie \texttt{with torch.no\_grad():}, die Aufzeichnung von Operationen für ganze Codeblöcke temporär zu deaktivieren.
-\vspace{\baselineskip}
+\medskip
 
 In dieser Arbeit werden diese Mechanismen genutzt,
 um ein \textit{Gradient\hyp{}Gating} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
@@ -367,7 +367,7 @@ Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehlo
     \caption[Gradient\hyp{}Gating Auswirkung]{Auswirkung von Gradient\hyp{}Gating auf den Optimierungspfad. Da der Parameter $\theta_1$ vom Rückfluss der Gradienten ausgeschlossen ist, erfolgt die Optimierung ausschließlich entlang der Achse $\theta_2$. Der Parameter $\theta_1$ verharrt auf seinem Initialwert.}
     \label{fig:gradient_descent_gated}
 \end{figure}
-\vspace{\baselineskip}
+\medskip
 
 Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gated} eine Projektion des hochdimensionalen Parameterraums auf zwei Dimensionen darstellt. $\theta_1$ steht hierbei stellvertretend für alle Netzwerk\hyp{}Gewichte, die einem aktuell inaktiven Aktionszweig zugeordnet sind, während $\theta_2$ die Parameter des aktiven Zweigs repräsentiert. In der Praxis führt das Gating dazu, dass die Parameter des inaktiven Zweigs ($\theta_1$) eingefroren werden und somit vor dem Einfluss von Rauschen geschützt sind, solange ihre Aktion nicht zur Ausführung kommt.
 

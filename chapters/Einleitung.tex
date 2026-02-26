@@ -2,7 +2,7 @@
 \label{ch:intro}
 Diese Arbeit wurde im Rahmen des Dualen Studiums der Informatik an der Hochschule Darmstadt in Kooperation mit der \ac{DFS} erstellt.
 Die Inhalte dieser Arbeit basieren zum Teil auf den Anforderungen, Erfahrungen und Erkenntnissen, die im Rahmen des Praxisprojekts der dritten Praxisphase im Team 
-TI/TD\footnote{Das Team TI/TD ist für die Simulatorentwicklung innerhalb der DFS zuständig.} der \ac{DFS} gesammelt wurden. Dieses Projekt baut auf einer vorherigen Bachelorarbeit \cite{dominikDiez} auf, die Reinforcement Learning als Lösungsansatz für die teilautomatisierte Flugverkehrssteuerung in der Adjacent-Position untersucht hat.
+TI/TD\footnote{Das Team TI/TD ist für die Simulatorentwicklung innerhalb der \ac{DFS} zuständig.} der \ac{DFS} gesammelt wurden. Dieses Projekt baut auf einer vorherigen Bachelorarbeit \cite{dominikDiez} auf, die Reinforcement Learning als Lösungsansatz für die teilautomatisierte Flugverkehrssteuerung in der Adjacent-Position untersucht hat.
 
 %
 % Section: Motivation
@@ -11,10 +11,10 @@ TI/TD\footnote{Das Team TI/TD ist für die Simulatorentwicklung innerhalb der DF
 \label{sec:intro:motivation}
 Das Team TI/TD der \ac{DFS} entwickelt Simulatoren, die in der Aus- und Weiterbildung von Fluglotsen eingesetzt werden. 
 Während der Simulatorübungen arbeiten die Lotsen in der Ausbildung nicht allein, sondern mit sogenannten Adjacent-Lotsen zusammen. Diese Adjacent-Lotsen sind für benachbarte Luftraumsektoren zuständig und übernehmen dort die Verkehrssteuerung der Flugzeuge. Sie koordinieren sich mit den Azubis, damit Flugzeuge sicher zwischen den Sektoren übergeben werden können. 
-\vspace{\baselineskip}
+\medskip
 
 TI/TD betreut mehrere Simulatoren, darunter auch NewSim Web, einen browserbasierten Simulator.
-Dieser soll es Lotsen ermöglichen, von Zuhause selbstständig zu üben. Speziell in diesem Szenario wäre eine KI-gestützte Lösung für die Adjacent-Position eine sinnvolle Erweiterung, da sie den Ausbildern die Arbeit abnehmen und den Trainees zusätzlich zu den im Vorhinein gebauten Szenarien mehr Übungsmöglichkeiten bieten könnte.
+Dieser soll es Lotsen ermöglichen, von Zuhause selbstständig zu üben. Speziell in diesem Szenario wäre eine \ac{KI}-gestützte Lösung für die Adjacent-Position eine sinnvolle Erweiterung, da sie den Ausbildern die Arbeit abnehmen und den Trainees zusätzlich zu den im Vorhinein gebauten Szenarien mehr Übungsmöglichkeiten bieten könnte.
 %
 % Section: Ziele
 %
@@ -32,7 +32,7 @@ Zur Beantwortung dieser Frage werden vier konkrete Untersuchungsziele definiert,
 \begin{itemize}
     \item \textbf{Abbildung von Noops:} In welcher Form lässt sich eine explizite Repräsentation von Nicht-Eingriffen (\emph{No-Operation}) im Aktionsraum realisieren, die zur Vermeidung redundanter Steuerbefehle führt?
     \item \textbf{Architektonische Machbarkeit:} Ermöglicht eine Architektur mit hybridem Aktionsraum (diskret und kontinuierlich) dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe?
-    \item \textbf{Algorithmische Machbarkeit:} Lässt sich der Proximal-Policy-Optimization-Algorithmus (PPO) durch die Integration von \emph{Gradient\hyp{}Gating} derart modifizieren, dass ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum ohne Beeinträchtigung der Konvergenz gewährleistet ist?
+    \item \textbf{Algorithmische Machbarkeit:} Lässt sich der Proximal-Policy-Optimization-Algorithmus (\ac{PPO}) durch die Integration von \emph{Gradient\hyp{}Gating} derart modifizieren, dass ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum ohne Beeinträchtigung der Konvergenz gewährleistet ist?
     \item \textbf{Operativer Mehrwert:} Resultiert aus dem erhöhten architektonischen Aufwand ein quantifizierbarer operativer Mehrwert (insbesondere im Hinblick auf eine reduzierte Eingriffsfrequenz, effizientere Flugführung oder gesteigerte Erfolgsrate) im Vergleich zu einem Agenten mit rein diskretem Aktionsraum?
 \end{itemize}
 
@@ -47,7 +47,7 @@ Zu Beginn der Arbeit werden in Kapitel \ref{ch:fs_grundlagen} die Grundlagen der
 Anschließend werden in Kapitel \ref{ch:rl_grundlagen} die theoretischen Grundlagen der Lösungsdomäne (\ac{RL}) und relevanten Algorithmen vorgestellt. 
 Danach wird in Kapitel \ref{ch:Statistische_Auswertung} auf die statistischen Methoden zur Auswertung der Experimente eingegangen.
 In Kapitel \ref{ch:konzeption} werden die Definition von Zustands- und Aktionsräumen sowie der Belohnungsfunktion behandelt.
-Darauf aufbauend beschreibt Kapitel \ref{ch:ppo_bedingt} die notwendigen algorithmischen Anpassungen des PPO\hyp{}Algorithmus, um die Besonderheiten des zuvor definierten gemischten Aktionsraums effizient zu handhaben. Desweiteren wird auf daraus resultierende Probleme eingegangen und Lösungsmöglichkeiten vorgestellt.
+Darauf aufbauend beschreibt Kapitel \ref{ch:ppo_bedingt} die notwendigen algorithmischen Anpassungen des \ac{PPO}\hyp{}Algorithmus, um die Besonderheiten des zuvor definierten gemischten Aktionsraums effizient zu handhaben. Desweiteren wird auf daraus resultierende Probleme eingegangen und Lösungsmöglichkeiten vorgestellt.
 Kapitel \ref{ch:evaluation} widmet sich der Evaluation des \ac{RL}-Systems, in welchem die durchgeführten Experimente und deren Ergebnisse präsentiert und analysiert werden.
 Abschließend werden in Kapitel \ref{ch:zusammenfassung} die Ergebnisse der Arbeit zusammengefasst und ein Ausblick auf mögliche zukünftige Arbeiten gegeben.
 

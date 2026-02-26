@@ -8,10 +8,13 @@ Die zentrale Forschungsfrage, wie die Architektur eines \ac{RL}-Agenten und dess
 
 \subsection*{Ergebnisse der Evaluation}
 Die experimentelle Evaluation erfolgte in drei Versuchsreihen, die unterschiedliche Aspekte der entwickelten Lösung untersuchten:
+\medskip
 
 Der erste Versuch (\ref{sec:versuch1}) erbrachte den Nachweis, dass die Anpassungen am \ac{PPO}-Algorithmus die Lernfähigkeit nicht beeinträchtigen. Die Modifikationen führten zu signifikanten Verbesserungen des finalen Rewards in der LunarLander-Umgebung und reduzierten zudem die Varianz der Ergebnisse, was auf eine erhöhte Stabilität des Lernprozesses hinweist.
+\medskip
 
 Der zweite Versuch (\ref{sec:versuch2}) in der Flugverkehrsumgebung lieferte differenziertere Ergebnisse. Während keine signifikante Verbesserung des finalen Rewards nachgewiesen werden konnte, traten Instabilitäten im Trainingsverhalten auf. Die dabei gewonnenen Erkenntnisse über die Sensitivität gegenüber Hyperparametern waren jedoch wertvoll für die weitere Optimierung.
+\medskip
 
 Der dritte Versuch (\ref{sec:versuch3}) nutzte die Erfahrungen aus den vorherigen Experimenten zur gezielten Anpassung der Hyperparameter. Obgleich auch hier kein signifikant besserer finaler Reward erzielt wurde, konnten andere zentrale Kennzahlen signifikant verbessert werden: Die Agenten zeigten eine frühere Konvergenz und eine deutlich bessere Ausnutzung von \emph{Noops}, was auf ein ruhigeres und effizienteres Steuerungsverhalten hindeutet. Dies bestätigt, dass die Anpassungen den angestrebten Effekt einer nachhaltigen Steuerungsstrategie mit reduzierter Eingriffsfrequenz erzielt haben.
 
@@ -28,7 +31,7 @@ Die in Kapitel \ref{sec:intro:goal} definierten Untersuchungsziele wurden weitge
 Bei der Interpretation der Ergebnisse sind folgende Einschränkungen zu berücksichtigen: Die Evaluation erfolgte in einem stark vereinfachten Szenario mit eingeschränktem Aktionsraum (ausschließlich laterale Manöver). Die aufgetretenen Instabilitäten in Versuch \ref{sec:versuch2} deuten darauf hin, dass eine umfassendere Hyperparameter-Optimierung, beispielsweise mittels automatisierter Verfahren wie Optuna, zu robusteren Ergebnissen führen könnte. Eine Wiederholung des zweiten Versuchs mit den optimierten Hyperparametern aus Versuch \ref{sec:versuch3} wäre zur Validierung der Ergebnisse sinnvoll.
 
 \subsection*{Schlussfolgerung}
-Zusammenfassend lässt sich festhalten, dass die vorliegende Arbeit einen erfolgreichen Proof of Concept für die Anwendung von \ac{RL} im Kontext der Flugverkehrssteuerung mit expliziter Modellierung von Nicht-Eingriffen darstellt. Die Ergebnisse zeigen, dass durch gezielte architektonische und algorithmische Anpassungen ein ruhigeres und effizienteres Steuerungsverhalten erzielt werden kann, was einen wichtigen Schritt in Richtung praxistauglicher KI-unterstützter Flugsicherungssysteme darstellt. Die gewonnenen Erkenntnisse über die Bedeutung der Hyperparameter-Wahl und die Herausforderungen bei der Stabilisierung des Lernprozesses bieten wertvolle Anhaltspunkte für zukünftige Forschungsarbeiten in diesem Bereich.
+Zusammenfassend lässt sich festhalten, dass die vorliegende Arbeit einen erfolgreichen Proof of Concept für die Anwendung von \ac{RL} im Kontext der Flugverkehrssteuerung mit expliziter Modellierung von Nicht-Eingriffen darstellt. Die Ergebnisse zeigen, dass durch gezielte architektonische und algorithmische Anpassungen ein ruhigeres und effizienteres Steuerungsverhalten erzielt werden kann, was einen wichtigen Schritt in Richtung praxistauglicher \ac{KI}-unterstützter Flugsicherungssysteme darstellt. Die gewonnenen Erkenntnisse verdeutlichen insbesondere, dass die Nutzung getrennter Netzwerkpfade zur Vermeidung von \emph{Negative Transfer} vorteilhaft für einen stabilen Lernprozess sein kann und wertvolle Anhaltspunkte für zukünftige Forschungsarbeiten in diesem Bereich bietet.
 
 \section{Ausblick}
 \label{ch:Future_Work}
@@ -38,12 +41,15 @@ Während der Entwicklung und Evaluation des \ac{RL}\hyp{}Agenten wurden einige A
 Der in dieser Arbeit entwickelte Agent operiert in einem eingeschränkten Aktionsraum, der sich primär auf horizontale Kursänderungen fokussiert. In der realen Flugsicherung stehen Lotsen jedoch weitere Freiheitsgrade zur Verfügung, insbesondere Geschwindigkeitsanpassungen (\emph{Speed Control}) und Höhenänderungen (\emph{Vertical Rate}). Die Integration dieser Dimensionen in das \ac{RL}-Framework würde nicht nur effizientere Trajektorien ermöglichen, sondern auch die Lösung komplexer Konfliktsituationen erlauben, die allein durch laterale Manöver schwer beherrschbar sind.
 
 \subsection*{Imitationslernen von Expertenwissen}
-Ein häufiger Kritikpunkt an rein explorativ trainierten KI-Systemen ist das mitunter \enquote{unnatürliche} Lösungsverhalten. Durch die Nutzung von \emph{Imitation Learning} \cite{imitationLearning} könnte der Agent initial auf Basis historischer Radarspuren und menschlicher Lotsenkommandos trainiert werden. Dieser Ansatz des \emph{Behavior Cloning} würde sicherstellen, dass die Basis-Policy bereits menschlichen Erwartungen entspricht, bevor sie durch exploratives \ac{RL} weiter optimiert wird.
+Ein häufiger Kritikpunkt an rein explorativ trainierten \ac{KI}-Systemen ist das mitunter \enquote{unnatürliche} Lösungsverhalten. Durch die Nutzung von \emph{Imitation Learning} \cite{imitationLearning} könnte der Agent initial auf Basis historischer Radarspuren und menschlicher Lotsenkommandos trainiert werden. Dieser Ansatz des \emph{Behavior Cloning} würde sicherstellen, dass die Basis-Policy bereits menschlichen Erwartungen entspricht, bevor sie durch exploratives \ac{RL} weiter optimiert wird.
 
 \subsection*{Systemintegration und Simulationsschnittstellen}
 Für den Transfer von der Forschung in den operativen Betrieb ist die technische Lücke zwischen Trainings- und Produktionsumgebung zu schließen. Während das Training effizient in Python-Frameworks erfolgt, basiert der Simulator der Deutschen Flugsicherung auf Java. Der Export der trainierten Policies in das \emph{Open Neural Network Exchange} (ONNX) Format erlaubt eine nahtlose und performante Integration in die Java-Umgebung, ohne dass die Agenten-Logik neu implementiert werden muss.
+\medskip
 
 Ergänzend hierzu sollte betrachtet werden, wie der Simulator nicht nur zur reinen Anwendung der trainierten Agenten, sondern direkt als Trainingsumgebung genutzt werden kann. Dies erfordert die Konzeption einer hochperformanten Schnittstelle zwischen der Java-Simulation und den Python-basierten Lernalgorithmen. Eine solche Anbindung würde Trainingsläufe direkt auf der produktiven Logik ermöglichen, stellt jedoch hohe Anforderungen an die Effizienz der Datenkommunikation, um die Trainingsdauer nicht durch Latenzen negativ zu beeinflussen.
+\medskip
+
 
 \subsection*{Multi-Agenten-Systeme}
 Die Integration von mehreren \ac{RL}\hyp{}Agenten, die kooperativ zusammenarbeiten, um den Flugverkehr zu steuern, könnte realistischere Szenarien abbilden und die Effizienz der Konfliktlösung erhöhen. Insbesondere in komplexen Luftraumstrukturen ist die Koordination zwischen mehreren Akteuren essenziell.
@@ -53,9 +59,12 @@ Standard-\ac{RL}\hyp{}Algorithmen arbeiten üblicherweise mit festen Zeitschritt
 
 \subsection*{Selfplay und Curriculum Learning}
 Die Anwendung von Selfplay-Techniken, bei denen der Agent gegen Kopien seiner selbst oder gegen andere trainierte Agenten antritt, könnte die Robustheit und Generalisierungsfähigkeit signifikant verbessern. Ansätze hierzu wurden im Laufe der Entwicklung bereits kurzzeitig evaluiert, scheiterten jedoch am exponentiell gestiegenen Rechenaufwand. 
+\medskip
+
 Ein vielversprechender Ansatz für zukünftige Arbeiten wäre das Training gegen ältere Versionen des eigenen Agenten (\enquote{League Training}), um das Verhalten in einer zunehmend realistischen Umgebung zu schärfen. Dieses Konzept des stufenweise anspruchsvolleren Trainings wird auch als \emph{Curriculum Learning} bezeichnet und könnte helfen, lokale Optima zu vermeiden.
 
 \subsection*{Bildbasierte Zustandserfassung}
 Ein fundamentaler alternativer Ansatz bei der Modellierung des Beobachtungsraums ist die Nutzung von Bilddaten, welche die grafische Darstellung des Radarschirms repräsentieren. Dieser Ansatz findet in der Mehrheit der bisherigen Forschungsarbeiten Verwendung, da er eine elegante Lösung für das Problem variabler Observationsvektoren bietet: Unabhängig von der Anzahl der Flugzeuge im Sektor bleibt die Dimension der Eingabe (Bildgröße) konstant.
+\medskip
 
 Die Vorteile liegen in der intuitiven Erfassung räumlicher Relationen durch \emph{Convolutional Neural Networks} (CNNs), die visuelle Konfliktmustern ähnlich wie ein menschlicher Lotse verarbeiten können. Dem gegenüber stehen jedoch Nachteile, wie der Verlust an Präzision im Vergleich zu exakten numerischen Zustandsvektoren und der signifikant erhöhte Rechenaufwand für das Training der Bildverarbeitungsnetzwerke. Zudem macht dieser Ansatz den Agenten abhängig von der visuellen Repräsentation der Simulation, was die Übertragbarkeit auf andere Sektoren erschweren kann.

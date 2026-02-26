@@ -2,12 +2,12 @@
 \label{ch:konzeption}
 
 Nachdem die theoretischen Fundamente der Flugsicherung und des Reinforcement Learning gelegt sind, widmet sich dieses Kapitel der konkreten Überführung der Problemstellung in ein trainierbares System. Die Konzeption der Lernumgebung ist der entscheidende Entwicklungsschritt, in dem abstrakte Anforderungen in ein mathematisch greifbares \ac{MDP} übersetzt werden.
-\vspace{\baselineskip}
+\medskip
 
 Die Qualität der hier getroffenen Designentscheidungen, von der Auswahl der Zustandsmerkmale bis zur Ausgestaltung der Belohnungsfunktion, bestimmt maßgeblich, ob der Agent in der Lage sein wird, nicht nur konfliktfreie, sondern auch operativ sinnvolle und effiziente Strategien zu entwickeln. Ein besonderer Schwerpunkt liegt dabei auf der Modellierung des Aktionsraums, da hier der zentrale Hebel zur Reduktion unnötiger Steuerbefehle (Jittering) vermutet wird. Zu diesem Zweck werden zwei konkurrierende Ansätze vorgestellt: ein klassischer diskreter Aktionsraum und ein neuartiger gemischter Ansatz.
-\vspace{\baselineskip}
+\medskip
 
-Im Folgenden wird zunächst die technische Integration des Flugsimulators Bluesky sowie die Generierung relevanter Trainingsszenarien erläutert. Darauf aufbauend erfolgt die detaillierte Definition der MDP-Komponenten, bevor abschließend die Wahl des PPO-Algorithmus als geeignetes Lernverfahren begründet wird.
+Im Folgenden wird zunächst die technische Integration des Flugsimulators Bluesky sowie die Generierung relevanter Trainingsszenarien erläutert. Darauf aufbauend erfolgt die detaillierte Definition der \ac{MDP}-Komponenten, bevor abschließend die Wahl des \ac{PPO}-Algorithmus als geeignetes Lernverfahren begründet wird.
 
 \section{Anforderungen aus der Problemdomäne}
 Vor der detaillierten Beschreibung des \ac{RL}\hyp{}Systems ist ein Verständnis der spezifischen Anforderungen der Flugverkehrskontrolle essenziell. 
@@ -20,7 +20,7 @@ Der \ac{RL}\hyp{}Agent soll daher lernen, Konflikte unter Minimierung von Steuer
 Die Anwendung von Reinforcement Learning im Kontext der Flugverkehrskontrolle ist ein aktives Forschungsfeld, das sich mit der Automatisierung von Entscheidungsprozessen in komplexen, dynamischen Umgebungen beschäftigt.
 Viele Arbeiten konzentrieren sich auf die Entwicklung von Agenten, die in der Lage sind, Konflikte zu erkennen und zu lösen, wobei jedoch die Effizienz der Steuerbefehle oft nicht explizit adressiert wird.
 
-Die Arbeit von \citet{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}Gym\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
+Die Arbeit von \citet{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}\ac{GYM}\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
 Diese Arbeit erweitert die bisherigen Ansätze, indem sie nicht nur die Konfliktlösung, sondern auch die Minimierung von Steuerbefehlen in den Fokus stellt. 
 Die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option stellt eine innovative Erweiterung dar, die es dem Agenten ermöglicht, zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe zu differenzieren, was in der Literatur bisher wenig Beachtung gefunden hat.
 
@@ -40,20 +40,20 @@ Die Auswahl des Szenariotyps während des Trainings erfolgt randomisiert, wobei 
 
 \section{Simulatorintegration und Environment}
 Als Simulationskern dient Bluesky \cite{bluesky}, eine Open\hyp{}Source\hyp{}Flugsimulationsplattform, die eine realistische Modellierung der Flugzeugdynamik bietet und Schnittstellen für externe Steuerungssysteme bereitstellt.
-Die Interaktion zwischen der Reinforcement\hyp{}Learning\hyp{}Umgebung (Gym) und Bluesky erfolgt über eine dedizierte Adapter\hyp{}Schicht. Diese übersetzt die Aktionen des Agenten in simulatorverständliche Steuerbefehle und extrahiert im Gegenzug die relevanten Zustandsinformationen für das Training.
-\vspace{\baselineskip}
+Die Interaktion zwischen der Reinforcement\hyp{}Learning\hyp{}Umgebung (\ac{GYM}) und Bluesky erfolgt über eine dedizierte Adapter\hyp{}Schicht. Diese übersetzt die Aktionen des Agenten in simulatorverständliche Steuerbefehle und extrahiert im Gegenzug die relevanten Zustandsinformationen für das Training.
+\medskip
 
 Die modulare Architektur der Adapter\hyp{}Schicht erlaubt einen potenziellen Austausch des Simulators, was im Hinblick auf eine geplante Migration auf den Simulator NewSim der DFS von Bedeutung ist.
 Die Entscheidung für Bluesky fiel primär aufgrund der Implementierung in Python. 
 Dies ermöglichte eine direkte Integration in das Python\hyp{}basierte \ac{RL}\hyp{}Framework ohne die Notwendigkeit komplexer Schnittstellen für den Datenaustausch zwischen unterschiedlichen Programmiersprachen, was die Implementierungskomplexität signifikant verringerte.
-Zudem konnte auf Vorarbeiten des Projekts Bluesky\hyp{}Gym \cite{bluesky-gym} aufgebaut werden.
+Zudem konnte auf Vorarbeiten des Projekts Bluesky\hyp{}\ac{GYM} \cite{bluesky-gym} aufgebaut werden.
 
 \section{Technische Optimierung der Lernumgebung}
-Ein kritischer, oft unterschätzter Faktor im Reinforcement Learning ist die Ausführungsgeschwindigkeit der Umgebung. Da moderne RL-Algorithmen wie PPO typischerweise Millionen von Interaktionsschritten benötigen, um zu konvergieren, summieren sich selbst minimale Verzögerungen pro Zeitschritt zu erheblichen Wartezeiten. Eine performante Implementierung ist daher nicht nur eine Frage der Effizienz, sondern bestimmt maßgeblich die Entwicklungsgeschwindigkeit, da sie schnellere Iterationszyklen und damit häufigeres Testen von Hypothesen ermöglicht.
-\vspace{\baselineskip}
+Ein kritischer, oft unterschätzter Faktor im Reinforcement Learning ist die Ausführungsgeschwindigkeit der Umgebung. Da moderne \ac{RL}-Algorithmen wie \ac{PPO} typischerweise Millionen von Interaktionsschritten benötigen, um zu konvergieren, summieren sich selbst minimale Verzögerungen pro Zeitschritt zu erheblichen Wartezeiten. Eine performante Implementierung ist daher nicht nur eine Frage der Effizienz, sondern bestimmt maßgeblich die Entwicklungsgeschwindigkeit, da sie schnellere Iterationszyklen und damit häufigeres Testen von Hypothesen ermöglicht.
+\medskip
 
 Um diesem Anspruch gerecht zu werden, wurde der Python-Code der Umgebung gezielt auf Performance optimiert. Ein Nadelöhr in Python-basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen. Zur Beschleunigung kam die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode, was insbesondere bei mathematischen Berechnungen (wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum) zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen führt.
-\vspace{\baselineskip}
+\medskip
 
 Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne CPU-Instruktionen (SIMD) effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
 
@@ -65,27 +65,27 @@ Die technische Umsetzung erfolgte mittels der Bibliothek Pygame \cite{pygame}, w
 \section{Definition der RL\hyp{}Umgebung}
 Die Umgebung (Environment) bildet die Schnittstelle zwischen dem \ac{RL}\hyp{}Agenten und der Simulation. 
 Sie definiert den Zustandsraum, den Aktionsraum sowie die Belohnungsfunktion.
-Die Implementierung folgt der Spezifikation von OpenAI Gym \cite{OpenAI-Gym}, um die Kompatibilität mit etablierten \ac{RL}\hyp{}Bibliotheken wie Stable Baselines3 \cite{sb3} sicherzustellen.
+Die Implementierung folgt der Spezifikation von OpenAI \ac{GYM} \cite{OpenAI-Gym}, um die Kompatibilität mit etablierten \ac{RL}\hyp{}Bibliotheken wie Stable Baselines3 \cite{sb3} sicherzustellen.
 
 \subsection{Zustandsraum}
 Das Design des Zustandsraums zielt darauf ab, dem Agenten alle relevanten Informationen zur Konflikterkennung und \hyp{}lösung bereitzustellen, ohne die Generalisierungsfähigkeit zu beeinträchtigen. 
 Eine hohe Generalisierung ist erforderlich, damit der Agent auch in unbekannten Situationen, die nicht Teil der Trainingsdaten waren, robuste Entscheidungen trifft.
-\vspace{\baselineskip}
+\medskip
 
 Absolute Positionsdaten erwiesen sich als ungeeignet, da sie stark an spezifische Szenarien gebunden sind. 
 Stattdessen werden relative Positionsdaten verwendet, die eine abstraktere und damit besser generalisierbare Repräsentation der Verkehrslage ermöglichen.
-\vspace{\baselineskip}
+\medskip
 
 Ein weiterer technischer Aspekt ist die stetige Repräsentation zyklischer Merkmale. 
 Die direkte Verwendung von Winkelgraden ist problematisch, da die Werte $0^\circ$ und $360^\circ$ numerisch weit auseinanderliegen, obwohl sie identische Zustände beschreiben. 
 Um Sprungstellen im Zustandsraum zu vermeiden, werden Winkel durch ihre Sinus\hyp{} und Kosinuskomponenten kodiert.
-\vspace{\baselineskip}
+\smallskip
 
 Da neuronale Netze in der Regel Eingabevektoren fester Länge erwarten, muss die Dimension des Zustandsraums unabhängig von der variablen Anzahl der Flugzeuge im Sektor konstant bleiben. 
 Dies wird durch die Festlegung einer maximalen Slot\hyp{}Anzahl für beobachtbare Flugzeuge und das Auffüllen (Padding) ungenutzter Slots mit neutralen Werten erreicht. 
 Die Auswahl, welche Flugzeuge in den Zustandsvektor aufgenommen werden, erfolgt priorisiert nach deren Konfliktpotential.
 Dieses wird mittels der \ac{CPA}\hyp{}Methode \cite{CPA} bestimmt, wobei die Zeit bis zum nächsten Konflikt sowie die Anzahl der prognostizierten Konflikte die ausschlaggebenden Metriken darstellen.
-\vspace{\baselineskip}
+\medskip
 
 Der Zustandsraum beider Umgebungen umfasst folgende Merkmale:
 \begin{itemize}
@@ -126,13 +126,13 @@ Die Berechnung zukünftiger Konflikte basiert auf dem \ac{CPA}\hyp{}Verfahren (C
 Die entwickelte Lernumgebung beschränkt sich auf die Konfliktlösung mittels Vectoring (Kursänderungen). 
 Diese Eingrenzung dient der Reduktion der Komplexität des Modells. 
 Obgleich operative Fluglotsen auch über Geschwindigkeits\hyp{} und Höhenänderungen verfügen, bleibt die Integration dieser Freiheitsgrade zukünftigen Untersuchungen vorbehalten.
-\vspace{\baselineskip}
+\medskip
 
 Ein rein kontinuierlicher Aktionsraum erwies sich für die Anforderungen als unzureichend, da er die Modellierung einer expliziten \emph{Noop}-Aktion (No Operation) erschwert, also den bewussten Verzicht auf einen Eingriff. 
 Ein kontinuierlicher Output von $0^\circ$ ist funktional nicht äquivalent zu \emph{Noop}, insbesondere unter Berücksichtigung der Latenz bei der Befehlsumsetzung. 
 Wenn im vorangegangenen Zeitschritt eine signifikante Kursänderung eingeleitet wurde, ermöglicht \emph{Noop} dem Agenten, dieses Manöver ohne weitere Störimpulse abzuschließen.
 Ein zentrales Lernziel ist die Minimierung der Interventionsrate. Der Agent soll idealerweise nur zwei Aktionen pro Konflikt ausführen, das Ausweichmanöver und die anschließende Rückkehr auf die Route (Direct Route).
-\vspace{\baselineskip}
+\medskip
 
 Der Aktionsraum wurde in zwei Varianten implementiert:
 \begin{itemize}
@@ -147,13 +147,13 @@ Der Aktionsraum wurde in zwei Varianten implementiert:
 \end{itemize}
 
 Die Implementierung des gemischten Aktionsraums stellte besondere Anforderungen an den Lernalgorithmus. 
-Kapitel \ref{ch:ppo_bedingt} erläutert die notwendigen Modifikationen am PPO\hyp{}Algorithmus zur Handhabung bedingter Aktionsräume.
+Kapitel \ref{ch:ppo_bedingt} erläutert die notwendigen Modifikationen am \ac{PPO}\hyp{}Algorithmus zur Handhabung bedingter Aktionsräume.
 
 \subsection{Belohnungsfunktion}
 Das Design der Belohnungsfunktion (Reward Function) erfordert eine sorgfältige Abwägung zwischen den konkurrierenden Zielen der Konfliktvermeidung und der Flugeffizienz.
 Um die Komplexität des Lernproblems handhabbar zu halten, wurde die Anzahl der Einflussfaktoren auf ein notwendiges Minimum beschränkt.
 Eine übermäßig komplexe Reward\hyp{}Struktur kann die Konvergenz des Modells erschweren, da die Kausalität zwischen Aktion und Belohnung für den Agenten schwerer zu extrahieren ist.
-\vspace{\baselineskip}
+\medskip
 
 Die implementierte Belohnungsfunktion setzt sich aus folgenden Komponenten zusammen:
 \begin{itemize}
@@ -166,7 +166,7 @@ Die implementierte Belohnungsfunktion setzt sich aus folgenden Komponenten zusam
 \end{itemize}
 
 Explizit wurde auf eine distanzbasierte Belohnung (\textit{Proximity Reward}) verzichtet, da diese anfällig für \textit{Reward Hacking} ist: Agenten könnten lernen, das Ziel lediglich zu umkreisen, um kontinuierlich Belohnung zu sammeln, ohne es zu erreichen. Die Ausrichtung auf das Ziel (Heading Alignment) löst dieses Navigationsproblem robuster und impliziert zudem eine natürliche Gewichtung der Präzision: Je näher das Flugzeug dem Ziel kommt, desto empfindlicher reagiert der relative Winkel auf Positionsänderungen, was automatisch eine höhere Genauigkeit im Endanflug einfordert.
-\vspace{\baselineskip}
+\medskip
 
 Es wurde Wert auf die Verwendung von sogenannten \emph{Dense Rewards} gelegt, also kontinuierlichen Rückmeldungen in jedem Zeitschritt. 
 Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Qualität seiner Zustandsänderungen erhält \cite[Kap. 17.4]{sutton2018rl}, im Gegensatz zu \emph{Sparse Rewards}, die nur selten vergeben werden.
@@ -175,7 +175,7 @@ Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Quali
 \label{sc:env_metrics}
 Die Analyse der Trainings\hyp{} und Evaluationsergebnisse stützt sich auf eine Reihe definierter Metriken. Diese dienen nicht nur der Leistungsbewertung, sondern auch dem Fine\hyp{}Tuning der Belohnungsfunktion.
 Die Metriken müssen hinreichend detailliert sein, um zu verifizieren, ob das erlernte Verhalten den Anforderungen der Domäne entspricht.
-\vspace{\baselineskip}
+\medskip
 
 Folgende Schlüsselmetriken werden erhoben:
 \begin{itemize}
@@ -188,23 +188,23 @@ Folgende Schlüsselmetriken werden erhoben:
 \end{itemize}
 
 \section{Auswahl des RL\hyp{}Algorithmus}
-Für das Training des Agenten wurde Proximal Policy Optimization (PPO) gewählt.
-PPO gehört zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (siehe Kapitel \ref{ch:rl_grundlagen}) und hat sich in zahlreichen Anwendungen als stabiler und robuster Standard etabliert \cite{OriginalPPO}.
-\vspace{\baselineskip}
+Für das Training des Agenten wurde Proximal Policy Optimization (\ac{PPO}) gewählt.
+\ac{PPO} gehört zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (siehe Kapitel \ref{ch:rl_grundlagen}) und hat sich in zahlreichen Anwendungen als stabiler und robuster Standard etabliert \cite{OriginalPPO}.
+\medskip
 
-Ein zentrales Auswahlkriterium war die praktische Einsetzbarkeit in \textit{Stable Baselines3} (SB3), wo PPO als ausgereifter und weit verbreiteter Algorithmus mit belastbarer Referenzimplementierung vorliegt \cite{sb3,sb3_algos_doc}.
+Ein zentrales Auswahlkriterium war die praktische Einsetzbarkeit in \textit{Stable Baselines3} (\ac{SB3}), wo \ac{PPO} als ausgereifter und weit verbreiteter Algorithmus mit belastbarer Referenzimplementierung vorliegt \cite{sb3,sb3_algos_doc}.
 Für die vorliegende Arbeit ist insbesondere die funktionale Breite relevant: Laut SB3\hyp{}Dokumentation unterstützt PPO nativ sowohl kontinuierliche als auch diskrete Aktionsräume (u.\,a. \texttt{Box}, \texttt{Discrete}, \texttt{MultiDiscrete}, \texttt{MultiBinary}) \cite{sb3_algos_doc}.
 Damit lässt sich eine einheitliche Trainingspipeline über unterschiedliche Environment\hyp{}Designs hinweg nutzen.
-Zusätzlich sind im \textit{sb3\hyp{}contrib}\hyp{}Ökosystem Erweiterungen wie \textit{RecurrentPPO} und \textit{MaskablePPO} verfügbar, was die methodische Anschlussfähigkeit für spätere Experimente erhöht \cite{sb3_algos_doc}.
-\vspace{\baselineskip}
+Zusätzlich sind im \textit{sb3\hyp{}contrib}\hyp{}Ökosystem Erweiterungen wie \textit{Recurrent\ac{PPO}} und \textit{Maskable\ac{PPO}} verfügbar, was die methodische Anschlussfähigkeit für spätere Experimente erhöht \cite{sb3_algos_doc}.
+\medskip
 
 Off\hyp{}Policy\hyp{}Verfahren wurden in dieser Arbeit bewusst nicht eingesetzt.
-Ein wesentlicher Grund ist, dass in SB3 kein allgemein einsetzbarer Standardalgorithmus verfügbar ist, der sich wahlweise für diskrete und kontinuierliche Aktionen konfigurieren lässt.
+Ein wesentlicher Grund ist, dass in \ac{SB3} kein allgemein einsetzbarer Standardalgorithmus verfügbar ist, der sich wahlweise für diskrete und kontinuierliche Aktionen konfigurieren lässt.
 Zudem war die von Off\hyp{}Policy\hyp{}Verfahren häufig versprochene Sample\hyp{}Effizienz im vorliegenden Experiment nicht ausschlaggebend, da die Simulationsumgebung eine schnelle Datengenerierung erlaubte.
-Off\hyp{}Policy\hyp{}Algorithmen wurden in Vorversuchen dennoch evaluiert. Aufgrund zusätzlichen I/O\hyp{}Overheads lagen ihre Wall\hyp{}Clock\hyp{}Trainingszeiten\footnote{Mit \enquote{Wall\hyp{}Clock\hyp{}Trainingszeit} ist die tatsächlich verstrichene Echtzeit gemeint, also wie lange das Training auf der Uhr dauert.} jedoch über denen von PPO.
-Unter diesen Randbedingungen erwies sich PPO als die zweckmäßigere Wahl im Hinblick auf Stabilität, Durchsatz und Entwicklungsaufwand.
-\vspace{\baselineskip}
+Off\hyp{}Policy\hyp{}Algorithmen wurden in Vorversuchen dennoch evaluiert. Aufgrund zusätzlichen I/O\hyp{}Overheads lagen ihre Wall\hyp{}Clock\hyp{}Trainingszeiten\footnote{Mit \enquote{Wall\hyp{}Clock\hyp{}Trainingszeit} ist die tatsächlich verstrichene Echtzeit gemeint, also wie lange das Training auf der Uhr dauert.} jedoch über denen von \ac{PPO}.
+Unter diesen Randbedingungen erwies sich \ac{PPO} als die zweckmäßigere Wahl im Hinblick auf Stabilität, Durchsatz und Entwicklungsaufwand.
+\medskip
 
 Für die technische Umsetzung wurde die Bibliothek \textit{Stable Baselines3\textunderscore Plus} \cite{sb3_plus} herangezogen. 
 Dabei handelt es sich um eine Erweiterung der populären Bibliothek \textit{Stable Baselines3}, die spezifische Anpassungen für hybride (gemischte) Aktionsräume bereitstellt.
-Die spezifischen methodischen Anpassungen des PPO\hyp{}Algorithmus an den in Abschnitt \ref{sc:aktionsraum} beschriebenen gemischten Aktionsraum werden im nachfolgenden Kapitel \ref{ch:ppo_bedingt} vertieft.
+Die spezifischen methodischen Anpassungen des \ac{PPO}\hyp{}Algorithmus an den in Abschnitt \ref{sc:aktionsraum} beschriebenen gemischten Aktionsraum werden im nachfolgenden Kapitel \ref{ch:ppo_bedingt} vertieft.
