@@ -17,16 +17,17 @@ Jede Kursänderung erfordert in der Praxis eine Funkkommunikation zwischen Lotse
 Der \ac{RL}\hyp{}Agent soll daher lernen, Konflikte unter Minimierung von Steuerbefehlen zu lösen, um ein realistisches Lotsenverhalten zu emulieren.
 
 \section{Verwandte Arbeiten und Abgrenzung}
-Die Anwendung von Reinforcement Learning im Kontext der Flugverkehrskontrolle ist ein aktives Forschungsfeld, das sich mit der Automatisierung von Entscheidungsprozessen in komplexen, dynamischen Umgebungen beschäftigt.
-Viele Arbeiten konzentrieren sich auf die Entwicklung von Agenten, die in der Lage sind, Konflikte zu erkennen und zu lösen, wobei jedoch die Effizienz der Steuerbefehle oft nicht explizit adressiert wird.
+Die Anwendung von Reinforcement Learning im Kontext der Flugverkehrskontrolle ist ein aktives Forschungsfeld, das sich mit der Automatisierung von Entscheidungsprozessen in komplexen und dynamischen Umgebungen beschäftigt.
+Viele Arbeiten konzentrieren sich auf die Entwicklung von Agenten, die in der Lage sind, Konflikte zu erkennen und zu lösen, wobei die Effizienz der Steuerbefehle oft nicht explizit adressiert wird.
+\medskip
 
 Die Arbeit von \citet{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}\ac{GYM}\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
 Diese Arbeit erweitert die bisherigen Ansätze, indem sie nicht nur die Konfliktlösung, sondern auch die Minimierung von Steuerbefehlen in den Fokus stellt. 
-Die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option stellt eine innovative Erweiterung dar, die es dem Agenten ermöglicht, zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe zu differenzieren, was in der Literatur bisher wenig Beachtung gefunden hat.
+Die Einführung eines gemischten Aktionsraums mit expliziter \enquote{\emph{No-Operation}}-Option stellt eine innovative Erweiterung dar, die es dem Agenten ermöglicht, zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe zu differenzieren, was in der Literatur bisher wenig Beachtung gefunden hat.
 
 \section{Szenarien}
 Die Szenarien wurden so gestaltet, dass der Agent mit einer Vielzahl an Verkehrssituationen konfrontiert wird, was essenziell für die Generalisierungsfähigkeit des Modells ist. 
-Die Generierung der Szenarien erfolgt stochastisch, folgt jedoch definierten Mustern, um eine breite Abdeckung möglicher Konfliktgeometrien zu gewährleisten. 
+Ihre Generierung erfolgt stochastisch, basiert jedoch auf definierten Mustern, um eine umfassende Abdeckung verschiedenster Konfliktgeometrien sicherzustellen. 
 Es werden vier grundlegende Szenarientypen im Training unterschieden:
 \begin{itemize}
     \item \textbf{Crossing:} Erzeugung von Konflikten durch sich kreuzende Flugrouten.
@@ -52,17 +53,20 @@ Zudem konnte auf Vorarbeiten des Projekts Bluesky\hyp{}\ac{GYM} \cite{bluesky-gy
 Ein kritischer, oft unterschätzter Faktor im Reinforcement Learning ist die Ausführungsgeschwindigkeit der Umgebung. Da moderne \ac{RL}-Algorithmen wie \ac{PPO} typischerweise Millionen von Interaktionsschritten benötigen, um zu konvergieren, summieren sich selbst minimale Verzögerungen pro Zeitschritt zu erheblichen Wartezeiten. Eine performante Implementierung ist daher nicht nur eine Frage der Effizienz, sondern bestimmt maßgeblich die Entwicklungsgeschwindigkeit, da sie schnellere Iterationszyklen und damit häufigeres Testen von Hypothesen ermöglicht.
 \medskip
 
-Um diesem Anspruch gerecht zu werden, wurde der Python-Code der Umgebung gezielt auf Performance optimiert. Ein Nadelöhr in Python-basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen. Zur Beschleunigung kam die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode, was insbesondere bei mathematischen Berechnungen (wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum) zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen führt.
+Um diesem Anspruch gerecht zu werden, wurde der Python\hyp{}Code der Umgebung gezielt auf Performance optimiert. Ein Flaschenhals in Python\hyp{}basierten Simulationen ist oft der Overhead des Interpreters bei rechenintensiven Schleifen sowie das \ac{GIL}, welches die parallele Ausführung von Python\hyp{}Bytecode auf mehreren CPU\hyp{}Kernen verhindert und somit echtes Multithreading blockiert. Zwar wird das \ac{GIL} in zukünftigen Python-Versionen (ab Python 3.14) voraussichtlich optional und langfristig abgeschafft \cite{Python314WhatsNew}, für die aktuelle Implementierung stellte es jedoch eine harte Leistungsgrenze dar. 
 \medskip
 
-Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne CPU-Instruktionen (SIMD) effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
+Zur Beschleunigung kam daher die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode und kann das \ac{GIL} für diese kompilierten Blöcke umgehen. Dies führt insbesondere bei mathematischen Berechnungen (wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum) zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen.
+\medskip
+
+Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne \acs{SIMD} CPU-Instruktionen effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
 
 \section{Visualisierung}
 Zur Validierung und Analyse des Agentenverhaltens wurde eine Echtzeit\hyp{}Visualisierung implementiert.
 Diese stellt neben der Verkehrslage auch erweiterte Diagnoseinformationen dar, darunter prognostizierte Konfliktpunkte, die aktuellen Entscheidungen des Agenten sowie relevante Merkmale des Zustandsraums.
 Die technische Umsetzung erfolgte mittels der Bibliothek Pygame \cite{pygame}, welche eine plattformunabhängige Erstellung von 2D\hyp{}Grafiken innerhalb des Python\hyp{}Ökosystems ermöglicht.
 
-\section{Definition der \ac{RL}\hyp{}Umgebung}
+\section{Definition der \acs{RL}\hyp{}Umgebung}
 Die Umgebung (Environment) bildet die Schnittstelle zwischen dem \ac{RL}\hyp{}Agenten und der Simulation. 
 Sie definiert den Zustandsraum, den Aktionsraum sowie die Belohnungsfunktion.
 Die Implementierung folgt der Spezifikation von OpenAI \ac{GYM} \cite{OpenAI-Gym}, um die Kompatibilität mit etablierten \ac{RL}\hyp{}Bibliotheken wie \ac{SB3} \cite{sb3} sicherzustellen.

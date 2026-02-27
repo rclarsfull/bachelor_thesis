@@ -124,7 +124,7 @@ $V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Rewa
 $J(\theta)$       & Performance Objective & Die Zielfunktion (erwarteter kumulierter Return), die maximiert werden soll \\
 $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
 $\gamma$          & Dis\-kont\-ie\-rungs\-faktor & Bestimmt die Gewichtung zukünftiger Belohnungen im Return $R_t$ \\
-$A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine konzeptionelle Vereinfachung. \ac{SB3} implementiert in der Praxis die \textit{Generalized Advantage Estimation} (GAE) \cite{sb3}). \\
+$A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine konzeptionelle Vereinfachung. \ac{SB3} implementiert in der Praxis die \textit{Generalized Advantage Estimation} (GAE) \cite{sb3, gae}). \\
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
 $\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy: $\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ \\
 $L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy\hyp{}Updates zu vermeiden \\
@@ -317,8 +317,7 @@ den Rückfluss der Gradienten zu den vorangegangenen Schichten.
 Ergänzend dazu ermöglichen Kontextmanager wie \texttt{with torch.no\_grad():}, die Aufzeichnung von Operationen für ganze Codeblöcke temporär zu deaktivieren.
 \medskip
 
-In dieser Arbeit werden diese Mechanismen genutzt,
-um ein \textit{Gradient\hyp{}Masking} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
+Diese Mechanismen bilden die technische Grundlage für das in Kapitel \ref{ch:ppo_bedingt} detailliert beschriebene \textit{Gradient\hyp{}Masking}. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
 Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehloptimierung inaktiver Netzwerkzweige verhindert wird.
 
 \begin{figure}[htbp]
@@ -386,13 +385,13 @@ Folgende Metriken \cite{LogExplanation} sind besonders relevant:
     Ein stark positiver Wert kann auf Instabilitäten im Lernprozess hinweisen.
     \item \textbf{Entropy Loss:} Diese Metrik quantifiziert die Entropie (Zufälligkeit) der Aktionsverteilung des Agenten. Sie dient als Maß für die Exploration: 
     Eine hohe Entropie bedeutet eine breite Streuung der Aktionen und fördert das Entdecken neuer Strategien, während eine sinkende Entropie auf eine zunehmende 
-    Spezialisierung (Exploitation) der gelernten Policy hindeutet. In der Optimierungslogik wird die Entropie mit einem negativen Vorzeichen versehen, um sie 
+    Spezialisierung (Exploitation) der gelernten Policy hindeutet. In der Optimierungslogik wird die Entropie mit einem negativen Vorzeichen versehen, um diese 
     als Minimierungsproblem darzustellen. Da der Algorithmus den Gesamt\hyp{}Loss minimiert, führt ein negativer Entropy Loss effektiv zu einer Maximierung der Entropie. 
     Ein Wert, der gegen Null strebt, signalisiert somit, dass der Agent eine deterministische Strategie entwickelt hat und die Exploration abgeschlossen ist.
     \item \textbf{Clip Fraction:} Diese Metrik gibt an, wie oft das Wahrscheinlichkeitsverhältnis \(\rho_t(\theta)\) im Clipped Surrogate Objective beschnitten wurde.
     Ein hoher Clip Fraction\hyp{}Wert kann darauf hinweisen, dass die Policy\hyp{}Updates zu aggressiv sind, was die Stabilität des Lernprozesses beeinträchtigen kann.
     \item \textbf{Approx KL:} Diese Metrik approximiert die Kullback\hyp{}Leibler\hyp{}Divergenz zwischen der alten und neuen Policy. Sie dient als Maß für die Änderung 
-    der Policy während des Lernprozesses. Ein hoher Approx KL\hyp{}Wert deutet auf eine signifikante Policy\hyp{}Änderung hin, was auf eine aggressive Aktualisierung hindeutet.
+    der Policy während des Lernprozesses. Ein hoher Approx KL\hyp{}Wert signalisiert eine signifikante Policy\hyp{}Änderung, was auf zu aggressive Aktualisierungsschritte schließen lässt.
 \end{itemize}
 
 Diese Metriken bieten wertvolle Einblicke in den Lernprozess und helfen dabei, die Leistung des \ac{RL}\hyp{}Agenten zu bewerten und zu optimieren.
