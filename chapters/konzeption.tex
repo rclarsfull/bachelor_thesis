@@ -21,7 +21,8 @@ Die Anwendung von Reinforcement Learning im Kontext der Flugverkehrskontrolle is
 Viele Arbeiten konzentrieren sich auf die Entwicklung von Agenten, die in der Lage sind, Konflikte zu erkennen und zu lösen, wobei die Effizienz der Steuerbefehle oft nicht explizit adressiert wird.
 \medskip
 
-Die Arbeit von \citet{bluesky-gym} hat diese Arbeit maßgeblich beeinflusst, da sie eine open source Implementierung einer Bluesky\hyp{}\ac{GYM}\hyp{}Umgebung bereitgestellt haben, die als Grundlage für die Entwicklung des hier vorgestellten \ac{RL}\hyp{}Systems diente.
+Als Grundlage für die technische Umsetzung diente die Open\hyp{}Source\hyp{}Implementierung von \citet{bluesky-gym}, die eine einfach Trainingsumgebung
+für \ac{RL}\hyp{}basierte Flugsicherungsaufgaben bereitstellt.
 Diese Arbeit erweitert die bisherigen Ansätze, indem sie nicht nur die Konfliktlösung, sondern auch die Minimierung von Steuerbefehlen in den Fokus stellt. 
 Die Einführung eines gemischten Aktionsraums mit expliziter \enquote{\emph{No-Operation}}-Option stellt eine innovative Erweiterung dar, die es dem Agenten ermöglicht, zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe zu differenzieren, was in der Literatur bisher wenig Beachtung gefunden hat.
 
@@ -37,10 +38,10 @@ Es werden vier grundlegende Szenarientypen im Training unterschieden:
     Diese Szenarien wurden für die Simulation abstrahiert, da das aktuelle Modell ausschließlich Vectoring (Kursänderungen) betrachtet und Höhen\hyp{} oder Geschwindigkeitsanpassungen ausgeklammert werden.
 \end{itemize}
 
-Die Auswahl des Szenariotyps während des Trainings erfolgt randomisiert, wobei Crossing\hyp{} und Merging\hyp{}Szenarien aufgrund ihrer höheren Komplexität bei der Konfliktlösung häufiger priorisiert werden.
+Die Auswahl des Szenariotyps während des Trainings erfolgt zufällig, wobei Crossing\hyp{} und Merging\hyp{}Szenarien aufgrund ihrer höheren Komplexität bei der Konfliktlösung häufiger priorisiert werden.
 
 \section{Simulatorintegration und Environment}
-Als Simulationskern dient Bluesky \cite{bluesky}, eine Open\hyp{}Source\hyp{}Flugsimulationsplattform, die eine realistische Modellierung der Flugzeugdynamik bietet und Schnittstellen für externe Steuerungssysteme bereitstellt.
+Als Simulationskern dient Bluesky \cite{bluesky}, eine Open\hyp{}Source\hyp{}Flugsimulationsplattform, die eine realistische Modellierung der Flugzeugdynamik bietet.
 Die Interaktion zwischen der Reinforcement\hyp{}Learning\hyp{}Umgebung (\ac{GYM}) und Bluesky erfolgt über eine dedizierte Adapter\hyp{}Schicht. Diese übersetzt die Aktionen des Agenten in simulatorverständliche Steuerbefehle und extrahiert im Gegenzug die relevanten Zustandsinformationen für das Training.
 \medskip
 
@@ -59,31 +60,28 @@ Um diesem Anspruch gerecht zu werden, wurde der Python\hyp{}Code der Umgebung ge
 Zur Beschleunigung kam daher die Just-in-Time Compiler-Bibliothek \emph{Numba} zum Einsatz. Numba übersetzt Python-Funktionen zur Laufzeit in optimierten Maschinencode und kann das \ac{GIL} für diese kompilierten Blöcke umgehen. Dies führt insbesondere bei mathematischen Berechnungen (wie der Distanzbestimmung zwischen Flugzeugen oder der Koordinatentransformation für den relativen Zustandsraum) zu Geschwindigkeitssteigerungen in der Größenordnung von kompilierten Sprachen.
 \medskip
 
-Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne \acs{SIMD} CPU-Instruktionen effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) massiv gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
+Zusätzlich wurden Berechnungen wo immer möglich vektorisiert. Statt über Listen von Flugzeugen zu iterieren, werden Operationen mittels der Bibliothek \emph{NumPy} auf ganzen Arrays gleichzeitig ausgeführt. Dies nutzt moderne \acs{SIMD} CPU-Instruktionen effizient aus und minimiert teure Funktionsaufrufe und Kontextwechsel innerhalb der Python-Laufzeitumgebung. Durch diese Kombination aus Kompilierung und Vektorisierung konnte der Durchsatz der Umgebung (Steps per Second) um ein vielfaches gesteigert werden, was die Experimentierzyklen von Tagen auf Stunden reduzierte.
 
 \section{Visualisierung}
 Zur Validierung und Analyse des Agentenverhaltens wurde eine Echtzeit\hyp{}Visualisierung implementiert.
 Diese stellt neben der Verkehrslage auch erweiterte Diagnoseinformationen dar, darunter prognostizierte Konfliktpunkte, die aktuellen Entscheidungen des Agenten sowie relevante Merkmale des Zustandsraums.
 Die technische Umsetzung erfolgte mittels der Bibliothek Pygame \cite{pygame}, welche eine plattformunabhängige Erstellung von 2D\hyp{}Grafiken innerhalb des Python\hyp{}Ökosystems ermöglicht.
 
-\section{Definition der \acs{RL}\hyp{}Umgebung}
+\section{Definition der RL\hyp{}Umgebung}
 Die Umgebung (Environment) bildet die Schnittstelle zwischen dem \ac{RL}\hyp{}Agenten und der Simulation. 
 Sie definiert den Zustandsraum, den Aktionsraum sowie die Belohnungsfunktion.
 Die Implementierung folgt der Spezifikation von OpenAI \ac{GYM} \cite{OpenAI-Gym}, um die Kompatibilität mit etablierten \ac{RL}\hyp{}Bibliotheken wie \ac{SB3} \cite{sb3} sicherzustellen.
 
 \subsection{Zustandsraum}
 Das Design des Zustandsraums zielt darauf ab, dem Agenten alle relevanten Informationen zur Konflikterkennung und \hyp{}lösung bereitzustellen, ohne die Generalisierungsfähigkeit zu beeinträchtigen. 
-Eine hohe Generalisierung ist erforderlich, damit der Agent auch in unbekannten Situationen, die nicht Teil der Trainingsdaten waren, robuste Entscheidungen trifft.
-\medskip
+Eine hohe Generalisierungsfähigkeit ist allerding erforderlich, damit der Agent auch in unbekannten Situationen, die nicht Teil der Trainingsdaten waren, robuste Entscheidungen trifft. Dies ist besonders wichtig wenn der Agent später in unterschiedlichen Sectoren eingesetzt werden soll.
 
 Absolute Positionsdaten erwiesen sich als ungeeignet, da sie stark an spezifische Szenarien gebunden sind. 
 Stattdessen werden relative Positionsdaten verwendet, die eine abstraktere und damit besser generalisierbare Repräsentation der Verkehrslage ermöglichen.
-\medskip
 
 Ein weiterer technischer Aspekt ist die stetige Repräsentation zyklischer Merkmale. 
 Die direkte Verwendung von Winkelgraden ist problematisch, da die Werte $0^\circ$ und $360^\circ$ numerisch weit auseinanderliegen, obwohl sie identische Zustände beschreiben. 
 Um Sprungstellen im Zustandsraum zu vermeiden, werden Winkel durch ihre Sinus\hyp{} und Kosinuskomponenten kodiert.
-\smallskip
 
 Da neuronale Netze in der Regel Eingabevektoren fester Länge erwarten, muss die Dimension des Zustandsraums unabhängig von der variablen Anzahl der Flugzeuge im Sektor konstant bleiben. 
 Dies wird durch die Festlegung einer maximalen Slot\hyp{}Anzahl für beobachtbare Flugzeuge und das Auffüllen (Padding) ungenutzter Slots mit neutralen Werten erreicht. 
@@ -128,8 +126,12 @@ Die Berechnung zukünftiger Konflikte basiert auf dem \ac{CPA}\hyp{}Verfahren (C
 \subsection{Aktionsraum}
 \label{sc:aktionsraum}
 Die entwickelte Lernumgebung beschränkt sich auf die Konfliktlösung mittels Vectoring (Kursänderungen). 
-Diese Eingrenzung dient der Reduktion der Komplexität des Modells. 
-Obgleich operative Fluglotsen auch über Geschwindigkeits\hyp{} und Höhenänderungen verfügen, bleibt die Integration dieser Freiheitsgrade zukünftigen Untersuchungen vorbehalten.
+Diese Eingrenzung dient primär der Reduktion des Projektumfangs und erlaubt eine fokussierte Untersuchung der Forschungsfrage.
+Obgleich operative Fluglotsen auch über Geschwindigkeits\hyp{} und Höhenänderungen verfügen, würde deren Integration die Komplexität der Problemstellung erheblich steigern:
+Die Konflikterkennung müsste auf dreidimensionale Trajektorien erweitert werden, was sowohl die Berechnungslogik als auch die Visualisierung deutlich aufwendiger gestaltet.
+Zudem würde der kombinierte Aktionsraum (Kurs, Geschwindigkeit, Höhe) die Anzahl der möglichen Handlungskombinationen drastisch erhöhen, was längere Trainingszeiten und einen größeren Explorationsbedarf nach sich zieht.
+Die Beschränkung auf Kursänderungen ermöglicht es, sich auf das Kernproblem der effizienten Konfliktlösung mit minimalen Steuerbefehlen zu konzentrieren.
+Die Integration weiterer Freiheitsgrade bleibt zukünftigen Untersuchungen vorbehalten.
 \medskip
 
 Ein rein kontinuierlicher Aktionsraum erwies sich für die Anforderungen als unzureichend, da er die Modellierung einer expliziten \emph{Noop}-Aktion (No Operation) erschwert, also den bewussten Verzicht auf einen Eingriff. 
@@ -151,6 +153,53 @@ Der Aktionsraum wurde in zwei Varianten implementiert:
 \end{itemize}
 
 Die Implementierung des gemischten Aktionsraums stellte besondere Anforderungen an den Lernalgorithmus. 
+Der entscheidende Unterschied zu einem rein hybriden Aktionsraum liegt in der bedingten Abhängigkeit: Die kontinuierliche Komponente (Kursänderung) ist nur dann relevant, wenn die diskrete Komponente den Typ \textit{Steer} auswählt.
+Wählt der Agent hingegen \textit{Noop} oder \textit{Direct Route}, muss der zugleich vom Netzwerk produzierte kontinuierliche Wert ignoriert werden, da er in diesen Fällen funktional bedeutungslos ist.
+Diese hierarchische Struktur ist in Abbildung \ref{fig:action_tree} dargestellt.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        grow=right,
+        level 1/.style={sibling distance=2.5cm, level distance=5.5cm},
+        level 2/.style={sibling distance=1.5cm, level distance=5cm},
+        edge from parent/.style={draw, -latex},
+        node/.style={rectangle, draw, rounded corners, minimum width=2cm, minimum height=0.8cm, align=center, font=\small},
+        leaf/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=0.8cm, align=center, font=\small, fill=blue!10},
+        inactive/.style={rectangle, draw, rounded corners, minimum width=2.5cm, minimum height=0.8cm, align=center, font=\small, fill=gray!20, dashed}
+    ]
+    
+    \node[node] {Aktionstyp\\(diskret)}
+        child {
+            node[node] {Steer}
+            child {
+                node[leaf] {Kursänderung\\$\theta \in [-180°, +180°]$\\(kontinuierlich)}
+                edge from parent node[above, font=\footnotesize] {verwendet}
+            }
+        }
+        child {
+            node[node] {Noop}
+            child {
+                node[inactive] {Steer-Parameter\\wird ignoriert}
+                edge from parent node[above, font=\footnotesize] {nicht relevant}
+            }
+        }
+        child {
+            node[node] {Direct Route}
+            child {
+                node[inactive] {Steer-Parameter\\wird ignoriert}
+                edge from parent node[above, font=\footnotesize] {nicht relevant}
+            }
+        };
+    
+    \end{tikzpicture}
+    \caption[Hierarchische Struktur des bedingten Aktionsraums]{Hierarchische Struktur des bedingten Aktionsraums. Die kontinuierliche Komponente (Kursänderung) ist nur bei Auswahl von \textit{Steer} funktional relevant. Bei \textit{Noop} und \textit{Direct Route} wird der vom Netzwerk produzierte kontinuierliche Wert ignoriert.}
+    \label{fig:action_tree}
+\end{figure}
+
+Diese bedingte Abhängigkeit hat weitreichende Konsequenzen für das Training: Das neuronale Netzwerk produziert in jedem Zeitschritt sowohl die diskrete Aktionswahl als auch den kontinuierlichen Parameter.
+Ohne besondere Vorkehrungen würden die Netzwerkgewichte, die für die Vorhersage des kontinuierlichen Parameters zuständig sind, auch dann aktualisiert, wenn dieser Parameter gar nicht verwendet wird.
+Dies führt zu ineffizientem Lernen und potenziell inkonsistenten Gradienten, da das Netzwerk auf Basis irrelevanter Daten optimiert würde.
 Kapitel \ref{ch:ppo_bedingt} erläutert die notwendigen Modifikationen am \ac{PPO}\hyp{}Algorithmus zur Handhabung bedingter Aktionsräume.
 
 \subsection{Belohnungsfunktion}
@@ -172,8 +221,8 @@ Die implementierte Belohnungsfunktion setzt sich aus folgenden Komponenten zusam
 Explizit wurde auf eine distanzbasierte Belohnung (\textit{Proximity Reward}) verzichtet, da diese anfällig für \textit{Reward Hacking} ist: Agenten könnten lernen, das Ziel lediglich zu umkreisen, um kontinuierlich Belohnung zu sammeln, ohne es zu erreichen. Die Ausrichtung auf das Ziel (Heading Alignment) löst dieses Navigationsproblem robuster und impliziert zudem eine natürliche Gewichtung der Präzision: Je näher das Flugzeug dem Ziel kommt, desto empfindlicher reagiert der relative Winkel auf Positionsänderungen, was automatisch eine höhere Genauigkeit im Endanflug einfordert.
 \medskip
 
-Es wurde Wert auf die Verwendung von sogenannten \emph{Dense Rewards} gelegt, also kontinuierlichen Rückmeldungen in jedem Zeitschritt. 
-Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Qualität seiner Zustandsänderungen erhält \cite[Kap. 17.4]{sutton2018rl}, im Gegensatz zu \emph{Sparse Rewards}, die nur selten vergeben werden.
+Es wurde Wert auf die Verwendung von sogenannten \emph{Dense Rewards} gelegt (z.\,B. Drift Reward, Collision Avoidance Cost). Diese bieten kontinuierlichen Rückmeldungen in jedem Zeitschritt. 
+Dies unterstützt den Lernprozess, da der Agent unmittelbares Feedback zur Qualität seiner Zustandsänderungen erhält \cite[Kap. 17.4]{sutton2018rl}, im Gegensatz zu \emph{Sparse Rewards}, die nur selten vergeben werden (z.\,B. Waypoint Bonus, Collision Penalty).
 
 \subsection{Metriken}
 \label{sc:env_metrics}
@@ -191,9 +240,9 @@ Folgende Schlüsselmetriken werden erhoben:
     \item \textbf{Average Drift:} Die durchschnittliche Kursabweichung vom Idealweg über die gesamte Episode.
 \end{itemize}
 
-\section{Auswahl des \ac{RL}\hyp{}Algorithmus}
+\section{Auswahl des RL\hyp{}Algorithmus}
 Für das Training des Agenten wurde Proximal Policy Optimization (\ac{PPO}) gewählt.
-\ac{PPO} gehört zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (siehe Kapitel \ref{ch:rl_grundlagen}) und hat sich in zahlreichen Anwendungen als stabiler und robuster Standard etabliert \cite{OriginalPPO}.
+\ac{PPO} gehört zur Klasse der Policy\hyp{}Gradient\hyp{}Methoden (Kapitel \ref{ch:rl_grundlagen}) und hat sich in zahlreichen Anwendungen als stabiler und robuster Standard etabliert \cite{OriginalPPO}.
 \medskip
 
 Ein zentrales Auswahlkriterium war die praktische Einsetzbarkeit in \textit{Stable Baselines3} (\ac{SB3}), wo \ac{PPO} als ausgereifter und weit verbreiteter Algorithmus mit belastbarer Referenzimplementierung vorliegt \cite{sb3,sb3_algos_doc}.

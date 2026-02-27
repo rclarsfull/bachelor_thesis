@@ -5,7 +5,7 @@ Dieses Kapitel widmet sich der Anpassung des \ac{PPO}-Algorithmus an die spezifi
 \medskip
 
 Die verwendete \ac{SB3}-Plus Bibliothek geht davon aus, dass alle Komponenten eines Aktionsvektors unabhängig voneinander gewählt werden können. Dies führt dazu, dass das Netzwerk auch dann versucht, einen optimalen Wert für die kontinuierliche Lenkaktion zu lernen, wenn der Agent sich entscheidet, gar nicht zu lenken (z.\,B. bei der Wahl von \emph{Noop} oder \emph{Direct Route}). In solchen Fällen ist der ausgegebene Lenkwert jedoch für die Umgebung bedeutungslos.
-Ohne Anpassung würde der Algorithmus dennoch Gradienten für diese inaktiven Komponenten berechnen und das Netzwerk entsprechend aktualisieren. Dies verschwendet nicht nur Trainingskapazität, sondern kann den Lernprozess stören, da das Netzwerk versucht, Zusammenhänge zu lernen, wo keine sind. Im Folgenden wird eine Methode vorgestellt, die diese Abhängigkeiten berücksichtigt und sicherstellt, dass der Optimierungsschritt nur auf tatsächlich relevanten Aktionen basiert.
+Ohne Anpassung würde der Algorithmus dennoch Gradienten für diese inaktiven Komponenten berechnen und das Netzwerk entsprechend aktualisieren. Dies verschwendet nicht nur Trainingskapazität, sondern kann den Lernprozess stören, da das Netzwerk versucht, Zusammenhänge zu modellieren, die faktisch nicht existieren. Im Folgenden wird eine Methode vorgestellt, die diese Abhängigkeiten berücksichtigt und sicherstellt, dass der Optimierungsschritt nur auf tatsächlich relevanten Aktionen basiert.
 \medskip
 
 \section{Verwandte Arbeiten und Abgrenzung}
@@ -21,10 +21,10 @@ Ein weiterer verwandter Ansatz ist das \emph{Invalid Action Masking} \cite{inval
 Ein Blick auf die mathematischen Grundlagen verdeutlicht, warum die Standard\hyp{}Implementierung hier unzureichend ist. Die ursprüngliche Implementierung geht davon aus, dass die logarithmischen Wahrscheinlichkeiten der Teilaktionen einfach addiert werden können. Wegen der Rechenregel $\log(p_1) + \log(p_2) = \log(p_1 \cdot p_2)$ entspricht dies einer Multiplikation der eigentlichen Wahrscheinlichkeiten. Diese Multiplikation setzt jedoch voraus, dass die Ereignisse unabhängig voneinander sind. Diese Annahme ist in diesem Szenario verletzt, da die Relevanz der kontinuierlichen Aktion direkt von der diskreten Entscheidung abhängt.
 \medskip
 
-Um diese Abhängigkeit korrekt abzubilden, nutzt die Implementierung (siehe Abschnitt \ref{sc:ppo_anpassung}) eine \enquote{Null-Maskierung}. Dabei wird der Log\hyp{}Wahrscheinlichkeitswert einer irrelevanten Aktion künstlich auf 0 gesetzt. Dies korrespondiert mit einer Wahrscheinlichkeit von $1$, da $\log(1) = 0$ gilt. Da die Multiplikation mit 1 das Ergebnis nicht verändert, wird die irrelevante Aktion so effektiv aus der Gesamtgleichung genommen, ohne die Verteilung zu verfälschen.
+Um diese Abhängigkeit korrekt abzubilden, nutzt die Implementierung (Abschnitt \ref{sc:ppo_anpassung}) eine \enquote{Null-Maskierung}. Dabei wird der Log\hyp{}Wahrscheinlichkeitswert einer irrelevanten Aktion künstlich auf 0 gesetzt. Dies korrespondiert mit einer Wahrscheinlichkeit von $1$, da $\log(1) = 0$ gilt. Da die Multiplikation mit 1 das Ergebnis nicht verändert, wird die irrelevante Aktion so effektiv aus der Gesamtgleichung genommen, ohne die Verteilung zu verfälschen.
 \medskip
 
-Dasselbe Prinzip wird auf die Entropie-Berechnung angewandt. Eine einfache Addition der Entropiewerte würde die Unsicherheit des Agenten künstlich aufblähen, da auch irrelevante Aktionen zur Unsicherheit beitragen würden. Stattdessen wird die Entropie der kontinuierlichen Aktion gewichtet: Sie fließt nur anteilig in die Berechnung ein, basierend auf der Wahrscheinlichkeit, dass die Aktion tatsächlich ausgeführt wird. Dies setzt das Konzept der \textit{bedingten Entropie} praktisch um \cite[Kap. 2.2]{bedinteEndropie}.
+Die Entropie-Berechnung erfordert eine vergleichbare Vorgehensweise. Würde man die Entropiewerte aller Aktionskomponenten unabhängig voneinander aufsummieren, würde dies zu einer systematischen Überschätzung der tatsächlichen Policy\hyp{}Entropie führen, da auch irrelevante Aktionen in die Unsicherheitsquantifizierung eingingen. Die Entropie der kontinuierlichen Aktion wird daher in Abhängigkeit von ihrer Ausführungswahrscheinlichkeit gewichtet, sodass sie nur dann zur Gesamtentropie beiträgt, wenn diese Komponente auch tatsächlich zur Anwendung kommt. Formal entspricht dies der Definition der \textit{bedingten Entropie} \cite[Kap. 2.2]{bedinteEndropie}.
 
 \section{Implementierung des Gradient-Maskings}
 \label{sc:ppo_anpassung}
@@ -35,7 +35,7 @@ Die technische Umsetzung erfolgt durch gezielte Anpassungen der \ac{SB3}\hyp{}Pl
 Das Verfahren greift in drei zentrale Komponenten des \ac{PPO}\hyp{}Algorithmus ein, deren theoretische Fundierung in Abschnitt \ref{ch:rl_grundlagen} erläutert wurde.
 \medskip
 
-Da der Policy\hyp{}Loss $L_t^{CLIP}$ (siehe Gleichung \ref{eq:clip_loss}) über das Wahrscheinlichkeitsverhältnis $r_t(\theta)$ direkt von den logarithmischen Wahrscheinlichkeiten der Aktionen abhängt, ist hier ein Eingriff erforderlich, um den Einfluss irrelevanter Aktionskomponenten auf den Gradienten zu eliminieren. Analog muss der Entropie\hyp{}Term $S[\pi_\theta]$ angepasst werden, um eine Belohnung für die Variation wirkungsloser Aktionen zu verhindern. Der Term der Wertfunktion $L_t^{VF}(\phi)$ (siehe Gleichung \ref{eq:value_loss}) bleibt von diesen Modifikationen hingegen unberührt, da der Critic $V_\phi(s_t)$ den Zustandswert unabhängig von der spezifischen Struktur des gewählten Aktionsvektors schätzt.
+Da der Policy\hyp{}Loss $L_t^{CLIP}$ (Gleichung \ref{eq:clip_loss}) über das Wahrscheinlichkeitsverhältnis $r_t(\theta)$ direkt von den logarithmischen Wahrscheinlichkeiten der Aktionen abhängt, ist hier ein Eingriff erforderlich, um den Einfluss irrelevanter Aktionskomponenten auf den Gradienten zu eliminieren. Analog muss der Entropie\hyp{}Term $S[\pi_\theta]$ angepasst werden, um eine Belohnung für die Variation wirkungsloser Aktionen zu verhindern. Der Term der Wertfunktion $L_t^{VF}(\phi)$ (Gleichung \ref{eq:value_loss}) bleibt von diesen Modifikationen hingegen unberührt, da der Critic $V_\phi(s_t)$ den Zustandswert unabhängig von der spezifischen Struktur des gewählten Aktionsvektors schätzt.
 \medskip
 
 Die konkrete technische Umsetzung dieser theoretischen Überlegungen erfordert Eingriffe an drei Stellen der Implementierung: der Definition der Wahrscheinlichkeitsverteilung, der Evaluationsmethode für das Training und dem Vorwärtsschritt für die Datensammlung. Im Folgenden werden diese Anpassungen im Detail beschrieben.
@@ -44,7 +44,7 @@ Die konkrete technische Umsetzung dieser theoretischen Überlegungen erfordert E
 Eine Erweiterung der Wahrscheinlichkeitsverteilungs\hyp{}Klasse ermöglicht es, logarithmische Wahrscheinlichkeiten (\texttt{log\_prob()}) und Entropien (\texttt{entropy()}) getrennt für diskrete und kontinuierliche Aktionen auszuwerten. Während die Basisimplementierung diese Werte sofort summiert, gewährt die Modifikation Zugriff auf separierte Tensoren. Dies ist die Voraussetzung, um im nächsten Schritt eine selektive Maskierung vornehmen zu können.
 
 \subsection*{Evaluation}
-In der Methode \texttt{evaluate\_actions()}, welche während der Optimierungsphase aufgerufen wird (siehe Algorithmus \ref{alg:ppo_training}, Zeile 20), werden die Komponenten der \ac{PPO}\hyp{}Verlustfunktion berechnet. Hier erfolgt das eigentliche Gradient\hyp{}Masking.
+In der Methode \texttt{evaluate\_actions()}, welche während der Optimierungsphase aufgerufen wird (Algorithmus \ref{alg:ppo_training}, Zeile 20), werden die Komponenten der \ac{PPO}\hyp{}Verlustfunktion berechnet. Hier erfolgt das eigentliche Gradient\hyp{}Masking.
 Mithilfe einer Maske wird sichergestellt, dass die kontinuierliche Verteilung nur dann Einfluss auf die Gradientenbildung hat, wenn sie entscheidungsrelevant ist.
 Algorithmus \ref{alg:gradient_masking} zeigt die Implementierung dieser Logik in vereinfachter, schematischer Form.
 
@@ -87,7 +87,7 @@ Würde man $p(a_{\text{type}}=\text{Steer})$ direkt verwenden, würde der Agent 
 Durch die Verwendung von \texttt{no\_grad()} wirkt die Wahrscheinlichkeit lediglich als konstanter Skalierungsfaktor für die kontinuierliche Entropie, wodurch dieser Bias eliminiert wird.
 
 \subsection*{Vorwärtsschritt}
-Analog zur Evaluation muss das Gradient\hyp{}Masking auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (siehe Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
+Analog zur Evaluation muss das Gradient\hyp{}Masking auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
 
 \section{Herausforderungen in bedingten Aktionsräumen}
 \label{sc:Herausforderungen_bedingte_Aktionsräume}
@@ -97,7 +97,7 @@ Die Verwendung bedingter Aktionsräume stellt das Training von Reinforcement\hyp
 \subsection{Sparsity\hyp{}Problematik der abhängigen Aktion}
 Gerade zu Beginn des Trainings neigen Agenten häufig zu suboptimalen Strategien. Wählt der Agent überwiegend Aktionen, welche die abhängige Komponente blockieren (z.\,B. \emph{Noop}), erhält das Netzwerk für die abhängige Aktion (\emph{Steer}) kaum Gradienteninformationen. Ein unoptimierter Steer\hyp{}Wert führt bei seiner seltenen Ausführung oft zu negativem Feedback, was den Agenten wiederum dazu verleitet, diese Aktion künftig zu meiden. Dieser Rückkopplungseffekt kann dazu führen, dass die Wahrscheinlichkeit für die Aktivierung der kontinuierlichen Komponente gegen Null geht, noch bevor der Agent ausreichend Erfahrung für eine effektive Lenkstrategie sammeln konnte.
 
-\subsection*{Erzwungene Exporation als Lösungsansatz}
+\subsection*{Erzwungene Exploration als Lösungsansatz}
 Um diesem Problem entgegenzuwirken, könnte eine gezielte Erhöhung der Explorationsrate hilfreich sein. Dies kann durch die Erhöhung der Entropie-Belohnung erreicht werden, wodurch Agenten gezwungen werden, auch seltene Aktionen auszuprobieren. Wenn ein agent zunächst häufiger die \emph{Steer}\hyp{}Aktion wählt, erhält er mehr Feedback für diese Komponente, was die Lernkurve stabilisiert. Allerdings muss die Erhöhung der Explorationsrate sorgfältig kalibriert werden, um nicht zu einer übermäßigen Zufälligkeit zu führen, die den Lernfortschritt insgesamt beeinträchtigen könnte.
 
 \subsection{Negative Transfer und Lokale Optima}
@@ -116,7 +116,7 @@ Diese vollständige Entkopplung, oft als \textit{Separate Networks} oder \textit
     \item \textbf{Stabilisierung des Lernens:} Selbst wenn der kontinuierliche Pfad seltener aktiviert wird, bleiben seine spezifischen Gewichte von den starken Updates des häufiger genutzten diskreten Pfades ungestört, was das Risiko von Negative Transfer mindert.
 \end{enumerate}
 
-Diese strikte Trennung reduziert jedoch die Modellkomplexität. Da Verbindungen zwischen den getrennten Pfaden fehlen, sinkt die Gesamtzahl der lernbaren Parameter im Vergleich zu einem vollständig verbundenen Netzwerk gleicher Größe signifikant. Da die Anzahl der effektiven Verbindungen jedoch maßgeblich die Approximationsfähigkeit des Netzwerks bestimmt, ist eine naive Halbierung der Neuronen pro Pfad oft unzureichend, um die ursprüngliche Leistungsfähigkeit beizubehalten.
+Diese strikte Trennung schränkt jedoch die Ausdruckskraft des Netzwerks ein. Da Verbindungen zwischen den getrennten Pfaden fehlen, können keine Abhängigkeiten zwischen den Aktionskomponenten gelernt werden. Zudem sinkt die Gesamtzahl der lernbaren Parameter im Vergleich zu einem vollständig verbundenen Netzwerk gleicher Breite signifikant. Da die Anzahl der effektiven Verbindungen maßgeblich die Approximationsfähigkeit des Netzwerks bestimmt, ist eine naive Halbierung der Neuronen pro Pfad oft unzureichend, um die ursprüngliche Repräsentationsfähigkeit beizubehalten.
 \medskip
 
 Um die Komplexität des Netzwerks in Bezug auf die Anzahl der freien Parameter im Vergleich zur Basisarchitektur der Breite $N$ (z.\,B. $N=64$) annähernd konstant zu halten, wurde die Breite $x$ der $k$ getrennten Pfade (im hier vorliegenden Fall $k=2$) gemäß folgender Gleichung bestimmt:

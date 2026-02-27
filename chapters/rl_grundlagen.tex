@@ -44,7 +44,7 @@ wobei:
 
 Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy \(\pi\) aus,
 führt die Aktion aus und erhält eine Belohnung \(r_t = R(s_t, a_t)\). Die Umgebung wechselt dann in einen neuen Zustand \(s_{t+1}\) basierend auf der Übergangswahrscheinlichkeit \(P(s_{t+1}|s_t, a_t)\).
-Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.B. eine maximale Anzahl von Schritten, das Erreichen eines Zielzustandes oder eine Kollision).
+Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.\,B. eine maximale Anzahl von Schritten, das Erreichen eines Zielzustandes oder eine Kollision).
 Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als Trajektorie bezeichnet wird \cite[Kap. 3.1]{sutton2018rl}:
 \\
 
@@ -106,7 +106,7 @@ für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das al
 \medskip
 
 Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Da Optimierungs-Frameworks wie PyTorch standardmäßig auf Gradientenabstieg (Minimierung) ausgelegt sind, wird dies äquivalent als Minimierung von $-J(\theta)$ formuliert. 
-Die Anpassung der Parameter $\theta$ erfolgt durch Gradientenabstieg (siehe Abbildung \ref{fig:gradient_descent_3d}), wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
+Die Anpassung der Parameter $\theta$ erfolgt durch Gradientenabstieg (Abbildung \ref{fig:gradient_descent_3d}), wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
 führen, systematisch erhöht wird \cite[Kap. 13.2]{sutton2018rl}.
 \medskip
 
@@ -158,7 +158,7 @@ Als konkreter Algorithmus kommt in dieser Arbeit die \ac{PPO} zum Einsatz. Er st
 \medskip
 
 Der Kern von \ac{PPO} ist das \textit{Clipped Surrogate Objective}. Durch diese Zielfunktion wird die Änderung der Policy pro Update\hyp{}Schritt begrenzt (Clipping).
-\ac{PPO} bietet gegenüber verwandten Methoden wie \ac{TRPO} (\textit{Trust Region Policy Optimization}) eine höhre Hyperparameterstabilität \cite[Abschn. 2.2]{OriginalPPO} und reduziert somit die Anfälligkeit gegenüber schlechten Hyperparametereinstellungen.
+\ac{PPO} bietet gegenüber verwandten Methoden wie \ac{TRPO} (\textit{Trust Region Policy Optimization}) eine höhere Hyperparameter\footnote{Hyperparameter sind Konfigurationsparameter des Lernalgorithmus, die vor dem Training festgelegt werden und nicht während des Trainings gelernt werden (im Gegensatz zu den Modellparametern $\theta$ und $\phi$). Beispiele sind die Lernrate, die Anzahl der Epochen $n\_epochs$ oder der Clipping\hyp{}Parameter $\epsilon$.}stabilität \cite[Abschn. 2.2]{OriginalPPO} und reduziert somit die Anfälligkeit gegenüber schlechten Hyperparametereinstellungen.
 \medskip
 
 Die Wahl von \ac{PPO} für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
@@ -268,7 +268,7 @@ Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch 
         ] {12 - 2.5*y + 2.5*sin(deg(x*1.5))*cos(deg(y*1.5))};
 
         % 2. Der Pfad des Gradientenabstiegs
-        % Startet "oben" (bei ca. -3, -3) und driftet durch Rauschen stärker in x-Richtung ab
+        % Startet "oben" (bei ca.~-3, -3) und driftet durch Rauschen stärker in x-Richtung ab
         \addplot3[
             color=red,
             mark=*,
@@ -288,7 +288,7 @@ Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch 
         \legend{Verlustfunktion $L_t^{total}$, Optimierungspfad}
         \end{axis}
     \end{tikzpicture}
-    \caption[Gradientenabstieg Visualisierung]{Visualisierung des Gradientenabstiegs auf einer zweidimensionalen Verlustfunktion. (Abbildung in Anlehung an \cite{gradientenabstieg_visio} erstellt.)}
+    \caption[Gradientenabstieg Visualisierung]{Visualisierung des Gradientenabstiegs auf einer zweidimensionalen Verlustfunktion. (Abbildung in Anlehnung an \cite{gradientenabstieg_visio} erstellt.)}
     \label{fig:gradient_descent_3d}
 \end{figure}
 
@@ -368,7 +368,7 @@ Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehlo
 \end{figure}
 \medskip
 
-Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gated} eine Projektion des hochdimensionalen Parameterraums auf zwei Dimensionen darstellt. $\theta_1$ steht hierbei stellvertretend für alle Netzwerk\hyp{}Gewichte, die einem aktuell inaktiven Aktionszweig zugeordnet sind, während $\theta_2$ die Parameter des aktiven Zweigs repräsentiert. In der Praxis führt das Masking dazu, dass die Parameter des inaktiven Zweigs ($\theta_1$) eingefroren werden und somit vor dem Einfluss von Rauschen geschützt sind, solange ihre Aktion nicht zur Ausführung kommt.
+Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gated} eine stark vereinfachte Projektion des hochdimensionalen Parameterraums auf zwei Dimensionen darstellt. In der Realität umfasst ein neuronales Netzwerk typischerweise hunderte bis tausende trainierbare Parameter. $\theta_1$ und $\theta_2$ in der Abbildung sind daher keine einzelnen Gewichte, sondern stehen jeweils stellvertretend für die Gesamtheit aller Netzwerk\hyp{}Gewichte eines Aktionszweigs: $\theta_1$ repräsentiert alle Parameter, die einem aktuell inaktiven Aktionszweig zugeordnet sind, während $\theta_2$ die Parameter des aktiven Zweigs zusammenfasst. Diese Reduktion auf zwei Dimensionen dient ausschließlich der Veranschaulichung. In der Praxis führt das Masking dazu, dass sämtliche Parameter des inaktiven Zweigs (potenziell hunderte Gewichte) simultan eingefroren werden und somit vor dem Einfluss von Rauschen geschützt sind, solange ihre Aktion nicht zur Ausführung kommt.
 
 \section{Metriken im Reinforcement Learning}
 Um den Erfolg der durchgeführten Experimente und die Wirksamkeit der modifizierten Algorithmen in Kapitel \ref{ch:evaluation} quantitativ bewerten zu können, müssen geeignete Vergleichsgrößen definiert werden. Im Reinforcement Learning gibt es verschiedene Metriken, die verwendet werden, um die Leistung eines Agenten zu bewerten.
