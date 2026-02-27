@@ -11,10 +11,10 @@ Ohne Anpassung würde der Algorithmus dennoch Gradienten für diese inaktiven Ko
 \section{Verwandte Arbeiten und Abgrenzung}
 
 Die Problematik gemischter Aktionsräume wird in der Literatur oft als \textit{Parameterized Action Space} bezeichnet. \citet{masson2016reinforcement} nutzen hierfür Q-Learning-Verfahren. Dabei gehen sie davon aus, dass zu jeder diskreten Aktion immer ein passender kontinuierlicher Parameter gehört, der mitgelernt werden muss.
-Im vorliegenden Szenario erfordern Aktionen wie \emph{Noop} hingegen keinen Parameter. Der hier vorgestellte Ansatz verzichtet daher auf die Optimierung dieser irrelevanten Ausgabegrößen. Durch den Einsatz von Gradient-Gating wird sichergestellt, dass die entsprechenden Parameter vom Trainingsprozess ausgeschlossen werden, sofern sie für die getroffene diskrete Entscheidung keine Relevanz besitzen.
+Im vorliegenden Szenario erfordern Aktionen wie \emph{Noop} hingegen keinen Parameter. Der hier vorgestellte Ansatz verzichtet daher auf die Optimierung dieser irrelevanten Ausgabegrößen. Durch den Einsatz von Gradient-Masking wird sichergestellt, dass die entsprechenden Parameter vom Trainingsprozess ausgeschlossen werden, sofern sie für die getroffene diskrete Entscheidung keine Relevanz besitzen.
 \medskip
 
-Ein weiterer verwandter Ansatz ist das \emph{Invalid Action Masking} \cite{invalid_Action_Masking}. Dort kommt ein zustandsabhängiges Gating zum Einsatz, um ungültige Aktionen bereits während der Rollout\hyp{}Phase zu maskieren. Für das hier vorliegende Problem lässt sich dieser Ansatz jedoch nicht direkt übertragen. Die Relevanz der kontinuierlichen Aktion hängt nicht allein vom Zustand ab, sondern primär von der im selben Zeitschritt erst noch zu wählenden diskreten Aktion. Da diese Entscheidung zum Zeitpunkt einer potenziellen Maskierung noch nicht feststeht, ist ein präemptives Gating ausgeschlossen.
+Ein weiterer verwandter Ansatz ist das \emph{Invalid Action Masking} \cite{invalid_Action_Masking}. Dort kommt ein zustandsabhängiges Masking zum Einsatz, um ungültige Aktionen bereits während der Rollout\hyp{}Phase zu maskieren. Für das hier vorliegende Problem lässt sich dieser Ansatz jedoch nicht direkt übertragen. Die Relevanz der kontinuierlichen Aktion hängt nicht allein vom Zustand ab, sondern primär von der im selben Zeitschritt erst noch zu wählenden diskreten Aktion. Da diese Entscheidung zum Zeitpunkt einer potenziellen Maskierung noch nicht feststeht, ist ein präemptives Masking ausgeschlossen.
 
 \section{Theoretische Fundierung der Anpassungen}
 
@@ -26,9 +26,9 @@ Um diese Abhängigkeit korrekt abzubilden, nutzt die Implementierung (siehe Absc
 
 Dasselbe Prinzip wird auf die Entropie-Berechnung angewandt. Eine einfache Addition der Entropiewerte würde die Unsicherheit des Agenten künstlich aufblähen, da auch irrelevante Aktionen zur Unsicherheit beitragen würden. Stattdessen wird die Entropie der kontinuierlichen Aktion gewichtet: Sie fließt nur anteilig in die Berechnung ein, basierend auf der Wahrscheinlichkeit, dass die Aktion tatsächlich ausgeführt wird. Dies setzt das Konzept der \textit{bedingten Entropie} praktisch um \cite[Kap. 2.2]{bedinteEndropie}.
 
-\section{Implementierung des Gradient-Gatings}
+\section{Implementierung des Gradient-Maskings}
 \label{sc:ppo_anpassung}
-Um die spezifischen Anforderungen des bedingten Aktionsraums zu erfüllen, wurde statt einer Maskierung der Aktionen selbst ein aktionsabhängiges Gradient\hyp{}Gating implementiert. Dabei werden zunächst alle Aktionen gesampelt, die Gradientenberechnung für die kontinuierliche Komponente wird jedoch nachträglich unterdrückt, sofern diese sich als irrelevant erweist. Die maskierte Ausführung innerhalb der Umgebung garantiert dabei, dass wirkungslose Aktionen tatsächlich keine Zustandsänderung hervorrufen.
+Um die spezifischen Anforderungen des bedingten Aktionsraums zu erfüllen, wurde statt einer Maskierung der Aktionen selbst ein aktionsabhängiges Gradient\hyp{}Masking implementiert. Dabei werden zunächst alle Aktionen gesampelt, die Gradientenberechnung für die kontinuierliche Komponente wird jedoch nachträglich unterdrückt, sofern diese sich als irrelevant erweist. Die maskierte Ausführung innerhalb der Umgebung garantiert dabei, dass wirkungslose Aktionen tatsächlich keine Zustandsänderung hervorrufen.
 \medskip
 
 Die technische Umsetzung erfolgt durch gezielte Anpassungen der \ac{SB3}\hyp{}Plus Bibliothek \cite{sb3_plus}. Die vollständigen Änderungen an der Implementierung sind im Anhang in Abschnitt \ref{sc:ppo_code} zu finden.
@@ -44,13 +44,13 @@ Die konkrete technische Umsetzung dieser theoretischen Überlegungen erfordert E
 Eine Erweiterung der Wahrscheinlichkeitsverteilungs\hyp{}Klasse ermöglicht es, logarithmische Wahrscheinlichkeiten (\texttt{log\_prob()}) und Entropien (\texttt{entropy()}) getrennt für diskrete und kontinuierliche Aktionen auszuwerten. Während die Basisimplementierung diese Werte sofort summiert, gewährt die Modifikation Zugriff auf separierte Tensoren. Dies ist die Voraussetzung, um im nächsten Schritt eine selektive Maskierung vornehmen zu können.
 
 \subsection*{Evaluation}
-In der Methode \texttt{evaluate\_actions()}, welche während der Optimierungsphase aufgerufen wird (siehe Algorithmus \ref{alg:ppo_training}, Zeile 20), werden die Komponenten der \ac{PPO}\hyp{}Verlustfunktion berechnet. Hier erfolgt das eigentliche Gradient\hyp{}Gating.
+In der Methode \texttt{evaluate\_actions()}, welche während der Optimierungsphase aufgerufen wird (siehe Algorithmus \ref{alg:ppo_training}, Zeile 20), werden die Komponenten der \ac{PPO}\hyp{}Verlustfunktion berechnet. Hier erfolgt das eigentliche Gradient\hyp{}Masking.
 Mithilfe einer Maske wird sichergestellt, dass die kontinuierliche Verteilung nur dann Einfluss auf die Gradientenbildung hat, wenn sie entscheidungsrelevant ist.
-Algorithmus \ref{alg:gradient_gating} zeigt die Implementierung dieser Logik in vereinfachter, schematischer Form.
+Algorithmus \ref{alg:gradient_masking} zeigt die Implementierung dieser Logik in vereinfachter, schematischer Form.
 
 \begin{algorithm}
-\caption{Gradient-Gating in der Evaluationsfunktion (vereinfacht)}
-\label{alg:gradient_gating}
+\caption{Gradient-Masking in der Evaluationsfunktion (vereinfacht)}
+\label{alg:gradient_masking}
 \begin{algorithmic}[1]
 \State \texttt{mask\_steer = (action\_type == STEERING)}
 \Statex
@@ -87,7 +87,7 @@ Würde man $p(a_{\text{type}}=\text{Steer})$ direkt verwenden, würde der Agent 
 Durch die Verwendung von \texttt{no\_grad()} wirkt die Wahrscheinlichkeit lediglich als konstanter Skalierungsfaktor für die kontinuierliche Entropie, wodurch dieser Bias eliminiert wird.
 
 \subsection*{Vorwärtsschritt}
-Analog zur Evaluation muss das Gradient\hyp{}Gating auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (siehe Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
+Analog zur Evaluation muss das Gradient\hyp{}Masking auch im Vorwärtsschritt angewendet werden. Die \texttt{forward()}\hyp{}Funktion wird während der Rollout\hyp{}Phase durchlaufen (siehe Algorithmus \ref{alg:ppo_training}, Zeile 7). Die logarithmischen Wahrscheinlichkeiten werden hier ebenfalls maskiert, bevor sie im Rollout\hyp{}Buffer gespeichert werden. Dies gewährleistet, dass die gespeicherten Referenzwerte ($\pi_{\text{old}}$) konsistent zu den im Training neu berechneten Werten sind und die \emph{Probability Ratios} korrekt gebildet werden können.
 
 \section{Herausforderungen in bedingten Aktionsräumen}
 \label{sc:Herausforderungen_bedingte_Aktionsräume}

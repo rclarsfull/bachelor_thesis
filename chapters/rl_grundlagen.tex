@@ -1,7 +1,7 @@
 \chapter{Reinforcement Learning}
 \label{ch:rl_grundlagen}
 
-Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Es führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (\ac{PPO}), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Gating) für gemischte Aktionsräume nachvollziehen zu können.
+Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Diese Arbeit führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (\ac{PPO}), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Masking) für gemischte Aktionsräume nachvollziehen zu können.
 
 \section{Einführung in Reinforcement Learning}
 
@@ -44,7 +44,7 @@ wobei:
 
 Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy \(\pi\) aus,
 führt die Aktion aus und erhält eine Belohnung \(r_t = R(s_t, a_t)\). Die Umgebung wechselt dann in einen neuen Zustand \(s_{t+1}\) basierend auf der Übergangswahrscheinlichkeit \(P(s_{t+1}|s_t, a_t)\).
-Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.B. eine maximale Anzahl von Schritten oder das Erreichen eines Zielzustands).
+Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.B. eine maximale Anzahl von Schritten, das Erreichen eines Zielzustandes oder eine Kollision).
 Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als Trajektorie bezeichnet wird \cite[Kap. 3.1]{sutton2018rl}:
 \\
 
@@ -71,23 +71,23 @@ Obwohl in der Literatur diverse Modellierungen existieren, beschränkt sich die 
     Dies lässt sich am Beispiel eines Autos mit Schaltgetriebe verdeutlichen: Das Einlegen eines Gangs ist eine diskrete Entscheidung (z.\,B. 1., 2. Gang), während das Gasgeben und Lenken kontinuierliche Eingaben sind.
 \end{itemize}
 
-Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hybride und bedingte Aktionsräume. Während der hybride Aspekt die Mischung aus diskreten und kontinuierlichen Aktionen beschreibt, führt der bedingte Charakter hierarchische Abhängigkeiten ein. Das bedeutet, die Auswahl einer übergeordneten diskreten Aktion bestimmt, welche untergeordneten Aktionen (oft kontinuierlich) zur Verfügung stehen. In der Literatur werden solche Strukturen auch als parametrisierte Aktionsräume bezeichnet. Ansätze wie sie in \cite{bamford2021generalising} vorgestellt werden, nutzen eine explizite Baumstruktur, um diese Abhängigkeiten im Kontext von Echtzeit\hyp{}Strategiespielen (RTS) zu modellieren um eine Reduktion der Modellkomplexität zu erreichen. Die vorliegende Arbeit überträgt diesen Grundgedanken auf den Luftverkehrskontext. Um die kausalen Abhängigkeiten während des Trainings zu wahren, wird im weiteren Verlauf die Methode des \textit{Gradient\hyp{}Gating} eingesetzt.
+Diese Arbeit konzentriert sich speziell auf eine Kombination zweier Konzepte: hybride und bedingte Aktionsräume. Während der hybride Aspekt die Mischung aus diskreten und kontinuierlichen Aktionen beschreibt, führt der bedingte Charakter hierarchische Abhängigkeiten ein. Das bedeutet, die Auswahl einer übergeordneten diskreten Aktion bestimmt, welche untergeordneten Aktionen (oft kontinuierlich) zur Verfügung stehen. In der Literatur werden solche Strukturen auch als parametrisierte Aktionsräume bezeichnet. Ansätze wie sie in \cite{bamford2021generalising} vorgestellt werden, nutzen eine explizite Baumstruktur, um diese Abhängigkeiten im Kontext von Echtzeit\hyp{}Strategiespielen (RTS) zu modellieren um eine Reduktion der Modellkomplexität zu erreichen. Die vorliegende Arbeit überträgt diesen Grundgedanken auf den Luftverkehrskontext. Um die kausalen Abhängigkeiten während des Trainings zu wahren, wird im weiteren Verlauf die Methode des \textit{Gradient\hyp{}Masking} eingesetzt.
 
 \subsection*{Extraktion von Aktionen aus neuronalen Netzen}
 \label{sc:action_extraction}
 Die Wahl der Aktionsraumklasse hat direkte Auswirkungen auf die Architektur der Ausgabeschicht (Output Layer) des neuronalen Netzes und die Art und Weise, wie Aktionen aus den Netzwerkausgaben abgeleitet werden.
 
 \subsubsection*{Diskrete Aktionsräume}
-\ac{SB3}\footnote{\ac{SB3} ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} \cite{sb3} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution). Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
+\ac{SB3}\footnote{\ac{SB3} ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution) \cite{sb3}. Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
 \medskip
 
 Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen. Bei mehrdimensionalen Aktionsräumen (z.\,B. Lenken und Beschleunigen) wächst die Anzahl der benötigten Kombinationen exponentiell an (kartesisches Produkt der Einzelaktionen), was das Training ineffizient macht \cite{lillicrap2015continuous}.
 
 \subsubsection*{Kontinuierliche Aktionsräume}
-Analog zu den diskreten Räumen modelliert \ac{SB3} \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Netzwerk die Parameter der Verteilung, typischerweise den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
-Für einen $n$-dimensionalen kontinuierlichen Aktionsvektor benötigt das Netzwerk somit lediglich $2n$ Ausgangsneuronen.
+Analog zu den diskreten Räumen modelliert \ac{SB3} \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Modell die Parameter der Verteilung: den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
+Das neuronale Netz gibt dabei lediglich den $n$-dimensionalen Vektor der Erwartungswerte aus, weshalb nur $n$ Ausgangsneuronen benötigt werden. Die Standardabweichung wird als separater, zustandsunabhängiger Parameter gelernt \cite{sb3}.
 
-\section{Differenzierung verschiedener \ac{RL}\hyp{}Algorithmen}
+\section{Differenzierung verschiedener RL\hyp{}Algorithmen}
 
 Nach der Formalisierung des Problems als \ac{MDP} stellt sich die Frage nach dem geeigneten Lösungsverfahren. Die Wahl des Algorithmus ist dabei maßgeblich von den Eigenschaften des Problems, wie der Beschaffenheit des Zustands- und Aktionsraums, abhängig.
 Algorithmen des \ac{RL} lassen sich grundlegend in modellbasierte und modellfreie Ansätze unterteilen \cite[Kap. 8]{sutton2018rl}. 
@@ -149,7 +149,7 @@ Diese kombiniert die Vorteile von Policy\hyp{}Methoden mit wertbasierten Ansätz
     \item Der \textbf{Critic} (die Wertfunktion $V_\phi$) schätzt den Erwartungswert der zukünftigen Belohnungen ab einem Zustand.
 \end{itemize}
 Durch die Gegenüberstellung der tatsächlichen Erträge mit der Schätzung des Critics lässt sich der \textbf{Advantage} $A_t$ berechnen.
-Dieser gibt an, um wie viel besser eine gewählte Aktion im Vergleich zum Durchschnitt aller möglichen Aktionen in diesem Zustand war. Der Advantage
+Dieser gibt an, wie viel besser eine gewählte Aktion im Vergleich zum Durchschnitt aller möglichen Aktionen in diesem Zustand war. Der Advantage
 dient als rauscharmes Signal für das Update des Actors und reduziert die Varianz des Gradienten signifikant \cite[Kap. 13.5]{sutton2018rl}.
 
 \section{Proximal Policy Optimization}
@@ -163,10 +163,10 @@ Der Kern von \ac{PPO} ist das \textit{Clipped Surrogate Objective}. Durch diese 
 
 Die Wahl von \ac{PPO} für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
 diskret\hyp{}kontinuierlicher Aktionsräume. Zudem erlaubt die Implementierung in \ac{SB3} \cite{sb3} eine modulare Anpassung der Netzwerkarchitektur,
-was für das in dieser Arbeit vorgestellte \textit{Gradient\hyp{}Gating} essentiell ist.
+was für das in dieser Arbeit vorgestellte \textit{Gradient\hyp{}Masking} essentiell ist.
 
 \subsection{Trainingsablauf}
-Der in Algorithmus \ref{alg:ppo_training} dargestellte Ablauf verdeutlicht die Trennung zwischen Datenerhebung und Optimierung, die für das Verständnis des später implementierten \textit{Gradient\hyp{}Gating} essenziell ist.
+Der in Algorithmus \ref{alg:ppo_training} dargestellte Ablauf verdeutlicht die Trennung zwischen Datenerhebung und Optimierung, die für das Verständnis des später implementierten \textit{Gradient\hyp{}Masking} essenziell ist.
 Der \ac{PPO}\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Rollout\hyp{}Phase} und der \textit{Optimierungsphase}.
 
 \begin{algorithm}[H]
@@ -213,7 +213,7 @@ In der Optimierungsphase (Zeilen 14--27) findet die eigentliche Anpassung der Ne
 Advantage\hyp{}Werte genutzt, um das \textit{Clipped Surrogate Objective} zu berechnen. 
 
 \subsection{Die kombinierte Verlustfunktion}
-Ein zentraler Bestandteil der Optimierungsphase ist die Verlustfunktion. Sie stellt zugleich den entscheidenden Eingriffspunkt für das in Kapitel \ref{ch:ppo_bedingt} vorgestellte \textit{Gradient\hyp{}Gating} dar, weshalb eine detaillierte Aufschlüsselung ihrer Komponenten für das Verständnis der späteren Modifikationen unerlässlich ist.
+Ein zentraler Bestandteil der Optimierungsphase ist die Verlustfunktion. Sie stellt zugleich den entscheidenden Eingriffspunkt für das in Kapitel \ref{ch:ppo_bedingt} vorgestellte \textit{Gradient\hyp{}Masking} dar, weshalb eine detaillierte Aufschlüsselung ihrer Komponenten für das Verständnis der späteren Modifikationen unerlässlich ist.
 In der praktischen Implementierung von \ac{PPO} werden die Parameter des Actors ($\theta$) und des Critics ($\phi$) simultan über eine solche kombinierte Funktion optimiert. Die totale Verlustfunktion ergibt sich als gewichtete Summe \cite[Glg. 9]{OriginalPPO}:
 
 \begin{equation}
@@ -241,7 +241,7 @@ Dabei setzen sich die Komponenten wie folgt zusammen:
 Der Zusammenhang zwischen diesen Komponenten ist essentiell für die Stabilität: Ein präziser Critic minimiert $L_t^{VF}$, was zu verlässlichen Advantage\hyp{}Schätzungen $A_t$ führt. Diese bilden wiederum die Grundlage für zielgerichtete Updates des Actors über $L_t^{CLIP}$. Die Hyperparameter $c_1$ und $c_2$ steuern dabei die Gewichtung zwischen Genauigkeit der Wertfunktion, Optimierung der Policy und dem Erhalt der Explorationsfähigkeit.
 
 \subsection{Gradientenbasierte Optimierung}
-Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch Gradientenabstieg. Ein Verständnis dieser Mechanismen ist entscheidend, um nachzuvollziehen, wie durch gezieltes Gating bestimmte Parameter situationsbedingt vom Training ausgeschlossen werden können.
+Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch Gradientenabstieg. Ein Verständnis dieser Mechanismen ist entscheidend, um nachzuvollziehen, wie durch gezieltes Masking bestimmte Parameter situationsbedingt vom Training ausgeschlossen werden können.
 
 \begin{figure}[htbp]
     \centering
@@ -318,7 +318,7 @@ Ergänzend dazu ermöglichen Kontextmanager wie \texttt{with torch.no\_grad():},
 \medskip
 
 In dieser Arbeit werden diese Mechanismen genutzt,
-um ein \textit{Gradient\hyp{}Gating} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
+um ein \textit{Gradient\hyp{}Masking} zu realisieren. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
 Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehloptimierung inaktiver Netzwerkzweige verhindert wird.
 
 \begin{figure}[htbp]
@@ -344,7 +344,7 @@ Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehlo
             opacity=0.8
         ] {12 - 2.5*y + 2.5*sin(deg(x*1.5))*cos(deg(y*1.5))};
 
-        % 2. Der Pfad des Gradientenabstiegs mit Gating
+        % 2. Der Pfad des Gradientenabstiegs mit Masking
         % Theta_1 ist fixiert bei -3, der Pfad bewegt sich nur entlang Theta_2
         \addplot3[
             color=blue,
@@ -361,22 +361,22 @@ Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehlo
             (-3, 4.0, 4.4)    % Ende
         };
         
-        \legend{Verlustfunktion $L_t^{total}$, Pfad bei Gating von $\theta_1$}
+        \legend{Verlustfunktion $L_t^{total}$, Pfad bei Masking von $\theta_1$}
         \end{axis}
     \end{tikzpicture}
-    \caption[Gradient\hyp{}Gating Auswirkung]{Auswirkung von Gradient\hyp{}Gating auf den Optimierungspfad. Da der Parameter $\theta_1$ vom Rückfluss der Gradienten ausgeschlossen ist, erfolgt die Optimierung ausschließlich entlang der Achse $\theta_2$. Der Parameter $\theta_1$ verharrt auf seinem Initialwert.}
+    \caption[Gradient\hyp{}Masking Auswirkung]{Auswirkung von Gradient\hyp{}Masking auf den Optimierungspfad. Da der Parameter $\theta_1$ vom Rückfluss der Gradienten ausgeschlossen ist, erfolgt die Optimierung ausschließlich entlang der Achse $\theta_2$. Der Parameter $\theta_1$ verharrt auf seinem Initialwert.}
     \label{fig:gradient_descent_gated}
 \end{figure}
 \medskip
 
-Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gated} eine Projektion des hochdimensionalen Parameterraums auf zwei Dimensionen darstellt. $\theta_1$ steht hierbei stellvertretend für alle Netzwerk\hyp{}Gewichte, die einem aktuell inaktiven Aktionszweig zugeordnet sind, während $\theta_2$ die Parameter des aktiven Zweigs repräsentiert. In der Praxis führt das Gating dazu, dass die Parameter des inaktiven Zweigs ($\theta_1$) eingefroren werden und somit vor dem Einfluss von Rauschen geschützt sind, solange ihre Aktion nicht zur Ausführung kommt.
+Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gated} eine Projektion des hochdimensionalen Parameterraums auf zwei Dimensionen darstellt. $\theta_1$ steht hierbei stellvertretend für alle Netzwerk\hyp{}Gewichte, die einem aktuell inaktiven Aktionszweig zugeordnet sind, während $\theta_2$ die Parameter des aktiven Zweigs repräsentiert. In der Praxis führt das Masking dazu, dass die Parameter des inaktiven Zweigs ($\theta_1$) eingefroren werden und somit vor dem Einfluss von Rauschen geschützt sind, solange ihre Aktion nicht zur Ausführung kommt.
 
 \section{Metriken im Reinforcement Learning}
 Um den Erfolg der durchgeführten Experimente und die Wirksamkeit der modifizierten Algorithmen in Kapitel \ref{ch:evaluation} quantitativ bewerten zu können, müssen geeignete Vergleichsgrößen definiert werden. Im Reinforcement Learning gibt es verschiedene Metriken, die verwendet werden, um die Leistung eines Agenten zu bewerten.
 Diese Metriken helfen dabei, den Fortschritt des Lernprozesses zu überwachen und die Effektivität verschiedener Algorithmen und Hyperparameter zu vergleichen.
 Viele dieser Metriken werden automatisch von \ac{RL}\hyp{}Bibliotheken wie \ac{SB3} \cite{sb3} erfasst und können zur Analyse und Visualisierung verwendet werden.
 Dieser Abschnitt soll sich auf diese \ac{PPO}\hyp{}spezifischen Metriken konzentrieren. Die Umgebungs\hyp{}spezifischen Metriken werden im Abschnitt \ref{sc:env_metrics} beschrieben.
-Folgende Metriken sind besonders relevant \cite{LogExplanation}:
+Folgende Metriken \cite{LogExplanation} sind besonders relevant:
 \begin{itemize}
     \item \textbf{Explained Variance (EV):} Diese Metrik misst, wie gut der Critic die tatsächlichen Returns vorhersagt. Ein hoher EV\hyp{}Wert (nahe 1) deutet darauf hin, dass der Critic
     die Returns gut modelliert, während ein niedriger oder negativer Wert auf eine schlechte Vorhersage hinweist.

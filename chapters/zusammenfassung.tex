@@ -4,7 +4,7 @@
 Die vorliegende Arbeit hatte zum Ziel, einen \ac{RL}-Agenten für die Adjacent-Position zu entwickeln, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und ruhiges Steuerungsverhalten zeigt. Im Mittelpunkt stand dabei die Untersuchung, ob durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option das Problem des \enquote{Jittering}, d.\,h. unnötiger kleinteiliger Kurskorrekturen, minimiert werden kann.
 
 \subsection*{Beantwortung der Forschungsfrage}
-Die zentrale Forschungsfrage, wie die Architektur eines \ac{RL}-Agenten und dessen Trainingsumgebung beschaffen sein muss, um sowohl Konfliktfreiheit als auch hohe Effizienz zu gewährleisten, konnte erfolgreich adressiert werden. Die entwickelte Architektur mit hybridem Aktionsraum ermöglicht dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem bewussten Verzicht auf Eingriffe. Die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Gating} gewährleistet dabei ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum.
+Die zentrale Forschungsfrage, wie die Architektur eines \ac{RL}-Agenten und dessen Trainingsumgebung beschaffen sein muss, um sowohl Konfliktfreiheit als auch hohe Effizienz zu gewährleisten, konnte erfolgreich adressiert werden. Die entwickelte Architektur mit hybridem Aktionsraum ermöglicht dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem bewussten Verzicht auf Eingriffe. Die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Masking} gewährleistet dabei ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum.
 
 \subsection*{Ergebnisse der Evaluation}
 Die experimentelle Evaluation erfolgte in drei Versuchsreihen, die unterschiedliche Aspekte der entwickelten Lösung untersuchten:
@@ -23,7 +23,7 @@ Die in Kapitel \ref{sec:intro:goal} definierten Untersuchungsziele wurden weitge
 \begin{itemize}
     \item Die explizite Repräsentation von \emph{No-Operations} im Aktionsraum wurde erfolgreich realisiert und führt nachweislich zur Vermeidung redundanter Steuerbefehle.
     \item Die Architektur mit hybridem Aktionsraum ermöglicht eine effektive Differenzierung zwischen aktiven Eingriffen und Nicht-Eingriffen.
-    \item Die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Gating} gewährleistet stabiles Lernverhalten ohne Beeinträchtigung der Konvergenz.
+    \item Die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Masking} gewährleistet stabiles Lernverhalten ohne Beeinträchtigung der Konvergenz.
     \item Der operative Mehrwert zeigt sich insbesondere in der reduzierten Eingriffsfrequenz und höheren Stabilität des Verhaltens, auch wenn dies nicht in allen Metriken zu statistisch signifikanten Verbesserungen führte.
 \end{itemize}
 

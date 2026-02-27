@@ -18,13 +18,13 @@ Ein Sektor wird typischerweise von einem Team aus zwei Fluglotsen kontrolliert:
     \item \textbf{Planner (Koordinationslotse):} Zuständig für die strategische Planung und die Abstimmung mit benachbarten Sektoren.
 \end{itemize}
 
-Für die Übergabe von Flügen zwischen Sektoren existieren in \textit{Letter of Agreement} (LoA) definierte Standardverfahren.
+Für die Übergabe von Flügen zwischen Sektoren existieren in \ac{LoA} definierte Standardverfahren.
 Diese legen Übergabepunkte sowie die zugehörigen Höhen und Geschwindigkeiten fest.
 Abweichungen von diesen Standards erfordern eine explizite Koordinierung zwischen den betroffenen Sektoren, dies geschieht üblicherweise über Telefonate zwischen den Lotsen.
 
 \section{Staffelung und Konfliktlösung}
 Die zentrale Sicherheitsmaßnahme der Flugsicherung ist die Staffelung (\textit{Separation}), also die Gewährleistung definierter Mindestabstände zwischen Luftfahrzeugen.
-Die \textit{International Civil Aviation Organization} (ICAO) gibt hierfür Standards vor \cite{separation_standards}. Für den Streckenflug gelten in der Regel:
+Die \ac{ICAO} gibt hierfür Standards vor \cite{separation_standards}. Für den Streckenflug gelten in der Regel:
 \begin{itemize}
     \item \textbf{Vertikale Staffelung:} Mindestens 1000 ft (ca. 300 m).
     \item \textbf{Laterale Staffelung:} Mindestens 5 NM (ca. 9,3 km).
@@ -53,7 +53,7 @@ Zu seinen Aufgaben gehören:
 
 Im Rahmen dieser Arbeit soll diese Rolle durch einen \ac{RL}\hyp{}Agenten automatisiert werden, um insbesondere für Selbstlernphasen (z.B. im Web-Simulator) eine realistische Interaktion ohne menschlichen Gegenpart zu ermöglichen.
 Die primäre Aufgabe des Agenten besteht darin, Konflikte in den benachbarten Sektoren zu vermeiden und den Verkehrsfluss sicherzustellen.
-Dies umfasst zwei wesentliche Phasen: Zunächst müssen Flugzeuge sicher von ihrem Startpunkt (Spawn\hyp{}Punkt) zu dem im \textit{Letter of Agreement} (LoA) definierten Übergabepunkt am Rand des Trainingssektors navigiert werden.
+Dies umfasst zwei wesentliche Phasen: Zunächst müssen Flugzeuge sicher von ihrem Startpunkt (Spawn\hyp{}Punkt) zu dem im \ac{LoA} definierten Übergabepunkt am Rand des Trainingssektors navigiert werden.
 Anschließend übernimmt der Agent die Flugzeuge wieder am Ausflugpunkt des Sektors und führt sie konfliktfrei zu einem Endpunkt (Despawn\hyp{}Punkt) außerhalb des Sichtbereichs des Lotsen.
 Kernherausforderung ist hierbei die Entwicklung eines Agenten, der diese Aufgaben nicht nur zuverlässig erfüllt, sondern dabei auch ein für menschliche Trainees nachvollziehbares und akzeptables Verhalten zeigt.
 Diese Arbeit konzentriert sich daher auf die Entwicklung eines Agenten, der durch gezielte Kursänderungen Konflikte vermeidet, ohne dabei unnötige oder verwirrende Manöver durchzuführen.
