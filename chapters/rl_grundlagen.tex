@@ -9,6 +9,7 @@ Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, da
 \medskip
 
 \textit{\enquote{Reinforcement learning is learning what to do — how to map situations to actions — so as to maximize a numerical reward signal. The learner is not told which actions to take, but instead must discover which actions yield the most reward by trying them. In the most interesting and challenging cases, actions may affect not only the immediate reward but also the next situation and, through that, all subsequent rewards. These two characteristics — trial-and-error search and delayed reward — are the two most important distinguishing features of reinforcement learning.} \cite[Kap. 1.1]{sutton2018rl}}
+\medskip
 
 Im \ac{RL} werden also Agenten bzw. Policies\footnote{Ein \textit{Agent} bezeichnet das lernende System im Reinforcement Learning. Das Verhalten eines Agenten wird durch eine \textit{Policy} beschrieben, welche festlegt, welche Aktion in einem gegebenen Zustand ausgeführt werden soll. Eine Policy kann dabei deterministisch (eindeutige Zuordnung von Zuständen zu Aktionen) oder stochastisch (Wahrscheinlichkeitsverteilung über mögliche Aktionen) sein \cite[Kap. 3.1]{sutton2018rl}.} durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
 Dies unterscheidet \ac{RL} von überwachten Lernverfahren, bei denen Modelle anhand von gekennzeichneten Beispieldaten trainiert werden \cite[Kap. 1]{sutton2018rl}.
@@ -119,7 +120,7 @@ Die Anpassung der Parameter $\theta$ erfolgt durch Gradientenabstieg (Abbildung 
 führen, systematisch erhöht wird \cite[Kap. 13.2]{sutton2018rl}.
 \medskip
 
-Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und deren spezifische Bedeutung zusammen, die im Kontext von Policy-Gradient-Methoden und insbesondere \ac{PPO} relevant sind. Diese Variablen bilden die Grundlage für die formale Beschreibung der Lernalgorithmen und deren Anpassungen, die in den folgenden Kapiteln behandelt werden.
+Die folgenden Tabellen \ref{tab:ppo_vars_part1} und \ref{tab:ppo_vars_part2} fassen die mathematischen Symbole und deren spezifische Bedeutung zusammen, die im Kontext von Policy-Gradient-Methoden und insbesondere \ac{PPO} relevant sind. Diese Variablen bilden die Grundlage für die formale Beschreibung der Lernalgorithmen und deren Anpassungen, die in den folgenden Kapiteln behandelt werden.
 
 \begin{table}[H]
 \centering
@@ -136,6 +137,18 @@ $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
 $\gamma$          & Dis\-kont\-ie\-rungs\-faktor & Bestimmt die Ge\-wichtung zu\-künftiger Be\-lohnungen im Return $R_t$ \\
 $A_t$             & Advantage & Vorteil einer Aktion gegen\-über dem Durch\-schnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine kon\-zep\-tio\-nelle Ver\-ein\-fachung. \ac{SB3} implementiert in der Praxis die \textit{Gene\-ralized Advantage Esti\-mation} (GAE) \cite{sb3, gae}). \\
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
+\hline
+\end{tabular}
+\caption{Grundlegende Komponenten und Parameter im \ac{PPO}\hyp{}Algorithmus (Teil 1)}
+\label{tab:ppo_vars_part1}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{2cm}|p{3cm}|p{7cm}|} 
+\hline
+\textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im \ac{PPO}\hyp{}Algorithmus} \\
+\hline
 $\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy \\
 $L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maxi\-miert den er\-warteten Vor\-teil, be\-grenzt durch Clipping, um große Policy\hyp{}Updates zu ver\-meiden \\
 $L^{VF}_t(\phi)$  & Value Function Loss & Der qua\-dra\-tische Fehler (\ac{MSE}) zwischen der Schät\-zung des Critics $V_\phi$ und dem rea\-li\-sierten Return $R_t$. \\
@@ -145,9 +158,8 @@ $c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Ein\-
 $\epsilon$         & Clipping\hyp{}Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
 \hline
 \end{tabular}
-
-\caption{Übersicht der wichtigsten Variablen im \ac{PPO}\hyp{}Algorithmus}
-\label{tab:ppo_vars}
+\caption{Verlustfunktionen und Optimierungsparameter im \ac{PPO}\hyp{}Algorithmus (Teil 2)}
+\label{tab:ppo_vars_part2}
 \end{table}
 
 \section{Proximal Policy Optimization}
