@@ -5,11 +5,10 @@ Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwi
 
 \section{Einführung in Reinforcement Learning}
 
-Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, das sich auf sequentielle Entscheidungsprobleme spezialisiert. Im Gegensatz zu überwachtem Lernen erhält der Agent keine direkten Anweisungen, welche Aktionen in welchen Situationen korrekt sind. Stattdessen lernt er durch Versuch und Irrtum, welche Handlungen zu den besten Ergebnissen führen \cite[Kap. 1]{sutton2018rl}. Dieser Ansatz eignet sich besonders für komplexe Aufgaben, bei denen optimales Verhalten schwer vorzugeben ist. Da die vorliegende Arbeit die Steuerung eines dynamischen Systems automatisieren soll, bildet \ac{RL} den geeigneten methodischen Rahmen. \citeauthor{sutton2018rl} definieren \ac{RL} wie folgt: 
-\\
+Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, das sich auf sequentielle Entscheidungsprobleme spezialisiert. Im Gegensatz zu überwachtem Lernen erhält der Agent keine direkten Anweisungen, welche Aktionen in welchen Situationen korrekt sind. Stattdessen lernt er durch Versuch und Irrtum, welche Handlungen zu den besten Ergebnissen führen \cite[Kap. 1]{sutton2018rl}. Dieser Ansatz eignet sich besonders für komplexe Aufgaben, bei denen optimales Verhalten schwer vorzugeben ist. Da die vorliegende Arbeit die Steuerung eines dynamischen Systems automatisieren soll, bildet \ac{RL} den geeigneten methodischen Rahmen. \citeauthor{sutton2018rl} definieren \ac{RL} wie folgt:
+\medskip
 
 \textit{\enquote{Reinforcement learning is learning what to do — how to map situations to actions — so as to maximize a numerical reward signal. The learner is not told which actions to take, but instead must discover which actions yield the most reward by trying them. In the most interesting and challenging cases, actions may affect not only the immediate reward but also the next situation and, through that, all subsequent rewards. These two characteristics — trial-and-error search and delayed reward — are the two most important distinguishing features of reinforcement learning.} \cite[Kap. 1.1]{sutton2018rl}}
-\\
 
 Im \ac{RL} werden also Agenten bzw. Policies\footnote{Ein \textit{Agent} bezeichnet das lernende System im Reinforcement Learning. Das Verhalten eines Agenten wird durch eine \textit{Policy} beschrieben, welche festlegt, welche Aktion in einem gegebenen Zustand ausgeführt werden soll. Eine Policy kann dabei deterministisch (eindeutige Zuordnung von Zuständen zu Aktionen) oder stochastisch (Wahrscheinlichkeitsverteilung über mögliche Aktionen) sein \cite[Kap. 3.1]{sutton2018rl}.} durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
 Dies unterscheidet \ac{RL} von überwachten Lernverfahren, bei denen Modelle anhand von gekennzeichneten Beispieldaten trainiert werden \cite[Kap. 1]{sutton2018rl}.
@@ -19,10 +18,10 @@ Um einen \ac{RL}\hyp{}Agenten zu trainieren, muss eine Umgebung definiert werden
 \section{Markov\hyp{}Entscheidungsprozesse}
 Um ein reales Problem für einen \ac{RL}\hyp{}Algorithmus zugänglich zu machen, muss es zunächst formalisiert werden. Das Konzept des \acl{MDP}es (\acs{MDP}) liefert hierfür das mathematische Fundament. Es modelliert Entscheidungsprobleme, bei denen ein Agent in einer Umgebung agiert, um eine maximale Belohnung zu erzielen \cite[Kap. 3]{sutton2018rl}. Die korrekte Definition des MDPs ist daher der erste und wichtigste Schritt, um die reale Aufgabenstellung in eine durch den Computer lösbare Form zu überführen.
 Ein \acs{MDP} wird durch das folgende 4\hyp{}Tupel definiert:
-\\
+\medskip
 
 \((S, A, P, R)\)
-\\
+\medskip
 
 wobei:
 \begin{itemize}
@@ -46,13 +45,13 @@ Der Ablauf der Interaktion gestaltet sich dabei wie folgt \cite[Kap. 3.1]{sutton
 führt die Aktion aus und erhält eine Belohnung \(r_t = R(s_t, a_t)\). Die Umgebung wechselt dann in einen neuen Zustand \(s_{t+1}\) basierend auf der Übergangswahrscheinlichkeit \(P(s_{t+1}|s_t, a_t)\).
 Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.\,B. eine maximale Anzahl von Schritten, das Erreichen eines Zielzustandes oder eine Kollision).
 Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als \textit{Trajektorie} bezeichnet wird:
-\\
+\medskip
 
 \((s_0, a_0, r_0, s_1, a_1, r_1, s_2, a_2, r_2, ...)\)
-\\  
+\medskip
 
 Diese Trajektorie repräsentiert die Erfahrung des Agenten in der Umgebung und wird verwendet, um die Policy zu verbessern und den Agenten zu trainieren.
-\\
+\medskip
 
 
 \section{Differenzierung verschiedener Aktionsraumklassen}
@@ -131,18 +130,18 @@ Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und der
 $\theta$          & Policy\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Actor). \\
 $\phi$            & Critic\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Critic). \\
 $\pi_\theta$      & Policy (Actor)& Liefert Wahrscheinlichkeiten über Aktionen, wobei die Parameter $\theta$ trainiert werden \\
-$V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Reward ab einem Zustand, wobei die Parameter $\phi$ trainiert werden \\
+$V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumu\-lierten Reward ab einem Zu\-stand, wobei die Para\-meter $\phi$ trainiert werden \\
 $J(\theta)$       & Performance Objective & Die Zielfunktion (erwarteter kumulierter Return), die maximiert werden soll \\
 $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
-$\gamma$          & Dis\-kont\-ie\-rungs\-faktor & Bestimmt die Gewichtung zukünftiger Belohnungen im Return $R_t$ \\
-$A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine konzeptionelle Vereinfachung. \ac{SB3} implementiert in der Praxis die \textit{Generalized Advantage Estimation} (GAE) \cite{sb3, gae}). \\
+$\gamma$          & Dis\-kont\-ie\-rungs\-faktor & Bestimmt die Ge\-wichtung zu\-künftiger Be\-lohnungen im Return $R_t$ \\
+$A_t$             & Advantage & Vorteil einer Aktion gegen\-über dem Durch\-schnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine kon\-zep\-tio\-nelle Ver\-ein\-fachung. \ac{SB3} implementiert in der Praxis die \textit{Gene\-ralized Advantage Esti\-mation} (GAE) \cite{sb3, gae}). \\
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
 $\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy \\
-$L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy\hyp{}Updates zu vermeiden \\
-$L^{VF}_t(\phi)$  & Value Function Loss & Der quadratische Fehler (\ac{MSE}) zwischen der Schätzung des Critics $V_\phi$ und dem realisierten Return $R_t$. \\
+$L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maxi\-miert den er\-warteten Vor\-teil, be\-grenzt durch Clipping, um große Policy\hyp{}Updates zu ver\-meiden \\
+$L^{VF}_t(\phi)$  & Value Function Loss & Der qua\-dra\-tische Fehler (\ac{MSE}) zwischen der Schät\-zung des Critics $V_\phi$ und dem rea\-li\-sierten Return $R_t$. \\
 $H[\pi_\theta](s_t)$ & Entropie\hyp{}Bonus & Ein Maß für die Unvorhersehbarkeit der Policy, das eine zu frühe Konvergenz auf ein lokales Optimum verhindert. \\
-$L_t^{total}$     & Totale Verlustfunktion & Die gewichtete Kombination aller Verlustkomponenten, die vom Optimierer minimiert wird ($\approx -J$). \\
-$c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Einfluss von Value Loss und Entropie auf die kombinierte Verlustfunktion \\
+$L_t^{total}$     & Totale Verlustfunktion & Die ge\-wichtete Kom\-bi\-nation aller Verlust\-kom\-po\-nenten, die vom Opti\-mierer mini\-miert wird ($\approx -J$). \\
+$c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Ein\-fluss von Value Loss und Entropie auf die kom\-bi\-nierte Verlust\-funktion \\
 $\epsilon$         & Clipping\hyp{}Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
 \hline
 \end{tabular}

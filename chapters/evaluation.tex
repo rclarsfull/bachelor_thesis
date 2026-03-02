@@ -117,15 +117,15 @@ Um die Effektivität des Gradient\hyp{}Masking-Mechanismus und den Einfluss der 
     \item \textbf{Testreihe 1: Validierung der Wirksamkeit des Gradient\hyp{}Masking} \\
     In dieser Phase wird geprüft, ob der Masking-Mechanismus gegenüber den Standard-Verfahren einen Vorteil bietet.
     \begin{itemize}
-        \item \textbf{Standard \ac{PPO}:} Der unveränderte Basis-Algorithmus in der Standard-Umgebung.
-        \item \textbf{\ac{PPO} mit Wrapper:} Der Standard-Algorithmus in der mittels Wrapper modifizierten Umgebung. Diese simuliert den gemischten Aktionsraum und dient als Baseline, um sicherzustellen, dass allein die Umgebungskapselung keine Leistungsänderung bewirkt.
-        \item \textbf{\ac{PPO} mit Masking:} Der Standard-Algorithmus in der modifizierten Umgebung, erweitert um den in Kapitel \ref{ch:ppo_bedingt} beschriebenen Gradient\hyp{}Masking-Mechanismus.
+        \item \textbf{Standard \ac{PPO}:} Der unveränderte Basis\hyp{}Algorithmus in der Standard\hyp{}Umgebung.
+        \item \textbf{\ac{PPO} mit Wrapper:} Der Standard\hyp{}Algorithmus in der mittels Wrapper modifizierten Umgebung. Diese simuliert den gemischten Aktionsraum und dient als Baseline, um sicherzustellen, dass allein die Umgebungskapselung keine Leistungsänderung bewirkt.
+        \item \textbf{\ac{PPO} mit Masking:} Der Standard\hyp{}Algorithmus in der modifizierten Umgebung, erweitert um den in Kapitel \ref{ch:ppo_bedingt} beschriebenen Gradient\hyp{}Masking-Mechanismus.
     \end{itemize}
 
     \item \textbf{Testreihe 2: Analyse verschiedener Netzarchitekturen unter Gradient\hyp{}Masking} \\
     In dieser Phase werden verschiedene Netzwerk-Topologien evaluiert, die alle den Masking-Mechanismus nutzen.
     \begin{itemize}
-        \item \textbf{\ac{PPO} (Fully Shared):} Diese Variante nutzt dieselbe vollständig geteilte Architektur wie \textit{\ac{PPO} mit Masking}, realisiert diese jedoch technisch über eine \textit{Aktionsnetzwerk-basierte Implementierung}. Dabei wird das vorgeschaltete Policy-Netzwerk leer initialisiert (\texttt{[]}) und die gesamte Topologie direkt im Aktionsnetzwerk abgebildet. Da die spezialisierten Split-Architekturen ebenfalls auf dieser Methode beruhen, dient diese Variante als interne Validierung, um methodische Abweichungen zur nativen Implementierung zu isolieren.
+        \item \textbf{\ac{PPO} (Fully Shared):} Diese Variante nutzt dieselbe vollständig geteilte Architektur wie \textit{\ac{PPO} mit Masking}, realisiert diese jedoch technisch über eine \textit{Aktionsnetzwerk\hyp{}basierte Implementierung}. Dabei wird das vorgeschaltete Policy\hyp{}Netzwerk leer initialisiert (\texttt{[]}) und die gesamte Topologie direkt im Aktionsnetzwerk abgebildet. Da die spezialisierten Split\hyp{}Architekturen ebenfalls auf dieser Methode beruhen, dient diese Variante als interne Validierung, um methodische Abweichungen zur nativen Implementierung zu isolieren.
         \item \textbf{\ac{PPO} (Split Net):} Das Netzwerk wird ab der Eingabeschicht in separate Äste für die unterschiedlichen Aktionen aufgeteilt. Um die Parametereffizienz vergleichbar zur Basis-Architektur zu halten, wird die Anzahl der Neuronen pro Ast reduziert. Die Dimensionierung erfolgt dabei gemäß der in Kapitel \ref{ch:ppo_bedingt} hergeleiteten Approximation (Gleichung \ref{eq:complexity_approx}).
         \item \textbf{\ac{PPO} (Split Net Full):} Eine Variante mit vollständig getrennten Netzwerken, bei der jeder Ast die volle Breite des ursprünglichen Netzwerks behält. Da jeder Pfad auch die Feature-Extraktion vollständig eigenständig erlernen muss, wird auf eine Reduktion der Parameter verzichtet.
         \item \textbf{\ac{PPO} (Shared \& Split):} Ein hybrider Ansatz, der einen gemeinsamen Layer für die grundlegende Feature-Extraktion verwendet, gefolgt von getrennten Köpfen für die Aktionen. Auch hier wird die Neuronenanzahl der getrennten Layer anhand der Formel (Gleichung \ref{eq:complexity_approx}) reduziert.
@@ -305,7 +305,7 @@ Auffällig ist, dass drei der vier Konfigurationen (\ac{PPO}, Masked \ac{PPO}, M
 Die Datenlage aus Tabelle \ref{tab:atc_evaluation_results} und Abbildung \ref{fig:iqm_atc_combined} wirft mehrere Fragen auf: Warum zeigen drei von vier Konfigurationen einen späten Leistungseinbruch? Welche Rolle spielt die Netzwerkarchitektur? Und wie beeinflusst der Masking-Mechanismus das Explorationsverhalten? Diese Fragen werden im Folgenden systematisch adressiert.
 \medskip
 
-Die Analyse gliedert sich in vier Schwerpunkte: Zunächst wird die \emph{Trainingsqualität} anhand der Clip Fraction untersucht, um generelle Hyperparameter-Probleme zu identifizieren (Abschnitt~\ref{subsubsec:training_quality}). Darauf aufbauend erfolgt eine detaillierte Untersuchung des \emph{Explorationsverhaltens} mittels Entropie-Analyse (Abschnitt~\ref{subsubsec:exploration}), welche die Grundlage für das Verständnis der \emph{Noop-Nut\-zung} bildet (Abschnitt~\ref{subsubsec:noop_behavior}). Abschließend werden die verschiedenen Masking-Architekturen verglichen (Abschnitt~\ref{subsubsec:architecture_comparison}) und die operative Validität nachgewiesen (Abschnitt~\ref{subsubsec:operational_validation}).
+Die Analyse gliedert sich in vier Schwerpunkte: Zunächst wird die \emph{Trainingsqualität} anhand der Clip Fraction untersucht, um generelle Hyperparameter\hyp{}Probleme zu identifizieren (Abschnitt~\ref{subsubsec:training_quality}). Darauf aufbauend erfolgt eine detaillierte Untersuchung des \emph{Explorationsverhaltens} mittels Entropie-Analyse (Abschnitt~\ref{subsubsec:exploration}), welche die Grundlage für das Verständnis der \emph{Noop\hyp{}Nut\-zung} bildet (Abschnitt~\ref{subsubsec:noop_behavior}). Abschließend werden die verschiedenen Masking\hyp{}Architekturen verglichen (Abschnitt~\ref{subsubsec:architecture_comparison}) und die operative Validität nachgewiesen (Abschnitt~\ref{subsubsec:operational_validation}).
 
 \subsubsection{Trainingsqualität und Hyperparameter-Problematik}
 \label{subsubsec:training_quality}
@@ -564,7 +564,7 @@ Hypothese 1 muss abgelehnt werden: Der hybride Ansatz erzielt keine signifikant 
 \subsubsection{Hypothese 2: Routeneffizienz}
 
 \subsubsection*{Beobachtung}
-Entgegen der Erwartung ist die durchschnittliche Episodenlänge beim hybriden Agenten signifikant höher (+5.18 Zeitschritte, Konfidenzintervall $[1.68, 7.33]$).
+Entgegen der Erwartung ist die durchschnittliche Episoden\-länge beim hybriden Agenten signifikant höher (+5.18 Zeitschritte, 95\%-KI: $[1.68, 7.33]$).
 
 \subsubsection*{Interpretation}
 Die präzisere Steuerung führt nicht zu effizienteren Pfaden. Stattdessen wählt der Agent weiträumigere oder zeitintensivere Manöver zur Konfliktvermeidung, anstatt die direkteste Route zu optimieren. Dies könnte auf die Reward-Struktur zurückzuführen sein, die Kollisionsvermeidung stärker gewichtet als Routeneffizienz.

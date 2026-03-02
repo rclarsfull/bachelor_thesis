@@ -146,7 +146,7 @@ Diese Unterscheidung ist für die Minimierung der Interventionsrate essenziell: 
 
 Der Aktionsraum wurde in zwei Varianten implementiert:
 \begin{itemize}
-    \item \textbf{Diskreter Aktionsraum:} Der Agent wählt aus einem finiten Set an Aktionen, bestehend aus festen Kursänderungen (z.\,B. $-15^\circ, -5^\circ, \dots, +15^\circ$), \emph{Noop} und \emph{Direct Route}.
+    \item \textbf{Diskreter Aktionsraum:} Der Agent wählt aus einem festen Set an Aktionen, bestehend aus Kursänderungen (z.\,B. $-15^\circ, -5^\circ, \dots, +15^\circ$), \emph{Noop} und \emph{Direct Route}.
     Dieser Ansatz eignet sich für grobe Manöver, stößt jedoch bei feingranularer Steuerung an Grenzen. Wie in Abschnitt \ref{sc:action_extraction} ausführlich hergeleitet, führt eine Erhöhung der Auflösung zu einer drastischen Zunahme der Modellkomplexität (Ausgangsneuronen), weshalb hier eine limitierte Auswahl an diskreten Schritten getroffen wurde.
     \item \textbf{Gemischter Aktionsraum (Hybrid):} Die Entscheidung erfolgt hierarchisch über einen diskreten Aktionstyp und einen zugehörigen kontinuierlichen Parameter:
     \begin{itemize}
