@@ -14,7 +14,7 @@ Um dennoch belastbare Aussagen über die Leistungsfähigkeit der Methoden treffe
 Statt einfacher Mittelwerte wird \ac{IQM} als robuste Lagekennzahl der episodischen Rewards genutzt. Der \ac{IQM} mittelt nur über das mittlere 50\%-Quantil und dämpft damit Ausreißer deutlich \citep{statistical_rl_evaluation}.
 
 \subsection*{Percentile-Bootstrap}
-Die Bestimmung der Konfidenzintervalle erfolgt mittels Percentile-Bootstrap. \citet{statistical_rl_evaluation} untersuchen verschiedene Bootstrap-Varianten (Basic, Percentile, Bias-Corrected, BCa) und zeigen, dass im Kontext von Deep Reinforcement Learning mit wenigen Runs der Percentile-Bootstrap die zuverlässigste Abdeckung der wahren Werte liefert, während komplexere Methoden wie BCa bei kleinen Stichproben instabiler sein können. Das Vorgehen lässt sich wie folgt zusammenfassen:
+Die Bestimmung der Konfidenzintervalle erfolgt mittels Percentile-Bootstrap. \citet{statistical_rl_evaluation} untersuchen verschiedene Bootstrap-Varianten und zeigen, dass im Kontext von Deep Reinforcement Learning mit wenigen Runs der Percentile-Bootstrap die zuverlässigste Abdeckung der wahren Werte liefert, während komplexere Methoden wie BCa bei kleinen Stichproben instabiler sein können. Das Vorgehen lässt sich wie folgt zusammenfassen:
 \begin{enumerate}
 	\item Gegeben sei eine Menge von \(n\) unabhängigen Runs einer Konfiguration mit den Ergebnissen \(p_1,\dots,p_n\).
 	\item Es werden \(B\) Bootstrap-Stichproben (in dieser Arbeit \(B=5000\)) der Größe \(n\) durch Ziehen \emph{mit Zurücklegen} aus den Originaldaten generiert.
