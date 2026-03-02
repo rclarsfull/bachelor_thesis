@@ -10,29 +10,29 @@ TI/TD\footnote{Das Team TI/TD ist für die Simulatorentwicklung innerhalb der \a
 \section{Motivation}
 \label{sec:intro:motivation}
 Das Team TI/TD der \ac{DFS} entwickelt Simulatoren, die in der Aus- und Weiterbildung von Fluglotsen eingesetzt werden. 
-Während der Simulatorübungen arbeiten die Lotsen in der Ausbildung nicht allein, sondern mit sogenannten Adjacent-Lotsen zusammen. Diese Adjacent-Lotsen sind für benachbarte Luftraumsektoren zuständig und übernehmen dort die Verkehrssteuerung der Flugzeuge. Sie koordinieren sich mit den Azubis, damit Flugzeuge sicher zwischen den Sektoren übergeben werden können. 
+Während der Simulatorübung arbeiten auszubildende Lotsen nicht allein, sondern mit sogenannten Adjacent-Lotsen zusammen. Diese Adjacent-Lotsen sind für benachbarte Luftraumsektoren zuständig und übernehmen dort die Verkehrssteuerung der Flugzeuge. Sie koordinieren sich mit den Azubis, damit Flugzeuge sicher zwischen den Sektoren übergeben werden können. 
 \medskip
 
 TI/TD betreut mehrere Simulatoren, darunter auch NewSim Web, einen browserbasierten Simulator.
-Dieser soll es Lotsen ermöglichen, von Zuhause selbstständig zu üben. Speziell in diesem Szenario wäre eine \ac{KI}-gestützte Lösung für die Adjacent-Position eine sinnvolle Erweiterung, da sie den Ausbildern die Arbeit abnehmen und den Trainees zusätzlich zu den im Vorhinein gebauten Szenarien mehr Übungsmöglichkeiten bieten könnte.
+Dieser soll es Lotsen ermöglichen, von Zuhause selbstständig zu üben. Speziell in diesem Szenario wäre eine KI\hyp{}gestützte Lösung für die Adjacent-Position eine sinnvolle Erweiterung, da sie den Ausbildern die Arbeit abnehmen und den Trainees zusätzlich zu den im Vorhinein gebauten Szenarien mehr Übungsmöglichkeiten bieten könnte.
 %
 % Section: Ziele
 %
 \section{Ziel der Arbeit}
 \label{sec:intro:goal}
 
-Ziel dieser Arbeit ist die Entwicklung eines \ac{RL}-Agenten für die Adjacent-Position, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und vor allem ruhiges Steuerungsverhalten zeigt. Im Gegensatz zu klassischen Ansätzen soll das häufige \enquote{Jittering}, überflüssige, kleinteilige Kurskorrekturen, durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option minimiert werden.
+Ziel dieser Arbeit ist die Entwicklung eines \ac{RL}-Agenten für die Adjacent-Position, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und vor allem ruhiges Steuerungsverhalten zeigt. Im Gegensatz zu klassischen Ansätzen zielt diese Arbeit darauf ab, \enquote{Jittering} (überflüssige, kleinteilige Kurskorrekturen) durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option zu minimieren.
 
 Die zentrale Forschungsfrage lautet daher:
 \begin{itemize}
-    \item Wie muss die Architektur eines Reinforcement-Learning-Agenten sowie dessen Trainingsumgebung beschaffen sein, um im Kontext der Flugverkehrssteuerung sowohl Konfliktfreiheit als auch eine hohe Effizienz der Lotsentätigkeit zu gewährleisten?
+    \item Wie muss die Architektur eines Reinforcement-Learning-Agenten beschaffen sein, um in der Flugverkehrssteuerung sowohl Konfliktfreiheit als auch eine hohe Effizienz durch Minimierung redundanter Eingriffe zu gewährleisten?
 \end{itemize}
 
 Zur Beantwortung dieser Frage werden vier konkrete Untersuchungsziele definiert, die für die spätere Evaluation maßgeblich sind:
 \begin{itemize}
     \item \textbf{Abbildung von Noops:} In welcher Form lässt sich eine explizite Repräsentation von Nicht-Eingriffen (\emph{No-Operation}) im Aktionsraum realisieren, die zur Vermeidung redundanter Steuerbefehle führt?
     \item \textbf{Architekturvergleich:} Ermöglicht eine Architektur mit hybridem Aktionsraum (diskret und kontinuierlich) dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem Verzicht auf Eingriffe?
-    \item \textbf{Algorithmische Validierung:} Lässt sich der Proximal-Policy-Optimization-Algorithmus (\ac{PPO}) durch die Integration von \emph{Gradient\hyp{}Masking} derart modifizieren, dass ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum ohne Beeinträchtigung der Konvergenz gewährleistet ist?
+    \item \textbf{Algorithmische Validierung:} Lässt sich der Proximal-Policy-Op\-ti\-mi\-za\-tion-Algorithmus (\acs{PPO}) durch die Integration von \emph{Gradient\hyp{}Masking} derart modifizieren, dass ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum ohne Beeinträchtigung der Konvergenz gewährleistet ist?
     \item \textbf{Operativer Mehrwert:} Resultiert aus dem erhöhten architektonischen Aufwand ein quantifizierbarer operativer Mehrwert (insbesondere im Hinblick auf eine reduzierte Eingriffsfrequenz, effizientere Flugführung oder gesteigerte Erfolgsrate) im Vergleich zu einem Agenten mit rein diskretem Aktionsraum?
 \end{itemize}
 
@@ -46,7 +46,7 @@ Vielmehr wird ein Proof of Concept erarbeitet, der auf einem stark vereinfachten
 Zu Beginn der Arbeit werden in Kapitel \ref{ch:fs_grundlagen} die Grundlagen der Problemdomäne Flugverkehrskontrolle und die Rolle der Adjacent-Lotsen in der Ausbildung von Fluglotsen am Simulator erläutert.
 Anschließend werden in Kapitel \ref{ch:rl_grundlagen} die theoretischen Grundlagen der Lösungsdomäne (\ac{RL}) und relevanten Algorithmen vorgestellt. 
 Danach wird in Kapitel \ref{ch:Statistische_Auswertung} auf die statistischen Methoden zur Auswertung der Experimente eingegangen.
-In Kapitel \ref{ch:konzeption} werden die Definition von Zustands- und Aktionsräumen sowie der Belohnungsfunktion behandelt.
+In Kapitel \ref{ch:konzeption} werden die Auswahl des \ac{RL}\hyp{}Algorithmus begründet sowie Zustands- und Aktionsraum und die Belohnungsfunktion des Systems definiert.
 Darauf aufbauend beschreibt Kapitel \ref{ch:ppo_bedingt} benötigte algorithmischen Anpassungen am \ac{PPO}\hyp{}Algorithmus, um die Besonderheiten des zuvor definierten bedingten Aktionsraums effizient zu handhaben. Des Weiteren wird auf daraus resultierende Probleme eingegangen und Lösungsmöglichkeiten vorgestellt.
 Kapitel \ref{ch:evaluation} widmet sich der Evaluation des \ac{RL}-Systems, in welchem die durchgeführten Experimente und deren Ergebnisse präsentiert und analysiert werden.
 Abschließend werden in Kapitel \ref{ch:zusammenfassung} die Ergebnisse der Arbeit zusammengefasst und ein Ausblick auf mögliche zukünftige Arbeiten gegeben.

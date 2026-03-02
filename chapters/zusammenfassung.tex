@@ -1,10 +1,10 @@
 \chapter{Fazit und Ausblick}
 \label{ch:zusammenfassung}
 \section{Fazit}
-Die vorliegende Arbeit hatte zum Ziel, einen \ac{RL}-Agenten für die Adjacent-Position zu entwickeln, der nicht nur Konfliktfreiheit gewährleistet, sondern auch ein effizientes und ruhiges Steuerungsverhalten zeigt. Im Mittelpunkt stand dabei die Untersuchung, ob durch die Einführung eines gemischten Aktionsraums mit expliziter \emph{No-Operation}-Option das Problem des \enquote{Jittering}, d.\,h. unnötiger kleinteiliger Kurskorrekturen, minimiert werden kann.
+Die vorliegende Arbeit hatte zum Ziel, einen \ac{RL}-Agenten für die Flugverkehrskontrolle zu entwickeln, der ein ruhiges und effizientes Steuerungsverhalten zeigt. Im Mittelpunkt stand dabei die Untersuchung, ob durch die Einführung eines hybriden Aktionsraums mit expliziter \emph{No-Op}-Option das Problem unnötiger Interventionen (\enquote{Jittering}), d.\,h. überflüssiger kleinteiliger Kurskorrekturen, minimiert werden kann.
 
 \subsection*{Beantwortung der Forschungsfrage}
-Die zentrale Forschungsfrage, wie die Architektur eines \ac{RL}-Agenten und dessen Trainingsumgebung beschaffen sein muss, um sowohl Konfliktfreiheit als auch hohe Effizienz zu gewährleisten, konnte erfolgreich adressiert werden. Die entwickelte Architektur mit hybridem Aktionsraum ermöglicht dem Agenten eine effektive Differenzierung zwischen aktiven Steuerbefehlen und dem bewussten Verzicht auf Eingriffe. Die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Masking} gewährleistet dabei ein stabiles Lernverhalten trotz der bedingten Abhängigkeiten im gemischten Aktionsraum.
+Die zentrale Forschungsfrage, wie die Architektur eines \ac{RL}-Agenten beschaffen sein muss, um ein ruhiges Steuerungsverhalten mit reduzierten Interventionen zu gewährleisten, konnte erfolgreich adressiert werden. Die entwickelte Lösung kombiniert drei Kernelemente: einen hybriden Aktionsraum (diskrete Aktionswahl mit kontinuierlichen Parametern), die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Masking} für stabiles Lernen und eine spezialisierte \emph{Shared \& Split}-Netzwerkarchitektur. Der operative Vergleich bestätigt: Der Ansatz reduziert Interventionen um Faktor 3,3 gegenüber klassischen diskreten Methoden, ohne dabei Sicherheit oder Effizienz zu beeinträchtigen.
 
 \subsection*{Ergebnisse der Evaluation}
 Die experimentelle Evaluation erfolgte in drei Versuchsreihen, die unterschiedliche Aspekte der entwickelten Lösung untersuchten:
@@ -13,25 +13,26 @@ Die experimentelle Evaluation erfolgte in drei Versuchsreihen, die unterschiedli
 Der erste Versuch (\ref{sec:versuch1}) erbrachte den Nachweis, dass die Anpassungen am \ac{PPO}-Algorithmus die Lernfähigkeit nicht beeinträchtigen. Die Modifikationen führten zu signifikanten Verbesserungen des finalen Rewards in der LunarLander-Umgebung und reduzierten zudem die Varianz der Ergebnisse, was auf eine erhöhte Stabilität des Lernprozesses hinweist.
 \medskip
 
-Der zweite Versuch (\ref{sec:versuch2}) in der Flugverkehrsumgebung lieferte differenziertere Ergebnisse. Während keine signifikante Verbesserung des finalen Rewards nachgewiesen werden konnte, traten Instabilitäten im Trainingsverhalten auf. Die dabei gewonnenen Erkenntnisse über die Sensitivität gegenüber Hyperparametern waren jedoch wertvoll für die weitere Optimierung.
+Der zweite Versuch (\ref{sec:versuch2}) übertrug den Ansatz auf die Flugverkehrsumgebung. Trainingsinstabilitäten verhinderten signifikante Leistungsgewinne, die Analyse identifizierte jedoch die \emph{Shared \& Split}-Variante als robusteste Architektur. Diese Erkenntnisse ermöglichten gezielte Optimierungen für den abschließenden Vergleich.
 \medskip
 
-Der dritte Versuch (\ref{sec:versuch3}) nutzte die Erfahrungen aus den vorherigen Experimenten zur gezielten Anpassung der Hyperparameter. Obgleich auch hier kein signifikant besserer finaler Reward erzielt wurde, konnten andere zentrale Kennzahlen signifikant verbessert werden: Die Agenten zeigten eine frühere Konvergenz und eine deutlich bessere Ausnutzung von \emph{Noops}, was auf ein ruhigeres und effizienteres Steuerungsverhalten hindeutet. Dies bestätigt, dass die Anpassungen den angestrebten Effekt einer nachhaltigen Steuerungsstrategie mit reduzierter Eingriffsfrequenz erzielt haben.
+Der dritte Versuch (\ref{sec:versuch3}) verglich den hybriden gegen einen klassischen diskreten Ansatz unter optimierten Bedingungen. Beide erreichen vergleichbare Sicherheit (Success Rate >97\%), wobei der hybride Agent schneller konvergiert und die Noop-Option dreimal häufiger nutzt. Die Hypothese höherer Routeneffizienz wurde widerlegt. Das Hauptziel, überflüssige Eingriffe zu minimieren, wurde jedoch exzellent erreicht.
 
 \subsection*{Zielerreichung}
-Die in Kapitel \ref{sec:intro:goal} definierten Untersuchungsziele wurden weitgehend erreicht:
+Die in Kapitel \ref{sec:intro:goal} definierten Untersuchungsziele wurden erreicht:
 \begin{itemize}
-    \item Die explizite Repräsentation von \emph{No-Operations} im Aktionsraum wurde erfolgreich realisiert und führt nachweislich zur Vermeidung redundanter Steuerbefehle.
-    \item Die Architektur mit hybridem Aktionsraum ermöglicht eine effektive Differenzierung zwischen aktiven Eingriffen und Nicht-Eingriffen.
-    \item Die Modifikation des \ac{PPO}-Algorithmus durch \emph{Gradient\hyp{}Masking} gewährleistet stabiles Lernverhalten ohne Beeinträchtigung der Konvergenz.
-    \item Der operative Mehrwert zeigt sich insbesondere in der reduzierten Eingriffsfrequenz und höheren Stabilität des Verhaltens, auch wenn dies nicht in allen Metriken zu statistisch signifikanten Verbesserungen führte.
+    \item Die explizite \emph{No-Op}-Modellierung vermeidet erfolgreich redundante Steuerbefehle.
+    \item \emph{Gradient\hyp{}Masking} ermöglicht stabiles Lernen trotz hybrider Aktionsräume.
+    \item Schnellere Konvergenz und höhere Konsistenz (geringere Varianz) gegenüber diskreten Ansätzen.
+    \item Limitation: Weder Sicherheit noch Routeneffizienz wurden verbessert.
 \end{itemize}
 
 \subsection*{Limitationen}
-Bei der Interpretation der Ergebnisse sind folgende Einschränkungen zu berücksichtigen: Die Evaluation erfolgte in einem stark vereinfachten Szenario mit eingeschränktem Aktionsraum (ausschließlich laterale Manöver). Die aufgetretenen Instabilitäten in Versuch \ref{sec:versuch2} deuten darauf hin, dass eine umfassendere Hyperparameter-Optimierung, beispielsweise mittels automatisierter Verfahren wie Optuna, zu robusteren Ergebnissen führen könnte. Eine Wiederholung des zweiten Versuchs mit den optimierten Hyperparametern aus Versuch \ref{sec:versuch3} wäre zur Validierung der Ergebnisse sinnvoll.
+Die Evaluation erfolgte in einem vereinfachten Szenario mit eingeschränktem Aktionsraum (laterale Manöver). Versuch \ref{sec:versuch2} litt unter Trainingsinstabilitäten, die in Versuch \ref{sec:versuch3} durch angepasste Konfiguration behoben wurden. Eine systematische Hyperparameter-Optimierung würde die Robustheit weiter erhöhen.
+
 
 \subsection*{Schlussfolgerung}
-Zusammenfassend lässt sich festhalten, dass die vorliegende Arbeit einen erfolgreichen Proof of Concept für die Anwendung von \ac{RL} im Kontext der Flugverkehrssteuerung mit expliziter Modellierung von Nicht-Eingriffen darstellt. Die Ergebnisse zeigen, dass durch gezielte architektonische und algorithmische Anpassungen ein ruhigeres und effizienteres Steuerungsverhalten erzielt werden kann, was einen wichtigen Schritt in Richtung praxistauglicher \ac{KI}-unterstützter Flugsicherungssysteme darstellt. Die gewonnenen Erkenntnisse verdeutlichen insbesondere, dass die Nutzung getrennter Netzwerkpfade zur Vermeidung von \emph{Negative Transfer} vorteilhaft für einen stabilen Lernprozess sein kann und wertvolle Anhaltspunkte für zukünftige Forschungsarbeiten in diesem Bereich bietet.
+Die Arbeit demonstriert erfolgreich, dass hybride Aktionsräume mit expliziter Noop-Modellierung zu deutlich ruhigerem Steuerungsverhalten führen. Die entwickelte Lösung stellt einen wichtigen Schritt in Richtung praxistauglicher \ac{KI}-Systeme dar. Insbesondere die Erkenntnisse zu spezialisierten Architekturen für hybride Aktionsräume bieten wertvolle Anhaltspunkte für zukünftige Forschung.
 
 \section{Ausblick}
 \label{ch:Future_Work}

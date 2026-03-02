@@ -1,7 +1,7 @@
 \chapter{Statistische Auswertung}
 \label{ch:Statistische_Auswertung}
 
-Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderungen an die statistische Auswertung. Aufgrund der inhärenten Stochastik des Trainingsprozesses, die durch zufällige Initialisierungen und probabilistische Policies bedingt ist, besitzen einzelne Trainingsläufe nur begrenzte Aussagekraft. Um dennoch belastbare Schlussfolgerungen über die Leistungsfähigkeit der entwickelten Methoden ziehen zu können, führt dieses Kapitel robuste statistische Metriken ein. Die hier vorgestellte Methodik, insbesondere die Berechnung von Konfidenzintervallen mittels Bootstrap, bildet die analytische Basis für die in Kapitel \ref{ch:evaluation} durchgeführte Validierung der Ergebnisse.
+Die Evaluation von Reinforcement-Learning-Algorithmen stellt besondere Anforderungen an die statistische Auswertung. Aufgrund von Zufallseinflüssen im Trainingsprozess, die durch Initialisierungen und probabilistische Policies bedingt sind, besitzen einzelne Trainingsläufe nur begrenzte Aussagekraft. Um dennoch belastbare Schlussfolgerungen über die Leistungsfähigkeit der entwickelten Methoden ziehen zu können, führt dieses Kapitel robuste statistische Metriken ein. Die hier vorgestellte Methodik, insbesondere die Berechnung von Konfidenzintervallen mittels Bootstrap, bildet die analytische Basis für die in Kapitel \ref{ch:evaluation} durchgeführte Validierung der Ergebnisse.
 
 \section{Konfidenzintervalle und Bootstrap nach \citet{statistical_rl_evaluation}}
 
@@ -10,26 +10,26 @@ In der Forschungspraxis des Deep Reinforcement Learning ist es aufgrund der enor
 
 Um dennoch belastbare Aussagen über die Leistungsfähigkeit der Methoden treffen zu können, empfiehlt \citet{statistical_rl_evaluation} den Einsatz von Bootstrap-Verfahren zur Berechnung von Konfidenzintervallen. Ein \ac{KI} beschreibt den Bereich, in dem der wahre Wert einer Kennzahl mit einer vorgegebenen Wahrscheinlichkeit (hier 95\%) liegt.
 
-\section*{Robuste Lagekennzahl: Interquartile Mean (IQM)}
-Statt einfacher Mittelwerte wird der Interquartile Mean (IQM) als robuste Lagekennzahl der episodischen Rewards genutzt. Der IQM mittelt nur über das mittlere 50\%-Quantil und dämpft damit Ausreißer deutlich \citep{statistical_rl_evaluation}.
+\section*{Robuste Lagekennzahl: Interquartile Mean}
+Statt einfacher Mittelwerte wird \ac{IQM} als robuste Lagekennzahl der episodischen Rewards genutzt. Der \ac{IQM} mittelt nur über das mittlere 50\%-Quantil und dämpft damit Ausreißer deutlich \citep{statistical_rl_evaluation}.
 
 \subsection*{Percentile-Bootstrap}
 Die Bestimmung der Konfidenzintervalle erfolgt mittels Percentile-Bootstrap. \citet{statistical_rl_evaluation} untersuchen verschiedene Bootstrap-Varianten (Basic, Percentile, Bias-Corrected, BCa) und zeigen, dass im Kontext von Deep Reinforcement Learning mit wenigen Runs der Percentile-Bootstrap die zuverlässigste Abdeckung der wahren Werte liefert, während komplexere Methoden wie BCa bei kleinen Stichproben instabiler sein können. Das Vorgehen lässt sich wie folgt zusammenfassen:
 \begin{enumerate}
-	\item Gegeben sei eine Menge von \(n\) unabhängigen Runs einer Variante mit den Ergebnissen \(p_1,\dots,p_n\).
+	\item Gegeben sei eine Menge von \(n\) unabhängigen Runs einer Konfiguration mit den Ergebnissen \(p_1,\dots,p_n\).
 	\item Es werden \(B\) Bootstrap-Stichproben (in dieser Arbeit \(B=5000\)) der Größe \(n\) durch Ziehen \emph{mit Zurücklegen} aus den Originaldaten generiert.
-	\item Für jede dieser Stichproben wird die untersuchte Kennzahl (z.\,B. IQM oder Mittelwert) berechnet.
+	\item Für jede dieser Stichproben wird die untersuchte Kennzahl (z.\,B. \ac{IQM} oder Mittelwert) berechnet.
 	\item Das 95\%-Konfidenzintervall wird direkt aus den Perzentilen (2.5\% und 97.5\%) der so erzeugten Verteilung bestimmt.
 \end{enumerate}
 
 \subsection*{Warum kein Stratified Bootstrap?}
 \citet{statistical_rl_evaluation} schlagen für die Aggregation von Ergebnissen über viele verschiedene Aufgaben (Tasks) hinweg den sogenannten Stratified Bootstrap vor. Dieser stellt sicher, dass beim Resampling jeder Task gleich gewichtet bleibt. In dieser Arbeit wird die Leistung der Algorithmen jedoch \emph{getrennt pro Task} (Environment) untersucht und die Ergebnisse werden nicht über verschiedene Umgebungen hinweg aggregiert. Da die Auswertung für jede Umgebung separat durchgeführt wird, ist das stratifizierte Verfahren nicht notwendig. Daher wird der klassische Percentile Bootstrap direkt auf die Runs des jeweiligen Tasks angewendet.
 
-\section{Vergleich zwei unterschiedlicher Varianten}
+\section{Vergleich zwei unterschiedlicher Modellkonfigurationen}
 Um zu beurteilen, ob ein Algorithmus A signifikant besser ist als ein Algorithmus B, genügt es nicht, lediglich zu prüfen, ob sich die individuellen Konfidenzintervalle der beiden Varianten überschneiden. \citet{statistical_rl_evaluation} weisen im Anhang A ihrer Arbeit explizit darauf hin, dass dieses Vorgehen irreführend sein kann. Selbst wenn sich Intervalle überlappen, kann ein signifikanter Unterschied vorliegen. Um die Unsicherheit korrekt zu erfassen, muss stattdessen das Konfidenzintervall der \emph{Differenz} berechnet werden (vgl.~Figure A.15 in \citet{statistical_rl_evaluation}).
 \medskip
 
-Um dies zu erreichen, wird aus den Originaldaten beider Algorithmen in jeder Bootstrap-Iteration \(i\) jeweils eine Stichprobe mit Zurücklegen gezogen, für jede dieser Stichproben die Kennzahl (z.\,B. IQM) berechnet und daraus die Differenz gebildet: \(\Delta_i = IQM_{A,i} - IQM_{B,i}\). Dies liefert eine empirische Verteilung der Differenzen. Das 95\%-Konfidenzintervall dieser Differenz-Verteilung ermöglicht eine präzise Aussage:
+Um dies zu erreichen, wird aus den Originaldaten beider Algorithmen in jeder Bootstrap-Iteration \(i\) jeweils eine Stichprobe mit Zurücklegen gezogen, für jede dieser Stichproben die Kennzahl (z.\,B. \ac{IQM}) berechnet und daraus die Differenz gebildet: \(\Delta_i = IQM_{A,i} - IQM_{B,i}\). Dies liefert eine empirische Verteilung der Differenzen. Das 95\%-Konfidenzintervall dieser Differenz-Verteilung ermöglicht eine präzise Aussage:
 \begin{itemize}
     \item Liegt das gesamte Intervall oberhalb von 0, ist Algorithmus A signifikant besser.
     \item Liegt das gesamte Intervall unterhalb von 0, ist Algorithmus B signifikant besser.

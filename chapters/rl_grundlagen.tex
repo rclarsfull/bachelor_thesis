@@ -1,14 +1,14 @@
 \chapter{Reinforcement Learning}
 \label{ch:rl_grundlagen}
 
-Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Diese Arbeit führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy-Gradient-Methoden und der Proximal Policy Optimization (\ac{PPO}), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Masking) für gemischte Aktionsräume nachvollziehen zu können.
+Dieses Kapitel legt die theoretischen Grundlagen für die in dieser Arbeit entwickelte Lösung. Diese Arbeit führt in das Paradigma des Reinforcement Learning (\ac{RL}) ein und erläutert die mathematische Formalisierung von Entscheidungsproblemen als Markov-Entscheidungsprozesse. Ein tieferes Verständnis dieser Konzepte, insbesondere der Funktionsweise von Policy\hyp{}Gradient\hyp{}Methoden und der Proximal Policy Optimization (\ac{PPO}), ist essenziell, um die in Kapitel \ref{ch:ppo_bedingt} vorgestellten algorithmischen Anpassungen (Gradient\hyp{}Masking) für gemischte Aktionsräume nachvollziehen zu können.
 
 \section{Einführung in Reinforcement Learning}
 
-Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, das sich besonders für komplexe sequentielle Entscheidungsprobleme eignet, bei denen ein explizites Lehren des korrekten Verhaltens (\enquote{Supervised Learning}) aufgrund der Vielschichtigkeit der Aufgabe schwierig ist. Da in der vorliegenden Arbeit eine Steuerung für ein dynamisches System automatisiert werden soll, bietet \ac{RL} den passenden methodischen Rahmen. Eines der Standardwerke \cite[Kap. 1.1]{sutton2018rl} definiert \ac{RL} wie folgt: 
+Reinforcement Learning (\ac{RL}) ist ein Teilgebiet des maschinellen Lernens, das sich auf sequentielle Entscheidungsprobleme spezialisiert. Im Gegensatz zu überwachtem Lernen erhält der Agent keine direkten Anweisungen, welche Aktionen in welchen Situationen korrekt sind. Stattdessen lernt er durch Versuch und Irrtum, welche Handlungen zu den besten Ergebnissen führen \cite[Kap. 1]{sutton2018rl}. Dieser Ansatz eignet sich besonders für komplexe Aufgaben, bei denen optimales Verhalten schwer vorzugeben ist. Da die vorliegende Arbeit die Steuerung eines dynamischen Systems automatisieren soll, bildet \ac{RL} den geeigneten methodischen Rahmen. \citeauthor{sutton2018rl} definieren \ac{RL} wie folgt: 
 \\
 
-\textit{\enquote{Reinforcement learning is learning what to do—how to map situations to actions—so as to maximize a numerical reward signal. The learner is not told which actions to take, but instead must discover which actions yield the most reward by trying them. In the most interesting and challenging cases, actions may affect not only the immediate reward but also the next situation and, through that, all subsequent rewards. These two characteristics—trial-and-error search and delayed reward—are the two most important distinguishing features of reinforcement learning.}}
+\textit{\enquote{Reinforcement learning is learning what to do — how to map situations to actions — so as to maximize a numerical reward signal. The learner is not told which actions to take, but instead must discover which actions yield the most reward by trying them. In the most interesting and challenging cases, actions may affect not only the immediate reward but also the next situation and, through that, all subsequent rewards. These two characteristics — trial-and-error search and delayed reward — are the two most important distinguishing features of reinforcement learning.} \cite[Kap. 1.1]{sutton2018rl}}
 \\
 
 Im \ac{RL} werden also Agenten bzw. Policies\footnote{Ein \textit{Agent} bezeichnet das lernende System im Reinforcement Learning. Das Verhalten eines Agenten wird durch eine \textit{Policy} beschrieben, welche festlegt, welche Aktion in einem gegebenen Zustand ausgeführt werden soll. Eine Policy kann dabei deterministisch (eindeutige Zuordnung von Zuständen zu Aktionen) oder stochastisch (Wahrscheinlichkeitsverteilung über mögliche Aktionen) sein \cite[Kap. 3.1]{sutton2018rl}.} durch Interaktion mit ihrer Umgebung trainiert, um eine maximale kumulative Belohnung zu erzielen.
@@ -17,8 +17,8 @@ Um einen \ac{RL}\hyp{}Agenten zu trainieren, muss eine Umgebung definiert werden
 
 
 \section{Markov\hyp{}Entscheidungsprozesse}
-Um ein reales Problem für einen \ac{RL}\hyp{}Algorithmus zugänglich zu machen, muss es zunächst formalisiert werden. Das Konzept des \ac{MDP} liefert hierfür das mathematische Fundament. Es modelliert Entscheidungsprobleme, bei denen ein Agent in einer Umgebung agiert, um eine maximale Belohnung zu erzielen \cite[Kap. 3]{sutton2018rl}. Die korrekte Definition des MDPs ist daher der erste und wichtigste Schritt, um die reale Aufgabenstellung in eine durch den Computer lösbare Form zu überführen.
-Ein \ac{MDP} wird durch das folgende 4\hyp{}Tupel definiert:
+Um ein reales Problem für einen \ac{RL}\hyp{}Algorithmus zugänglich zu machen, muss es zunächst formalisiert werden. Das Konzept des \acl{MDP}es (\acs{MDP}) liefert hierfür das mathematische Fundament. Es modelliert Entscheidungsprobleme, bei denen ein Agent in einer Umgebung agiert, um eine maximale Belohnung zu erzielen \cite[Kap. 3]{sutton2018rl}. Die korrekte Definition des MDPs ist daher der erste und wichtigste Schritt, um die reale Aufgabenstellung in eine durch den Computer lösbare Form zu überführen.
+Ein \acs{MDP} wird durch das folgende 4\hyp{}Tupel definiert:
 \\
 
 \((S, A, P, R)\)
@@ -42,10 +42,10 @@ wobei:
     \label{fig:rl_agent_environment}
 \end{figure}
 
-Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy \(\pi\) aus,
+Der Ablauf der Interaktion gestaltet sich dabei wie folgt \cite[Kap. 3.1]{sutton2018rl}: Bei jedem Zeitschritt \(t\) befindet sich der Agent in einem Zustand \(s_t \in S\), wählt eine Aktion \(a_t \in A\) basierend auf seiner Policy \(\pi\) aus,
 führt die Aktion aus und erhält eine Belohnung \(r_t = R(s_t, a_t)\). Die Umgebung wechselt dann in einen neuen Zustand \(s_{t+1}\) basierend auf der Übergangswahrscheinlichkeit \(P(s_{t+1}|s_t, a_t)\).
 Der Prozess wiederholt sich solange, bis ein Abbruchkriterium erreicht ist (z.\,B. eine maximale Anzahl von Schritten, das Erreichen eines Zielzustandes oder eine Kollision).
-Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als Trajektorie bezeichnet wird \cite[Kap. 3.1]{sutton2018rl}:
+Beim Durchlaufen eines \ac{MDP} entsteht eine Folge von Zuständen, Aktionen und Belohnungen, die als \textit{Trajektorie} bezeichnet wird:
 \\
 
 \((s_0, a_0, r_0, s_1, a_1, r_1, s_2, a_2, r_2, ...)\)
@@ -67,7 +67,7 @@ Obwohl in der Literatur diverse Modellierungen existieren, beschränkt sich die 
     Hier werden Aktionen durch Werte innerhalb eines bestimmten Bereichs dargestellt, was theoretisch unendlich viele Abstufungen erlaubt.
     Analog hierzu lässt sich dies mit einem Dimmer für Licht vergleichen, bei dem die Helligkeit nicht nur an- oder ausgeschaltet, sondern stufenlos geregelt werden kann. In der Praxis entspricht dies oft Steuergrößen wie Lenkwinkeln oder Motorkraft.
     \item \textbf{Hybride Aktionsräume:}
-    Viele reale Probleme erfordern eine Mischung aus beiden Typen. Hybride Räume bestehen sowohl aus diskreten als auch aus kontinuierlichen Komponenten.
+    Viele reale Probleme erfordern eine Kombination verschiedener Aktionsraumtypen. Hybride Räume können aus unterschiedlichen Komponenten bestehen, beispielsweise einer Mischung aus diskreten und kontinuierlichen Aktionen.
     Dies lässt sich am Beispiel eines Autos mit Schaltgetriebe verdeutlichen: Das Einlegen eines Gangs ist eine diskrete Entscheidung (z.\,B. 1., 2. Gang), während das Gasgeben und Lenken kontinuierliche Eingaben sind.
 \end{itemize}
 
@@ -81,31 +81,41 @@ Die Wahl der Aktionsraumklasse hat direkte Auswirkungen auf die Architektur der 
 \ac{SB3}\footnote{\ac{SB3} ist eine quelloffene Python\hyp{}Bibliothek, die Implementierungen gängiger \ac{RL}\hyp{}Algorithmen bereitstellt.} modelliert diskrete Aktionsräume mittels einer kategorialen Verteilung (Categorical Distribution) \cite{sb3}. Hierbei besitzt die Ausgabeschicht des Netzwerks für jede mögliche diskrete Aktion genau ein Neuron. Die Aktivierungswerte dieser Neuronen (Logits) werden durch eine \emph{Softmax}-Funktion in Wahrscheinlichkeiten umgewandelt, wobei die Summe aller Wahrscheinlichkeiten $1$ ergibt.
 \medskip
 
-Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen. Bei mehrdimensionalen Aktionsräumen (z.\,B. Lenken und Beschleunigen) wächst die Anzahl der benötigten Kombinationen exponentiell an (kartesisches Produkt der Einzelaktionen), was das Training ineffizient macht \cite{lillicrap2015continuous}.
+Während des Trainings wird eine Aktion stochastisch basierend auf diesen Wahrscheinlichkeiten gesamplet. Ein wesentlicher Nachteil diskreter Aktionsräume liegt im sogenannten \emph{Fluch der Dimensionalität} bei feingranularen Steuerungsaufgaben. Soll eine kontinuierliche Größe (z.\,B. ein Lenkwinkel) präzise gesteuert werden, muss der Wertebereich diskretisiert werden. Eine Erhöhung der Präzision erfordert eine feinere Diskretisierung, was zu einem linearen Anstieg der benötigten Ausgangsneuronen führt. Soll beispielsweise ein Bereich von $-180^\circ$ bis $+180^\circ$ in $1^\circ$-Schritten abgebildet werden, benötigt das Netzwerk bereits $361$ Ausgangsneuronen \cite{lillicrap2015continuous}.
 
 \subsubsection*{Kontinuierliche Aktionsräume}
-Analog zu den diskreten Räumen modelliert \ac{SB3} \cite{sb3} kontinuierliche Aktionsräume durch die Parametrisierung einer Wahrscheinlichkeitsdichtefunktion, standardmäßig einer Gauß\hyp{}Verteilung (Normalverteilung). Anstatt Wahrscheinlichkeiten für diskrete Werte auszugeben, liefert das Modell die Parameter der Verteilung: den Erwartungswert $\mu$ (Mean) und die Standardabweichung $\sigma$ (Standard Deviation).
-Das neuronale Netz gibt dabei lediglich den $n$-dimensionalen Vektor der Erwartungswerte aus, weshalb nur $n$ Ausgangsneuronen benötigt werden. Die Standardabweichung wird als separater, zustandsunabhängiger Parameter gelernt \cite{sb3}.
+Für kontinuierliche Aktionsräume modelliert \ac{SB3} \cite{sb3} die Aktionen durch die Parametrisierung einer Gauß\hyp{}Verteilung (Normalverteilung). Das neuronale Netz gibt für jede kontinuierliche Aktion einen Erwartungswert $\mu$ (Mean) aus, weshalb bei $n$ Aktionsdimensionen lediglich $n$ Ausgangsneuronen benötigt werden. Die Standardabweichungen $\sigma$ werden dabei als separate, zustandsunabhängige Parameter gelernt \cite{sb3}.
 
 \section{Differenzierung verschiedener RL\hyp{}Algorithmen}
 
 Nach der Formalisierung des Problems als \ac{MDP} stellt sich die Frage nach dem geeigneten Lösungsverfahren. Die Wahl des Algorithmus ist dabei maßgeblich von den Eigenschaften des Problems, wie der Beschaffenheit des Zustands- und Aktionsraums, abhängig.
-Algorithmen des \ac{RL} lassen sich grundlegend in modellbasierte und modellfreie Ansätze unterteilen \cite[Kap. 8]{sutton2018rl}. 
+Im Reinforcement Learning wird grundlegend zwischen modellbasierten und modellfreien Ansätzen unterschieden \cite[Kap. 8]{sutton2018rl}. 
 Während modellbasierte Verfahren ein internes Abbild der Systemdynamik (\textit{Transition Model}) erlernen, 
 operieren modellfreie Algorithmen ausschließlich auf Basis der durch Interaktion gesammelten Erfahrungen. Diese Arbeit fokussiert sich auf modellfreie Ansätze, da diese sowohl einfacher zu optimieren als auch in der Praxis weiter verbreitet sind \cite{SpinningUp2018}.
 \medskip
 
 Innerhalb der modellfreien Algorithmen wird primär zwischen wertbasierten Methoden (z.\,B. Q\hyp{}Learning) und \textit{Policy\hyp{}Gradient}\hyp{}Methoden unterschieden. 
-Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy\hyp{}Gradient}\hyp{}Methoden inhärent besser für kontinuierliche oder hochdimensionale Aktionsräume 
+Die Wahl fällt in dieser Arbeit auf Letztere, da \textit{Policy\hyp{}Gradient}\hyp{}Methoden besonders gut für kontinuierliche oder hochdimensionale Aktionsräume 
 geeignet sind und eine direktere Optimierung des angestrebten Verhaltens erlauben \cite[Kap. 13.2]{sutton2018rl}.
+
+\subsection{Actor\hyp{}Critic\hyp{}Architektur}
+Um die Varianz der Gradientenschätzung zu reduzieren und den Lernprozess zu stabilisieren, greift diese Arbeit auf eine weit verbreitete Erweiterung der reinen Policy\hyp{}Gradient\hyp{}Methoden zurück: die \textit{Actor\hyp{}Critic}\hyp{}Architektur.
+Diese kombiniert die Vorteile von Policy\hyp{}Methoden mit wertbasierten Ansätzen \cite[Kap. 13.5]{sutton2018rl}:
+\begin{itemize}
+    \item Der \textbf{Actor} (die Policy $\pi_\theta$) ist für die Auswahl der Aktionen verantwortlich.
+    \item Der \textbf{Critic} (die Wertfunktion $V_\phi$) schätzt den Erwartungswert der zukünftigen Belohnungen ab einem Zustand.
+\end{itemize}
+Durch die Gegenüberstellung der tatsächlichen Erträge mit der Schätzung des Critics lässt sich der \textbf{Advantage} $A_t$ berechnen.
+Dieser gibt an, wie viel besser eine gewählte Aktion im Vergleich zum Durchschnitt aller möglichen Aktionen in diesem Zustand war. Der Advantage
+dient als rauscharmes Signal für das Update des Actors und reduziert die Varianz des Gradienten signifikant \cite[Kap. 13.5]{sutton2018rl}.
 
 \subsection{Funktionsweise von Policy\hyp{}Gradient\hyp{}Methoden}
 Im Gegensatz zu wertbasierten Ansätzen, die zunächst eine Wertfunktion lernen und daraus eine Policy ableiten, optimieren \textit{Policy\hyp{}Gradient}\hyp{}Methoden die Policy $\pi_\theta$ des Agenten unmittelbar. 
 Die Policy wird dabei als differenzierbares, parametrisiertes Modell aufgefasst, das in der Regel durch ein künstliches neuronales Netzwerk dargestellt wird und 
-für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über das alle möglichen Aktionen ausgibt.
+für einen gegebenen Zustand $s$ eine Wahrscheinlichkeitsverteilung über alle möglichen Aktionen ausgibt.
 \medskip
 
-Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Da Optimierungs-Frameworks wie PyTorch standardmäßig auf Gradientenabstieg (Minimierung) ausgelegt sind, wird dies äquivalent als Minimierung von $-J(\theta)$ formuliert. 
+Das Ziel der Optimierung ist die Maximierung der erwarteten kumulativen Belohnung $J(\theta)$. Da Optimierungs-Frameworks wie PyTorch standardmäßig auf Gradientenabstieg ausgelegt sind, wird statt $J(\theta)$ zu maximieren die Verlustfunktion $-J(\theta)$ minimiert.
 Die Anpassung der Parameter $\theta$ erfolgt durch Gradientenabstieg (Abbildung \ref{fig:gradient_descent_3d}), wodurch die Eintrittswahrscheinlichkeit von Aktionen, die zu überdurchschnittlichen Erträgen 
 führen, systematisch erhöht wird \cite[Kap. 13.2]{sutton2018rl}.
 \medskip
@@ -119,6 +129,7 @@ Die folgende Tabelle \ref{tab:ppo_vars} fasst die mathematischen Symbole und der
 \textbf{Variable} & \textbf{Bedeutung} & \textbf{Rolle im \ac{PPO}\hyp{}Algorithmus} \\
 \hline
 $\theta$          & Policy\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Actor). \\
+$\phi$            & Critic\hyp{}Parameter & Der Vektor der trainierbaren Gewichte des neuronalen Netzwerks (Critic). \\
 $\pi_\theta$      & Policy (Actor)& Liefert Wahrscheinlichkeiten über Aktionen, wobei die Parameter $\theta$ trainiert werden \\
 $V_\phi$          & Wertfunktion (Critic) & Schätzt erwarteten kumulierten Reward ab einem Zustand, wobei die Parameter $\phi$ trainiert werden \\
 $J(\theta)$       & Performance Objective & Die Zielfunktion (erwarteter kumulierter Return), die maximiert werden soll \\
@@ -126,14 +137,13 @@ $R_t$             & Return & Diskontierte Summe der Rewards ab Zeit $t$ \\
 $\gamma$          & Dis\-kont\-ie\-rungs\-faktor & Bestimmt die Gewichtung zukünftiger Belohnungen im Return $R_t$ \\
 $A_t$             & Advantage & Vorteil einer Aktion gegenüber dem Durchschnitt: $A_t = R_t - V_\phi(s_t)$. (Dies ist eine konzeptionelle Vereinfachung. \ac{SB3} implementiert in der Praxis die \textit{Generalized Advantage Estimation} (GAE) \cite{sb3, gae}). \\
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
-$\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy: $\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ \\
+$\rho_t(\theta)$    & Probability Ratio & Verhältnis zwischen aktueller und alter Policy \\
 $L^{\text{CLIP}}(\theta)$ & Clipped Surrogate Objective & Maximiert den erwarteten Vorteil, begrenzt durch Clipping, um große Policy\hyp{}Updates zu vermeiden \\
 $L^{VF}_t(\phi)$  & Value Function Loss & Der quadratische Fehler (\ac{MSE}) zwischen der Schätzung des Critics $V_\phi$ und dem realisierten Return $R_t$. \\
 $H[\pi_\theta](s_t)$ & Entropie\hyp{}Bonus & Ein Maß für die Unvorhersehbarkeit der Policy, das eine zu frühe Konvergenz auf ein lokales Optimum verhindert. \\
 $L_t^{total}$     & Totale Verlustfunktion & Die gewichtete Kombination aller Verlustkomponenten, die vom Optimierer minimiert wird ($\approx -J$). \\
 $c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Einfluss von Value Loss und Entropie auf die kombinierte Verlustfunktion \\
 $\epsilon$         & Clipping\hyp{}Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
-$n\_epochs$       & Anzahl der Trainings\hyp{}Epochen & Gibt an, wie oft die Policy und Wertfunktion pro Rollout aktualisiert werden \\
 \hline
 \end{tabular}
 
@@ -141,24 +151,13 @@ $n\_epochs$       & Anzahl der Trainings\hyp{}Epochen & Gibt an, wie oft die Pol
 \label{tab:ppo_vars}
 \end{table}
 
-\subsection{Actor\hyp{}Critic\hyp{}Architektur}
-Um die Varianz der Gradientenschätzung zu reduzieren und den Lernprozess zu stabilisieren, greift diese Arbeit auf eine weit verbreitete Erweiterung der reinen Policy\hyp{}Gradient\hyp{}Methoden zurück: die \textit{Actor\hyp{}Critic}\hyp{}Architektur.
-Diese kombiniert die Vorteile von Policy\hyp{}Methoden mit wertbasierten Ansätzen \cite[Kap. 13.5]{sutton2018rl}:
-\begin{itemize}
-    \item Der \textbf{Actor} (die Policy $\pi_\theta$) ist für die Auswahl der Aktionen verantwortlich.
-    \item Der \textbf{Critic} (die Wertfunktion $V_\phi$) schätzt den Erwartungswert der zukünftigen Belohnungen ab einem Zustand.
-\end{itemize}
-Durch die Gegenüberstellung der tatsächlichen Erträge mit der Schätzung des Critics lässt sich der \textbf{Advantage} $A_t$ berechnen.
-Dieser gibt an, wie viel besser eine gewählte Aktion im Vergleich zum Durchschnitt aller möglichen Aktionen in diesem Zustand war. Der Advantage
-dient als rauscharmes Signal für das Update des Actors und reduziert die Varianz des Gradienten signifikant \cite[Kap. 13.5]{sutton2018rl}.
-
 \section{Proximal Policy Optimization}
 Als konkreter Algorithmus kommt in dieser Arbeit die \ac{PPO} zum Einsatz. Er stellt eine Weiterentwicklung innerhalb der \textit{Policy\hyp{}Optimization}\hyp{}Verfahren dar.
 \ac{PPO} setzt auf eine Actor\hyp{}Critic\hyp{}Architektur und adressiert die Instabilität klassischer Gradientenverfahren, bei denen zu große Aktualisierungsschritte die Policy in Regionen des Parameterraums treiben können, aus denen eine Erholung kaum möglich ist \cite{OriginalPPO}.
 \medskip
 
 Der Kern von \ac{PPO} ist das \textit{Clipped Surrogate Objective}. Durch diese Zielfunktion wird die Änderung der Policy pro Update\hyp{}Schritt begrenzt (Clipping).
-\ac{PPO} bietet gegenüber verwandten Methoden wie \ac{TRPO} (\textit{Trust Region Policy Optimization}) eine höhere Hyperparameter\footnote{Hyperparameter sind Konfigurationsparameter des Lernalgorithmus, die vor dem Training festgelegt werden und nicht während des Trainings gelernt werden (im Gegensatz zu den Modellparametern $\theta$ und $\phi$). Beispiele sind die Lernrate, die Anzahl der Epochen $n\_epochs$ oder der Clipping\hyp{}Parameter $\epsilon$.}stabilität \cite[Abschn. 2.2]{OriginalPPO} und reduziert somit die Anfälligkeit gegenüber schlechten Hyperparametereinstellungen.
+\ac{PPO} bietet gegenüber verwandten Methoden wie \ac{TRPO} eine höhere Hyperparameterstabilität\footnote{Hyperparameter sind Konfigurationsparameter des Lernalgorithmus, die vor dem Training festgelegt werden und nicht während des Trainings gelernt werden (im Gegensatz zu den Modellparametern $\theta$ und $\phi$). Beispiele sind die Lernrate, die Anzahl der Epochen oder der Clipping\hyp{}Parameter $\epsilon$.} \cite[Abschn. 2.2]{OriginalPPO} und reduziert somit die Anfälligkeit gegenüber schlechten Hyperparametereinstellungen.
 \medskip
 
 Die Wahl von \ac{PPO} für die Flugverkehrssteuerung begründet sich durch seine Robustheit gegenüber Hyperparametereinstellungen und die effiziente Handhabung
@@ -180,17 +179,17 @@ Der \ac{PPO}\hyp{}Algorithmus operiert dabei in zwei Hauptphasen: der \textit{Ro
         \State Berechne Aktionsverteilung $p = \pi_\theta(s_t)$
         \State Wähle Aktion $a_t$ stochastisch aus $p$
         \State Führe Aktion $a_t$ aus
-        \State Beobachte Belohnung $r_t$ und neuen Zustand $s_{t+1}$
+        \State Berrechne Belohnung $r_t$ und auf Basis des neuen Zustandes $s_{t+1}$
         \State Speichere $(s_t, a_t, r_t, \log p(a_t))$
         \State $t \gets t+1$
     \EndWhile
-    \State Alle Rewards aufsummieren und mit $\gamma$ gewichten
+    \State Rewards aufsummieren und mit $\gamma$ gewichten
     \State Alle Advantages berechnen
     \State Alte Policy speichern
     \For{$epoch = 1 \dots n\_epochs$}
         \State Generiere Minibatches aus den gesammelten Trajektorien
         \For{jedes $minibatch$}
-            \State Berechne Logarithmische Wahrscheinlichkeit und Entropie
+            \State Berechne Log-Wahrscheinlichkeitsverteilung und Entropie
             \State Berechne Probability Ratio ($\rho_t(\theta)$)
             \State Berechne Clipped Surrogate Objective ($L^{\text{CLIP}}(\theta)$)
             \State Berechne Critic Loss ($L_t^{VF}(\phi)$)
@@ -209,12 +208,11 @@ Während der Rollout\hyp{}Phase (Zeilen 5--13) interagiert der Agent mit der Umg
 Dabei werden für jeden Zeitschritt die Zustände, ausgeführten Aktionen, erhaltenen Belohnungen sowie die \textit{logarithmischen Wahrscheinlichkeiten} der gewählten Aktionen unter der aktuellen Policy im Buffer gespeichert.
 \medskip
 
-In der Optimierungsphase (Zeilen 14--27) findet die eigentliche Anpassung der Netzwerkgewichte statt. Hierbei werden die im Vorfeld berechneten 
-Advantage\hyp{}Werte genutzt, um das \textit{Clipped Surrogate Objective} zu berechnen. 
+In der Optimierungsphase (Zeilen 14--27) findet die eigentliche Anpassung der Netzwerkgewichte statt. Hierbei wird zunächst das \textit{Clipped Surrogate Objective} zu berechnen. Zusammen mit dem \textit{Critic Loss} und dem \textit{Entropie\hyp{}Bonus} wird daraus die kombinierte Verlustfunktion $L_t^{total}$ gebildet, welche schließlich verwendet wird, um die Parameter $\theta$ und $\phi$ zu optimieren.
 
 \subsection{Die kombinierte Verlustfunktion}
 Ein zentraler Bestandteil der Optimierungsphase ist die Verlustfunktion. Sie stellt zugleich den entscheidenden Eingriffspunkt für das in Kapitel \ref{ch:ppo_bedingt} vorgestellte \textit{Gradient\hyp{}Masking} dar, weshalb eine detaillierte Aufschlüsselung ihrer Komponenten für das Verständnis der späteren Modifikationen unerlässlich ist.
-In der praktischen Implementierung von \ac{PPO} werden die Parameter des Actors ($\theta$) und des Critics ($\phi$) simultan über eine solche kombinierte Funktion optimiert. Die totale Verlustfunktion ergibt sich als gewichtete Summe \cite[Glg. 9]{OriginalPPO}:
+In der praktischen Implementierung von \ac{PPO} werden die Parameter des Actors ($\theta$) und des Critics ($\phi$) simultan über eine kombinierte Funktion optimiert \cite[Glg. 9]{OriginalPPO}:
 
 \begin{equation}
     L_t^{total}(\theta, \phi) = \hat{\mathbb{E}}_t \left[ -L_t^{CLIP}(\theta) + c_1 L_t^{VF}(\phi) - c_2 H[\pi_\theta](s_t) \right]
@@ -228,6 +226,7 @@ Dabei setzen sich die Komponenten wie folgt zusammen:
         L_t^{CLIP}(\theta) = \min \big( \rho_t(\theta) A_t, \text{clip}(\rho_t(\theta), 1-\epsilon, 1+\epsilon) A_t \big)
         \label{eq:clip_loss}
     \end{equation}
+    wobei $\rho_t(\theta) = \frac{\pi_\theta(a_t|s_t)}{\pi_{\text{old}}(a_t|s_t)}$ das Verhältnis der Wahrscheinlichkeiten darstellt, mit denen die aktuelle und die alte Policy die spezifische Aktion $a_t$ im Zustand $s_t$ auswählen würden. Ein Ratio $\rho_t > 1$ bedeutet, dass die neue Policy diese Aktion in diesem Zustand für wahrscheinlicher hält als zuvor, während $\rho_t < 1$ eine Abwertung dieser Zustand\hyp{}Aktions\hyp{}Kombination signalisiert. Das Clipping auf den Bereich $[1-\epsilon, 1+\epsilon]$ verhindert zu drastische Änderungen der Policy pro Update\hyp{}Schritt.
     
     \item \textbf{Critic\hyp{}Loss} ($L_t^{VF}$): Der \textit{Value Function Loss} beschreibt den quadratischen Fehler zwischen der Vorhersage des Critics und dem tatsächlichen Return $R_t$:
     \begin{equation}
@@ -292,33 +291,9 @@ Die Minimierung der zuvor beschriebenen Verlustfunktion erfolgt technisch durch 
     \label{fig:gradient_descent_3d}
 \end{figure}
 
-Die Optimierung der Actor\hyp{} und Critic\hyp{}Netzwerke zielt darauf ab, die jeweilige Verlustfunktion $L_t^{VF}(\phi)$ zu minimieren.
-Die Anpassung der Netzwerkparameter $\theta$ erfolgt dabei iterativ entlang des negativen Gradienten. Die Berechnung dieser Gradienten wird in Frameworks wie PyTorch\footnote{PyTorch ist eine quelloffene Python\hyp{}Bibliothek zur Entwicklung und zum Training neuronaler Netzwerke. Sie bietet umfangreiche Funktionen für Tensoroperationen und automatische Differenzierung.}
+Die Optimierung der Actor\hyp{} und Critic\hyp{}Netzwerke zielt darauf ab, die kombinierte Verlustfunktion $L_t^{total}(\theta, \phi)$ zu minimieren.
+Die Anpassung der Netzwerkparameter $\theta$ und $\phi$ erfolgt dabei iterativ entlang des negativen Gradienten. Die Berechnung dieser Gradienten wird in Frameworks wie PyTorch\footnote{PyTorch ist eine quelloffene Python\hyp{}Bibliothek zur Entwicklung und zum Training neuronaler Netzwerke. Sie bietet umfangreiche Funktionen für Tensoroperationen und automatische Differenzierung.}
 über automatische Differenzierung\footnote{PyTorch bezeichnet sein System der automatischen Differenzierung als \textit{Autograd} (\textit{Automatic Gradient}). Es nutzt einen dynamischen Rechengraphen, um Gradienten automatisch zu berechnen.} realisiert \cite[Kap. 2]{PyTorch_Fundamentals}.
-
-
-\subsubsection*{Rechengraph und Kettenregel} 
-PyTorch zeichnet während der Vorwärtspropagierung (Forward Pass), bei der die Eingaben Schicht für Schicht durch das Netzwerk geleitet werden, alle Operationen in einem dynamischen Rechengraphen auf. Dieser Graph bildet die Abhängigkeit der Verlustfunktion $L_t^{total}$ von den Parametern $\theta$ und $\phi$ ab. In der anschließenden Rückwärtspropagierung (Backward Pass) werden durch wiederholte Anwendung der Kettenregel die Gradienten berechnet \cite[Kap. 1]{PyTorch_Fundamentals}. Für eine beispielhafte Kette von Operationen ergibt sich:
-\begin{equation} 
-    \frac{\partial \mathcal{L}}{\partial \theta} = \frac{\partial \mathcal{L}}{\partial y} \cdot \frac{\partial y}{\partial g} \cdot \frac{\partial g}{\partial \theta} 
-\end{equation}
-
-Die resultierenden Gradienten $\frac{\partial L_t^{total}}{\partial \theta}$ und $\frac{\partial L_t^{total}}{\partial \phi}$ geben an, wie stark jeder Parameter den Fehler beeinflusst. Diese nutzt der Optimierer, um die Gewichte zu aktualisieren (Zeile 26 in Algorithmus \ref{alg:ppo_training}).
-
-\subsubsection*{Steuerung des Gradientenflusses} 
-Für die Implementierung komplexer Architekturen ist eine präzise Steuerung dieses Flusses notwendig.
-Über die Methode \texttt{tensor.detach()} kann ein Tensor explizit aus dem Rechengraphen ausgegliedert werden. Mathematisch wird die Kette
-der Ableitungen an dieser Stelle unterbrochen, sodass der Tensor für das System wie eine Konstante wirkt:
-
-\begin{equation} \frac{\partial \mathcal{L}}{\partial \theta_{\text{detached}}} = 0 \end{equation}
-
-Obwohl der Tensor seine numerischen Werte für nachfolgende Berechnungen beibehält, unterbindet er 
-den Rückfluss der Gradienten zu den vorangegangenen Schichten.
-Ergänzend dazu ermöglichen Kontextmanager wie \texttt{with torch.no\_grad():}, die Aufzeichnung von Operationen für ganze Codeblöcke temporär zu deaktivieren.
-\medskip
-
-Diese Mechanismen bilden die technische Grundlage für das in Kapitel \ref{ch:ppo_bedingt} detailliert beschriebene \textit{Gradient\hyp{}Masking}. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
-Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehloptimierung inaktiver Netzwerkzweige verhindert wird.
 
 \begin{figure}[htbp]
     \centering
@@ -368,7 +343,33 @@ Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehlo
 \end{figure}
 \medskip
 
+
 Es ist wichtig anzumerken, dass die Visualisierung \ref{fig:gradient_descent_gated} eine stark vereinfachte Projektion des hochdimensionalen Parameterraums auf zwei Dimensionen darstellt. In der Realität umfasst ein neuronales Netzwerk typischerweise hunderte bis tausende trainierbare Parameter. $\theta_1$ und $\theta_2$ in der Abbildung sind daher keine einzelnen Gewichte, sondern stehen jeweils stellvertretend für die Gesamtheit aller Netzwerk\hyp{}Gewichte eines Aktionszweigs: $\theta_1$ repräsentiert alle Parameter, die einem aktuell inaktiven Aktionszweig zugeordnet sind, während $\theta_2$ die Parameter des aktiven Zweigs zusammenfasst. Diese Reduktion auf zwei Dimensionen dient ausschließlich der Veranschaulichung. In der Praxis führt das Masking dazu, dass sämtliche Parameter des inaktiven Zweigs (potenziell hunderte Gewichte) simultan eingefroren werden und somit vor dem Einfluss von Rauschen geschützt sind, solange ihre Aktion nicht zur Ausführung kommt.
+
+
+\subsubsection*{Rechengraph und Kettenregel} 
+PyTorch zeichnet während der Vorwärtspropagierung (Forward Pass), bei der die Eingaben Schicht für Schicht durch das Netzwerk geleitet werden, alle Operationen in einem dynamischen Rechengraphen auf. Dieser Graph bildet die Abhängigkeit der Verlustfunktion $L_t^{total}$ von den Parametern $\theta$ und $\phi$ ab. In der anschließenden Rückwärtspropagierung (Backward Pass) werden durch wiederholte Anwendung der Kettenregel die Gradienten berechnet \cite[Kap. 1]{PyTorch_Fundamentals}. Für eine beispielhafte Kette von Operationen ergibt sich:
+\begin{equation} 
+    \frac{\partial \mathcal{L}}{\partial \theta} = \frac{\partial \mathcal{L}}{\partial y} \cdot \frac{\partial y}{\partial g} \cdot \frac{\partial g}{\partial \theta} 
+\end{equation}
+
+Die resultierenden Gradienten $\frac{\partial L_t^{total}}{\partial \theta}$ und $\frac{\partial L_t^{total}}{\partial \phi}$ geben an, wie stark jeder Parameter den Fehler beeinflusst. Diese nutzt der Optimierer, um die Gewichte zu aktualisieren (Zeile 26 in Algorithmus \ref{alg:ppo_training}).
+
+\subsubsection*{Steuerung des Gradientenflusses} 
+Für die Implementierung komplexer Architekturen ist eine präzise Steuerung dieses Flusses notwendig.
+Über die Methode \texttt{tensor.detach()} kann ein Tensor explizit aus dem Rechengraphen ausgegliedert werden. Mathematisch wird die Kette
+der Ableitungen an dieser Stelle unterbrochen, sodass der Tensor für das System wie eine Konstante wirkt:
+
+\begin{equation} \frac{\partial \mathcal{L}}{\partial \theta_{\text{detached}}} = 0 \end{equation}
+
+Obwohl der Tensor seine numerischen Werte für nachfolgende Berechnungen beibehält, unterbindet er 
+den Rückfluss der Gradienten zu den vorangegangenen Schichten.
+Ergänzend dazu ermöglichen Kontextmanager wie \texttt{with torch.no\_grad():}, die Aufzeichnung von Operationen für ganze Codeblöcke temporär zu deaktivieren.
+\medskip
+
+Diese Mechanismen bilden die technische Grundlage für das in Kapitel \ref{ch:ppo_bedingt} detailliert beschriebene \textit{Gradient\hyp{}Masking}. Dies stellt sicher, dass die Aktualisierung der Gewichte innerhalb eines verzweigten
+Aktionsraums ausschließlich auf kausal relevanten Pfaden erfolgt und eine Fehloptimierung inaktiver Netzwerkzweige verhindert wird.
+
 
 \section{Metriken im Reinforcement Learning}
 Um den Erfolg der durchgeführten Experimente und die Wirksamkeit der modifizierten Algorithmen in Kapitel \ref{ch:evaluation} quantitativ bewerten zu können, müssen geeignete Vergleichsgrößen definiert werden. Im Reinforcement Learning gibt es verschiedene Metriken, die verwendet werden, um die Leistung eines Agenten zu bewerten.

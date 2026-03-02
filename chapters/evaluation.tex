@@ -21,7 +21,7 @@ Dazu werden zunächst Tests in standardisierten Umgebungen durchgeführt, um die
 \section{Methodik der Auswertung}
 Die Bewertung erfolgt auf Basis der in Kapitel \ref{ch:Statistische_Auswertung} beschriebenen statistischen Methoden.
 Da \ac{RL}-Training stochastischen Schwankungen unterliegt, reicht die Betrachtung einzelner Trainingsläufe nicht aus.
-Als primäre Metrik zur Bewertung der Leistung wird daher der \emph{Interquartile Mean} (IQM) der episodischen Belohnungen (Rewards) verwendet. Dieser ist robuster gegenüber Ausreißern als der arithmetische Mittelwert. Ergänzend wird die \emph{Success Rate} (SR) als sekundäre Metrik herangezogen, um den operativen Erfolg (konfliktfreie Durchquerung des Sektors) zu quantifizieren.
+Als primäre Metrik zur Bewertung der Leistung wird daher \ac{IQM} der episodischen Belohnungen (Rewards) verwendet. 
 Alle Metriken (wenn nicht explizit anders angegeben) werden mit 95\%-Konfidenzintervallen mittels \emph{Percentile-Bootstrap} ausgewertet, um die statistische Signifikanz der Ergebnisse sicherzustellen und zufällige Effekte auszuschließen.
 
 \section{Versuch 1: Validierung des Gradient-Masking-Mechanismus}
@@ -106,7 +106,7 @@ Die zugrunde liegenden Hypothesen lauten wie folgt:
     \item \label{hyp:convergence} \textbf{Masking-Trade-off:} Der Einsatz von Gradient\hyp{}Masking führt initial zu einer verlangsamten Konvergenz (niedriger \emph{Mean Eval}), resultiert jedoch in einer überlegenen finalen Policy (höherer \emph{Last Eval}).
     \item \label{hyp:stability} \textbf{Stabilität:} Gradient\hyp{}Masking reduziert die Varianz zwischen den Trainingsläufen und erhöht die Lernstabilität signifikant.
     \item \label{hyp:Interferenzen} \textbf{Vermeidung von Negative Transfer:} Die angepasste Netzarchitektur mit separaten Verarbeitungspfaden für diskrete und kontinuierliche Aktionen in Kombination mit Gradient\hyp{}Masking führt zu einer weiteren Leistungssteigerung gegenüber der Standard-Gradient\hyp{}Masking-Variante, besonders in Szenarien mit einem hohen Anteil Noop\hyp{}Aktionen.
-    \item \label{hyp:Netzarchitektur} \textbf{Architekturvergleich:} Die angepassten Netzarchitekturen sollten in diesem Szenario keine signifikante Leistungssteigerung gegenüber der Standard-Gradient\hyp{}Masking-Variante zeigen, da alle Aktionen etwa gleich häufig auftreten und der Negative Transfer zwischen den Aktionszweigen gering sein sollte. 
+    \item \label{hyp:Netzarchitektur} \textbf{Architekturvergleich:} Die angepassten Netzarchitekturen zeigen in diesem Szenario keine signifikante Leistungssteigerung gegenüber der Standard-Gradient\hyp{}Masking-Variante. Dies wird vermutet, da alle Aktionen etwa gleich häufig auftreten und der Negative Transfer zwischen den Aktionszweigen gering sein sollte. 
 \end{enumerate}
 
 \subsection{Durchführung}
@@ -128,7 +128,7 @@ Um die Effektivität des Gradient\hyp{}Masking-Mechanismus und den Einfluss der 
         \item \textbf{\ac{PPO} (Fully Shared):} Diese Variante nutzt dieselbe vollständig geteilte Architektur wie \textit{\ac{PPO} mit Masking}, realisiert diese jedoch technisch über eine \textit{Aktionsnetzwerk-basierte Implementierung}. Dabei wird das vorgeschaltete Policy-Netzwerk leer initialisiert (\texttt{[]}) und die gesamte Topologie direkt im Aktionsnetzwerk abgebildet. Da die spezialisierten Split-Architekturen ebenfalls auf dieser Methode beruhen, dient diese Variante als interne Validierung, um methodische Abweichungen zur nativen Implementierung zu isolieren.
         \item \textbf{\ac{PPO} (Split Net):} Das Netzwerk wird ab der Eingabeschicht in separate Äste für die unterschiedlichen Aktionen aufgeteilt. Um die Parametereffizienz vergleichbar zur Basis-Architektur zu halten, wird die Anzahl der Neuronen pro Ast reduziert. Die Dimensionierung erfolgt dabei gemäß der in Kapitel \ref{ch:ppo_bedingt} hergeleiteten Approximation (Gleichung \ref{eq:complexity_approx}).
         \item \textbf{\ac{PPO} (Split Net Full):} Eine Variante mit vollständig getrennten Netzwerken, bei der jeder Ast die volle Breite des ursprünglichen Netzwerks behält. Da jeder Pfad auch die Feature-Extraktion vollständig eigenständig erlernen muss, wird auf eine Reduktion der Parameter verzichtet.
-        \item \textbf{\ac{PPO} (Shared \& Split):} Ein hybrider Ansatz, der einen gemeinsamen Layer für die grundlegende Feature-Extraktion verwendet, gefolgt von getrennten Köpfen (Heads) für die Aktionen. Auch hier wird die Neuronenanzahl der getrennten Layer anhand der Formel (Gleichung \ref{eq:complexity_approx}) reduziert.
+        \item \textbf{\ac{PPO} (Shared \& Split):} Ein hybrider Ansatz, der einen gemeinsamen Layer für die grundlegende Feature-Extraktion verwendet, gefolgt von getrennten Köpfen für die Aktionen. Auch hier wird die Neuronenanzahl der getrennten Layer anhand der Formel (Gleichung \ref{eq:complexity_approx}) reduziert.
     \end{itemize}
 \end{enumerate}
 
@@ -139,7 +139,7 @@ Jede Konfiguration wird mit den selben Hyperparamertern und den gleichen 15 Seed
 
 \begin{table}[htbp]
     \centering
-    \caption{Vergleich der Trainingsergebnisse (IQM mit 95\%\hyp{}Konfidenzintervall)}
+    \caption{Vergleich der Trainingsergebnisse (\ac{IQM} mit 95\%\hyp{}Konfidenzintervall)}
     \label{tab:evaluation_results}
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{cl|ccc|ccc}
@@ -171,36 +171,59 @@ Jede Konfiguration wird mit den selben Hyperparamertern und den gleichen 15 Seed
 Die in Tabelle \ref{tab:evaluation_results} quantifizierten Daten belegen die Validität des Versuchsaufbaus und ermöglichen eine differenzierte Bewertung der beiden Testreihen.
 
 \subsubsection{Grundlegende Validierung}
-Die Ergebnisse bestätigen, dass der experimentelle Rahmen solide ist. Der Standard-\ac{PPO} erreicht mit einem IQM von 275.04 den geforderten Referenzwert (Bestätigung Hypothese \ref{hyp:baseline}). Zudem zeigt das Konfidenzintervall der Wrapper-Variante $[-18.59, 1.75]$ (Differenz zu Standard-\ac{PPO}), dass die Kapselung der Umgebung selbst keinen signifikanten Einfluss auf die Leistung hat (Bestätigung Hypothese \ref{hyp:no_masking}). Dennoch ist ein Rückgang der IQM-Werte zu verzeichnen, der sich auf die gestiegene Komplexität des Aktionsraums zurückführen lässt. Dies erlaubt es, den Masking-Mechanismus als isolierte Ursache für die im Folgenden diskutierten positiven Effekte zu betrachten.
+
+\subsubsection*{Beobachtung}
+Der Standard-\ac{PPO} erreicht mit einem \ac{IQM} von 275.04 den geforderten Referenzwert. Das Konfidenzintervall der Wrapper-Variante $[-18.59, 1.75]$ (Differenz zu Standard-\ac{PPO}) umfasst die Null, was bedeutet, dass die Kapselung der Umgebung keinen statistisch signifikanten Einfluss auf die Leistung hat.
+
+\subsubsection*{Interpretation}
+Diese Ergebnisse bestätigen, dass der experimentelle Rahmen solide ist (Bestätigung Hypothese \ref{hyp:baseline} und \ref{hyp:no_masking}). Der beobachtete Rückgang der \ac{IQM}-Werte bei der Wrapper-Variante lässt sich auf die gestiegene Komplexität des Aktionsraums zurückführen, ist jedoch nicht statistisch signifikant. Dies erlaubt es, den Masking-Mechanismus als isolierte Ursache für die im Folgenden diskutierten positiven Effekte zu betrachten.
 
 \subsubsection{Testreihe 1: Wirksamkeit des Gradient\hyp{}Masking}
-Der Vergleich zwischen Standard-\ac{PPO} und \ac{PPO} mit Masking offenbart den postulierten Trade-off (Hypothese \ref{hyp:convergence}):
-Während der Masking-Ansatz über das gesamte Training hinweg eine niedrigere Durchschnittsleistung (\emph{Mean Eval}) aufweist, was auf die initialen Lernkosten der hierarchischen Struktur zurückzuführen ist, zahlt sich diese Investition am Ende aus. Das positive Paird-Intervall für die finale Leistung (`Last Eval`: $[6.74, 18.17]$) belegt, dass der Masking-Mechanismus zu einer signifikant leistungsfähigeren finalen Policy führt.
+
+\subsubsection*{Beobachtung}
+Der Vergleich zwischen Standard-\ac{PPO} und \ac{PPO} mit Masking zeigt ein differenziertes Bild: Während der Masking-Ansatz über das gesamte Training hinweg eine niedrigere Durchschnittsleistung (Mean Eval) aufweist, übertrifft er die Standard-Variante am Trainingsende deutlich. Das positive Paird-Intervall für die finale Leistung (Last Eval: $[6.74, 18.17]$) belegt einen signifikanten Leistungsgewinn.
+
+\subsubsection*{Interpretation}
+Dies offenbart den postulierten Trade-off (Hypothese \ref{hyp:convergence}): Die hierarchische Struktur verursacht anfängliche Lernkosten, da der Agent sowohl die diskrete Auswahl als auch die kontinuierliche Steuerung erlernen muss. Diese Investition zahlt sich jedoch am Ende aus, indem der Masking-Mechanismus zu einer signifikant leistungsfähigeren finalen Policy führt.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[height=4.2cm, trim=0 0 3mm 0, clip]{chapters/bilder/firstTest/iqm_ci_LunarLanderContinuous-v3_last_eval_mean.png}
     \hfill
     \includegraphics[height=4.2cm, trim=115mm 0 0 0, clip]{chapters/bilder/firstTest/iqm_ci_LunarLanderContinuous-v3_mean_eval_mean.png}
-    \caption[Trainingsleistung (Test 1)]{Trainingsleistung in der LunarLander-Umgebung, dargestellt als Interquartile Mean (IQM) über 15 Trainingsläufe mit 95\%-Konfidenzintervallen. \textbf{Links:} Finale Trainingsleistung am Ende des Trainings (Last Eval). \textbf{Rechts:} Durchschnittliche Trainingsleistung über den gesamten Trainingsverlauf (Mean Eval).}
+    \caption[Trainingsleistung (Test 1)]{Trainingsleistung in der LunarLander-Umgebung, dargestellt als \ac{IQM} über 15 Trainingsläufe mit 95\%-Konfidenzintervallen. \textbf{Links:} Finale Trainingsleistung am Ende des Trainings (Last Eval). \textbf{Rechts:} Durchschnittliche Trainingsleistung über den gesamten Trainingsverlauf (Mean Eval).}
     \label{fig:iqm_lunar_combined}
 \end{figure}
 
-Gleichzeitig bestätigt sich Hypothese \ref{hyp:stability} bezüglich der Stabilität. Wie in Abbildung \ref{fig:iqm_lunar_combined} ersichtlich, konvergiert der Masking-Ansatz (Masked PPO) robuster (schmaleres Konfidenzintervall von 5.08) als die Standard-Variante (8.51).
+\subsubsection*{Bewertung der Stabilität}
+Hypothese \ref{hyp:stability} wird bestätigt: Wie in Abbildung \ref{fig:iqm_lunar_combined} ersichtlich, konvergiert der Masking-Ansatz (Masked PPO) robuster (schmaleres Konfidenzintervall von 5.08) als die Standard-Variante (8.51). Dies zeigt, dass der Mechanismus nicht nur die finale Leistung verbessert, sondern auch die Varianz zwischen Trainingsläufen reduziert.
 
 \subsubsection{Testreihe 2: Performance der Architekturen}
-Bei der Analyse der Netzwerkarchitekturen ist zunächst eine methodische Besonderheit zu beachten. Um die verschiedenen Topologien flexibel zu realisieren, wurde für diese Testreihe eine \textit{Aktionsnetzwerk-basierte Implementierung} gewählt, bei der die Netzstruktur technisch in das Aktionsnetzwerk verlagert wurde. Ein Vergleich der \textit{\ac{PPO} (Fully Shared)} Variante (welche diese Methode nutzt) mit der nativen \textit{\ac{PPO} mit Masking} Implementierung zeigt einen leichten Leistungsabfall (IQM 285.12 vs. 287.41). Dies deutet auf minimale Ineffizienzen durch diese technische Realisierung hin.
-Aus diesem Grund werden die Architekturen im Folgenden relativ zueinander bewertet, wobei \textit{\ac{PPO} (Fully Shared)} als interne Baseline dient.
-\medskip
 
-In diesem direkten Vergleich schneidet die \textit{\ac{PPO} (Split Net)} Architektur am besten ab (IQM 286.09). Sie übertrifft die Fully\hyp{}Shared\hyp{}Baseline, wenngleich die Überlappung der Konfidenzintervalle keine statistische Signifikanz ausweist. Dennoch stützt dieses Ergebnis Hypothese \ref{hyp:Netzarchitektur} (Architekturvergleich): Die Trennung der Pfade (bei gleichzeitiger Reduktion der Neuronenanzahl zur Wahrung der Parameter\hyp{}Effizienz) scheint vorteilhaft zu sein, da sie spezialisierte Repräsentationen ohne negativen Einfluss erlaubt.
-Die komplexere Variante (\textit{Split Net Full}) zeigt hingegen keine Vorteile. Dies lässt vermuten, dass die erhöhte Parameteranzahl in dieser vergleichsweise einfachen Umgebung keinen Mehrwert bietet und tendenziell eher zu Overfitting führt.
+\subsubsection*{Methodische Vorbemerkung}
+Um die verschiedenen Topologien flexibel zu realisieren, wurde für diese Testreihe eine \textit{Aktionsnetzwerk-basierte Implementierung} gewählt, bei der die Netzstruktur technisch in das Aktionsnetzwerk verlagert wurde. Ein Vergleich der \textit{\ac{PPO} (Fully Shared)} Variante (welche diese Methode nutzt) mit der nativen \textit{\ac{PPO} mit Masking} Implementierung zeigt einen leichten Leistungsabfall (\ac{IQM} 285.12 vs. 287.41). Dies deutet auf minimale Ineffizienzen durch diese technische Realisierung hin. Aus diesem Grund werden die Architekturen im Folgenden relativ zueinander bewertet, wobei \textit{\ac{PPO} (Fully Shared)} als interne Baseline dient.
+
+\subsubsection*{Beobachtung}
+Im direkten Vergleich schneidet die \textit{\ac{PPO} (Split Net)} Architektur am besten ab (\ac{IQM} 286.09). Sie übertrifft die Fully-Shared-Baseline, wenngleich die Überlappung der Konfidenzintervalle keine statistische Signifikanz ausweist. Die komplexere Variante (\textit{Split Net Full}) zeigt hingegen keine Vorteile gegenüber der einfacheren Split-Net-Architektur.
+
+\subsubsection*{Interpretation}
+Dieses Ergebnis stützt Hypothese \ref{hyp:Netzarchitektur} (Architekturvergleich): Die Trennung der Pfade (bei gleichzeitiger Reduktion der Neuronenanzahl zur Wahrung der Parameter-Effizienz) scheint vorteilhaft zu sein, da sie spezialisierte Repräsentationen ohne negativen Einfluss erlaubt. Die fehlenden Vorteile der Split-Net-Full-Variante lassen vermuten, dass die erhöhte Parameteranzahl in dieser vergleichsweise einfachen Umgebung keinen Mehrwert bietet und tendenziell eher zu Overfitting führt.
 
 \subsection{Zusammenfassung der Erkenntnisse}
-Der erste Versuch liefert den klaren Nachweis, dass der konzipierte Gradient-Masking-Mechanismus wie erwartet funktioniert. Er löst das Problem des verschwindenden Gradienten in Deadzones und führt zu einer signifikant robusteren und leistungsfähigeren finalen Policy (Bestätigung Hypothese \ref{hyp:baseline} und \ref{hyp:convergence}). Der anfängliche Performance-Rückstand bestätigt dabei den erwarteten Trade-off zwischen stabilerer Exploration und schneller Konvergenz.
 
-Bezüglich der Netzwerkarchitektur zeigte sich, dass in dieser vergleichsweise einfachen Umgebung die Wahl der Topologie zwar eine untergeordnete Rolle spielt, die \textit{Split-Net}-Variante jedoch das beste Verhältnis aus Leistung und Parametereffizienz bietet.
-Diese Ergebnisse validieren das technische Fundament und rechtfertigen die Anwendung des Verfahrens auf das hochdimensionale Problem der Flugverkehrskontrolle im nächsten Schritt.
+Dieser Versuch validiert die grundsätzliche Funktionalität des Gradient\hyp{}Masking\hyp{}Mechanismus in einer kontrollierten Testumgebung und liefert erste Erkenntnisse zum Einfluss verschiedener Netzwerkarchitekturen.
+
+\subsubsection*{Wirksamkeit des Gradient-Masking}
+Der konzipierte Mechanismus löst das Problem des verschwindenden Gradienten in Deadzones erfolgreich. Die signifikant höhere finale Leistung (Last Eval) bei gleichzeitig robusterer Konvergenz (schmaleres Konfidenzintervall) bestätigt Hypothese \ref{hyp:convergence}. Der anfängliche Performance-Rückstand während des Trainings (Mean Eval) zeigt den erwarteten Trade-off: Die hierarchische Struktur erfordert mehr Exploration, führt aber zu einer stabileren finalen Policy.
+
+\subsubsection*{Architekturvergleich}
+In dieser vergleichsweise einfachen Umgebung spielt die Wahl der Topologie eine untergeordnete Rolle. Dennoch zeigt die \textit{Split-Net}-Variante das beste Verhältnis aus Leistung und Parametereffizienz. Die vollständig getrennte Architektur (Split Net Full) bietet in diesem Szenario keinen Mehrwert, was auf Overfitting hindeutet.
+
+\subsubsection*{Validierung der Hypothesen}
+Hypothese \ref{hyp:baseline} (\textbf{Baseline-Performance}) wird bestätigt: Standard-\ac{PPO} erreicht den geforderten Referenzwert. Hypothese \ref{hyp:no_masking} (\textbf{Architektur-Robustheit}) wird bestätigt: Der Wrapper allein beeinträchtigt die Leistung nicht signifikant. Hypothese \ref{hyp:convergence} (\textbf{Masking-Trade-off}) wird bestätigt. Hypothese \ref{hyp:stability} (\textbf{Stabilität}) wird bestätigt: Gradient-Masking reduziert die Varianz zwischen Trainingsläufen.
+
+\subsubsection*{Implikationen für Versuch~\ref{sec:versuch2}}
+Die erfolgreiche Validierung des Mechanismus rechtfertigt die Anwendung auf das hochdimensionale Problem der Flugverkehrskontrolle. Die \textit{Split-Net}-Architektur wird als vielversprechender Ansatz für komplexere Szenarien identifiziert.
 
 \section{Versuch 2: Validierung in der Flugverkehrsumgebung}
 \label{sec:versuch2}
@@ -212,14 +235,14 @@ Diese Ergebnisse validieren das technische Fundament und rechtfertigen die Anwen
     \label{fig:atc_env}
 \end{figure}
 
-Nach der erfolgreichen Validierung des Gradient\hyp{}Masking-Mechanismus in der kontrollierten LunarLander-Umgebung, widmet sich dieser Versuch der eigentlichen Zieldomäne: der Flugverkehrskontrolle. Dieses Einsatzgebiet stellt ungleich höhere Anforderungen an den Agenten, bedingt durch eine komplexere Systemdynamik und strikte Sicherheitsvorgaben. Der Versuch adressiert dabei zwei Kernfragen: Zunächst wird die \textbf{Algorithmische Validierung} auf dieses hochdimensionale Problem übertragen, um die Stabilität des Masking-Mechanismus unter realitätsnahen Bedingungen zu prüfen. Darauf aufbauend liegt der Fokus auf dem \textbf{Architekturvergleich}, um zu ermitteln, welche Netzwerkstruktur die bedingten Abhängigkeiten im gemischten Aktionsraum am besten handhaben kann.
+Nach der erfolgreichen Validierung des Gradient\hyp{}Masking-Mechanismus in der kontrollierten LunarLander-Umgebung, widmet sich dieser Versuch der eigentlichen Zieldomäne: der Flugverkehrskontrolle. Dieses Einsatzgebiet stellt ungleich höhere Anforderungen an den Agenten, bedingt durch eine komplexere Systemdynamik und strikte Sicherheitsvorgaben. Der Versuch adressiert dabei zwei Kernfragen: Zunächst wird die \textbf{Algorithmische Validierung} auf dieses hochdimensionale Problem übertragen, um die grundsätzliche Funktionsfähigkeit des Masking-Mechanismus unter realitätsnahen Bedingungen zu prüfen. Darauf aufbauend liegt der Fokus auf dem \textbf{Architekturvergleich}, um zu ermitteln, welche Netzwerkstruktur die bedingten Abhängigkeiten im gemischten Aktionsraum am besten handhaben kann.
 
 \subsection{Versuchsaufbau und Hypothesen}
 Die zugrunde liegenden Hypothesen lauten:
 \begin{enumerate}
-    \item \label{hyp:atc_stability} \textbf{Lernstabilität in komplexer Umgebung:} Der Gradient-Masking-Mechanismus gewährleistet auch in der hochdimensionalen ATC-Umgebung ein stabiles Training und verhindert den Kollaps der Policy.
+    \item \label{hyp:atc_functionality} \textbf{Funktionalität in komplexer Umgebung:} Der Gradient\hyp{}Masking\hyp{}Mechanismus ist auch in der hochdimensionalen ATC-Umgebung anwendbar und führt zu operativ sinnvollen Policies.
     \item \label{hyp:atc_performance} \textbf{Performance-Gewinn:} Durch die Eliminierung des Rauschens irrelevanter Aktionen erlernt der Agent mit Masking feinfühligere Steuerbefehle und erzielt eine höhere durchschnittliche Belohnung.
-    \item \label{hyp:atc_architecture} \textbf{Architektureffizienz:} Es wird erwartet, dass spezialisierte Architekturen (wie Split Net) die Lernleistung analog zum ersten Versuch weiter steigern.
+    \item \label{hyp:atc_architecture} \textbf{Archi\-tek\-tur\-effi\-zi\-enz:} Es wird erwartet, dass spezialisierte Architekturen (wie Split Net) die Lernleistung analog zum ersten Versuch weiter steigern.
 \end{enumerate}
 
 \subsection{Durchführung}
@@ -227,18 +250,19 @@ Die zugrunde liegenden Hypothesen lauten:
 Aufgrund der hohen Rechenkomplexität der Interaktion mit dem externen Simulator (BlueSky) und der erforderlichen Netzgröße wird die Evaluation auf eine konsolidierte Testreihe beschränkt.
 Folgende vier Konfigurationen werden über 6 Millionen Zeitschritte mit 8 Seeds evaluiert:
 \begin{itemize}
-    \item \textbf{\ac{PPO}:} Der Multioutput-Algorithmus aus \ac{SB3}-Plus \cite{sb3_plus} als Baseline.
+    \item \textbf{\ac{PPO}:} Der Multioutput-\acs{PPO}Algorithmus aus \ac{SB3}-Plus \cite{sb3_plus} als Baseline.
     \item \textbf{Masked \ac{PPO}:} Der um Gradient\hyp{}Masking erweiterte \ac{PPO}-Algorithmus.
-    \item \textbf{Masked split\_net \ac{PPO}:} Die Variante mit getrennten Pfaden für diskrete und kontinuierliche Aktionen.
-    \item \textbf{Masked shared \& split\_net \ac{PPO}:} Die hybride Architektur mit geteiltem Feature-Extractor.
+    \item \textbf{Masked split\_net \ac{PPO}:} Eine Variante mit getrennten Pfaden für diskrete und kontinuierliche Aktionen.
+    \item \textbf{Masked shared \& split\_net \ac{PPO}:} Eine hybride Architektur mit geteiltem Feature-Extractor.
 \end{itemize}
-Dies gewährleistet die direkte Vergleichbarkeit der Ansätze unter identischen Bedingungen.
+
+\textbf{Anmerkung zu den Hyperparametern:} Nach Abschluss dieses Versuchs stellte sich heraus, dass die gewählten Hyperparameter für diese komplexe Umgebung nicht optimal waren. Insbesondere die Batchsize und der Gamma-Parameter bedürfen einer sorgfältigeren Abstimmung, um ein stabileres Training zu gewährleisten. Die hier präsentierten Ergebnisse sind daher primär als Machbarkeitsnachweis und Architekturvergleich zu verstehen. Eine optimierte Hyperparameter-Konfiguration wird in Versuch \ref{sec:versuch3} verwendet.
 
 \subsection{Ergebnisse}
 
 \begin{table}[htbp]
     \centering
-    \caption{Vergleich der Trainingsergebnisse in der Flugverkehrsumgebung (IQM mit 95\%\hyp{}Konfidenzintervall)}
+    \caption{Vergleich der Trainingsergebnisse in der Flugverkehrsumgebung (\ac{IQM} mit 95\%\hyp{}Konfidenzintervall)}
     \label{tab:atc_evaluation_results}
     \resizebox{\textwidth}{!}{%
     \renewcommand{\arraystretch}{1.2}
@@ -263,59 +287,55 @@ Dies gewährleistet die direkte Vergleichbarkeit der Ansätze unter identischen 
 \end{table}
 
 Die Ergebnisse in Tabelle \ref{tab:atc_evaluation_results} zeichnen ein differenziertes Bild (vgl.~Abbildung \ref{fig:iqm_atc_combined}).
-Bezüglich Hypothese \ref{hyp:atc_performance} (\textbf{Performance-Gewinn}) zeigt sich, dass zwar die beste Masking-Architektur (Shared \& Split) numerisch den höchsten Endwert erreicht, die Konfidenzintervalle der Paar-Differenzen bei der finalen Leistung (\emph{Last Eval}) jedoch keine statistische Signifikanz auf dem 95\%-Niveau aufweisen. Die Hypothese eines reinen Performance-Gewinns kann somit weder eindeutig bestätigt noch abgelehnt werden. Der Vergleich zwischen \emph{Last Eval} und \emph{Mean Eval} offenbart jedoch eine fundamentale Divergenz in der Lernstabilität.
+Bezüglich Hypothese \ref{hyp:atc_performance} (\textbf{Performance-Gewinn}) zeigt sich, dass zwar die Masking-Architektur (Shared \& Split) numerisch den höchsten Endwert erreicht, die Konfidenzintervalle der Paar-Differenzen bei der finalen Leistung (\emph{Last Eval}) jedoch keine statistische Signifikanz auf dem 95\%-Niveau aufweisen. Die Hypothese eines reinen Performance-Gewinns kann somit weder eindeutig bestätigt noch abgelehnt werden.
+
+Auffällig ist, dass drei der vier Konfigurationen (\ac{PPO}, Masked \ac{PPO}, Masked split\_net \ac{PPO}) ein ähnliches Muster aufweisen: Sie erzielen während des Trainings hohe durchschnittliche Belohnungen (Mean Eval ca.~210--225), zeigen jedoch gegen Ende einen Leistungsrückgang (Last Eval ca.~197--202). Lediglich die \emph{Shared \& Split}-Architektur weicht von diesem Muster ab und erreicht sowohl einen stabilen Mean Eval (209.48) als auch den höchsten Last Eval (216.82).
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[height=4.2cm, trim=0 0 3mm 0, clip]{chapters/bilder/secondTest/iqm_ci_crossing_planes_multiHead_last_eval_mean.png}
     \hfill
     \includegraphics[height=4.2cm, trim=115mm 0 0 0, clip]{chapters/bilder/secondTest/iqm_ci_crossing_planes_multiHead_mean_eval_mean.png}
-    \caption[Trainingsleistung (Test 2)]{Trainingsleistung im Flugverkehrsszenario, dargestellt als Interquartile Mean (IQM) über 8 Trainingsläufe mit 95\%-Konfidenzintervallen. \textbf{Links:} Finale Trainingsleistung am Ende des Trainings (Last Eval). \textbf{Rechts:} Durchschnittliche Trainingsleistung über den gesamten Trainingsverlauf (Mean Eval).}
+    \caption[Trainingsleistung (Test 2)]{Trainingsleistung im Flugverkehrsszenario, dargestellt als \ac{IQM} über 8 Trainingsläufe mit 95\%-Konfidenzintervallen. \textbf{Links:} Finale Trainingsleistung am Ende des Trainings (Last Eval). \textbf{Rechts:} Durchschnittliche Trainingsleistung über den gesamten Trainingsverlauf (Mean Eval).}
     \label{fig:iqm_atc_combined}
 \end{figure}
 
-Der \ac{PPO}-Algorithmus erzielt zwar den höchsten durchschnittlichen Trainingswert (IQM 224.84), bricht jedoch gegen Ende leistungstechnisch ein (Last Eval 202.21). Dies indiziert eine \emph{Policy Degradation}, also das Verlernen bereits erworbenen Wissens.
-Im Gegensatz dazu beweisen die Gradient-Masking-Varianten eine deutlich höhere Robustheit. Trotz flacherer anfänglicher Lernkurve (niedrigerer Mean Eval) stabilisieren sie ihr Leistungsniveau und übertreffen den \ac{PPO}-Algorithmus am Ende des Trainings (Last Eval 216.82).
-
 \subsection{Analyse der Lern- und Verhaltensdynamik}
 
-Um die Divergenz zwischen der Instabilität des \ac{PPO} und der Robustheit der Masking-Varianten zu erklären, ist eine Analyse der zugrunde liegenden Verhaltensstrategien notwendig. Diese zeigt, dass Gradient\hyp{}Masking das Lernverhalten des Agenten fundamental verändert.
+Die Datenlage aus Tabelle \ref{tab:atc_evaluation_results} und Abbildung \ref{fig:iqm_atc_combined} wirft mehrere Fragen auf: Warum zeigen drei von vier Konfigurationen einen späten Leistungseinbruch? Welche Rolle spielt die Netzwerkarchitektur? Und wie beeinflusst der Masking-Mechanismus das Explorationsverhalten? Diese Fragen werden im Folgenden systematisch adressiert.
+\medskip
 
-\subsubsection{Strategische Unterschiede und Noop-Verhalten}
-Abbildung \ref{fig:steering_behavior} visualisiert die Nutzung der Inaktivitäts-Aktion (Noop). Während der \ac{PPO}-Algorithmus stark zu inaktivem Verhalten tendiert, zeigen die Masking-Varianten eine balanciertere Strategie.
+Die Analyse gliedert sich in vier Schwerpunkte: Zunächst wird die \emph{Trainingsqualität} anhand der Clip Fraction untersucht, um generelle Hyperparameter-Probleme zu identifizieren (Abschnitt~\ref{subsubsec:training_quality}). Darauf aufbauend erfolgt eine detaillierte Untersuchung des \emph{Explorationsverhaltens} mittels Entropie-Analyse (Abschnitt~\ref{subsubsec:exploration}), welche die Grundlage für das Verständnis der \emph{Noop-Nut\-zung} bildet (Abschnitt~\ref{subsubsec:noop_behavior}). Abschließend werden die verschiedenen Masking-Architekturen verglichen (Abschnitt~\ref{subsubsec:architecture_comparison}) und die operative Validität nachgewiesen (Abschnitt~\ref{subsubsec:operational_validation}).
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.6\textwidth, trim=0 4mm 0 0mm, clip]{chapters/bilder/secondTest/aggregetet-Stats/env_actions_noop.pdf}
-    \caption[Noop-Aktionen (Test 2)]{Entwicklung der durchschnittlichen Noop-Aktionen (geglätteter Mittelwert über alle Läufe). Der \ac{PPO}-Algorithmus (Grau) zeigt eine überproportionale Tendenz zur Inaktivität. Aufgrund eines Darstellungsfehlers bei großen Zahlen wurde die x-Achsenbeschriftung entfernt. Die dargestellten Zeitschritte reichen von 0 bis 6~Millionen.}
-    \label{fig:steering_behavior}
-\end{figure}
+\subsubsection{Trainingsqualität und Hyperparameter-Problematik}
+\label{subsubsec:training_quality}
 
-Diese Beobachtung korreliert direkt mit der Instabilität der Updates. Die \emph{Clip Fraction} (Abbildung \ref{fig:clip_fraction}) ist beim \ac{PPO}-Algorithmus messbar höher, was darauf hindeutet, dass der Algorithmus permanent versucht, zu große Schritte in der Policy vorzunehmen.
+Die \emph{Clip Fraction} (Abbildung \ref{fig:clip_fraction}) dient als Indikator für die Stabilität der Policy-Updates \cite{OriginalPPO}. Ein hoher Wert deutet darauf hin, dass der Algorithmus häufig versucht, zu große Schritte in der Policy vorzunehmen, die dann beschnitten werden müssen.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth, trim=0 3mm 0 3mm, clip]{chapters/bilder/secondTest/aggregetet-Stats/train_clip_fraction.pdf}
-    \caption[Clip Fraction (Test 2)]{Clip Fraction im Trainingsverlauf (geglätteter Mittelwert über alle Läufe). Die hohen Werte des \ac{PPO}-Algorithmus (Grau) indizieren instabile Policy-Updates. Aufgrund eines Darstellungsfehlers bei großen Zahlen wurde die x-Achsenbeschriftung entfernt. Die dargestellten Zeitschritte reichen von 0 bis 6~Millionen.}
+    \caption[Clip Fraction (Test 2)]{Clip Fraction im Trainingsverlauf (geglätteter Mittelwert über alle Läufe). Alle Varianten zeigen erhöhte Werte, wobei die maskierten Varianten (Pink, Rot, Orange) tendenziell etwas niedrigere Werte aufweisen als der unmaskierte \ac{PPO} (Grau). Aufgrund eines Darstellungsfehlers bei großen Zahlen wurde die x-Achsenbeschriftung entfernt. Die dargestellten Zeitschritte reichen von 0 bis 6~Millionen.}
     \label{fig:clip_fraction}
 \end{figure}
 
-Ursächlich hierfür ist die Qualität der Gradienten: Ohne den Masking-Mechanismus fließen auch Gradienten von inaktiven (Noop-)Schritten in die Optimierung der kontinuierlichen Parameter ein. Dies erzeugt ein Rauschen, das eine sinnvolle Optimierung des Steuerkopfes verhindert. Da der unmaskierte Agent nicht in der Lage ist, eine effektive Lenkstrategie zu erlernen, konvergiert er frühzeitig gegen eine lokale Lösung, die fast ausschließlich aus Inaktivität besteht.
-Der \ac{PPO}-Algorithmus versucht, die resultierende Diskrepanz durch große Updates zu kompensieren, die dann geclippt werden müssen.
+\subsubsection*{Beobachtung}
+Sämtliche Varianten weisen über den gesamten Trainingsverlauf hinweg erhöhte Clip-Raten auf. Die maskierten Varianten (Pink, Rot, Orange) zeigen zwar tendenziell etwas geringere Werte als der unmaskierte \ac{PPO} (Grau), jedoch liegt das Niveau insgesamt deutlich über dem wünschenswerten Bereich.
 
+\subsubsection*{Interpretation}
+Dies indiziert ein systemisches Problem in der Hyperparameter-Kon\-fi\-gu\-ra\-tion. Insbesondere die Batchsize und die Lernrate sind für diese komplexe Umgebung nicht optimal gewählt. Kleinere Batches führen zu rauschhafteren Gradienten, was instabile Updates zur Folge hat.
 
+\subsubsection*{Konsequenz}
+Die folgenden Analysen sind unter dem Vorbehalt suboptimaler Trainingsbedingungen zu interpretieren. Dennoch lassen sich wichtige qualitative Erkenntnisse über die strukturellen Unterschiede zwischen den Ansätzen gewinnen.
 
-Damit bestätigt sich Hypothese \ref{hyp:atc_stability} (\textbf{Lernstabilität}): Der Gradient-Masking-Mechanismus verhindert effektiv den bei Standard-\ac{PPO} beobachteten Zusammenbruch der Policy (\emph{Policy Degradation}) und gewährleistet auch in der hochdimensionalen ATC-Umgebung ein stabiles Training.
+\subsubsection{Explorationsverhalten: Entropie-Analyse}
+\label{subsubsec:exploration}
 
-\subsubsection{Explorationsverhalten und Entropie-Verlauf}
-Um den Verlauf des \emph{Entropy Loss} (Abbildung \ref{fig:entropy_loss}) korrekt zu interpretieren, muss zunächst die Zusammensetzung der Entropie im hybriden Aktionsraum betrachtet werden. Diese ergibt sich additiv aus einem diskreten und einem kontinuierlichen Anteil. Während die diskrete \emph{Shannon-Entropie} strikt nicht-negativ ist ($H \ge 0$), kann die \emph{differenzielle Entropie} \cite[Kap. 9.1]{bedinteEndropie} der kontinuierlichen Aktion negativ werden, wenn ihre Varianz sehr klein wird. Da der Loss als negative Entropie definiert ist, bedeutet ein positiver \emph{Entropy Loss}-Wert zwingend eine negative Gesamtentropie, welche ausschließlich durch den kontinuierlichen Anteil verursacht werden kann.
-\medskip
-
-Die Analyse zeigt, dass die Masking\hyp{}Varianten zu einer frühen Festlegung der Strategie neigen. Ihre Loss-Werte schneiden bereits nach ca.~2,5 Millionen Schritten die Nulllinie. Dies indiziert, dass die Gesamtentropie negativ geworden ist, was primär durch eine sehr niedrige Varianz der kontinuierlichen Aktion verursacht wird. Da die differentielle Entropie einer kontinuierlichen Verteilung unbegrenzt negativ werden kann ($h(X) \to -\infty$ für $\sigma \to 0$), lässt sich hieraus nicht sicher ableiten, dass die diskrete Exploration bereits vollständig abgeschlossen ist. Die Beobachtung legt jedoch nahe, dass der kontinuierliche Kopf zu diesem Zeitpunkt bereits stark spezialisiert ist.
-\medskip
-
-Im Kontrast dazu weist der unmaskierte \ac{PPO}-Algorithmus (Grau) ein rapid ansteigendes, positives Niveau des Entropy Loss auf. Wie zuvor hergeleitet, resultiert diese negative Gesamtentropie zwingend aus der kontinuierlichen Aktion. Ursache hierfür ist die fehlerhafte Standardberechnung des \ac{PPO}, bei der die kontinuierliche Aktion auch in Noop-Phasen unmaskiert einfließt. Dies verzerrt die differenzielle Entropie so stark ins Negative, dass sie den positiven diskreten Anteil überkompensiert. Der gemessene Entropie-Wert ist für den unmaskierten \ac{PPO}-Algorithmus in diesem Setup daher nicht aussagekräftig. Die Masking-Varianten beheben dieses Problem, da sie die kontinuierliche Aktion während Noop-Phasen maskieren und somit eine korrekte Metrik gewährleisten.
-\medskip
+Die Entropie ist ein Maß für die Unsicherheit bzw. Exploration einer Policy. Im hybriden Aktionsraum ergibt sie sich additiv aus einem diskreten und einem kontinuierlichen Anteil:
+\begin{equation}
+H_{\text{gesamt}} = H_{\text{diskret}}(\pi_d) + h_{\text{diff}}(\pi_c)
+\end{equation}
+wobei $H_{\text{diskret}} \geq 0$ (Shannon-Entropie) und $h_{\text{diff}}$ (differentielle Entropie) auch negativ werden kann, wenn die Varianz klein wird \cite{bedinteEndropie}. Da der \emph{Entropy Loss} als negative Entropie definiert ist, bedeutet ein positiver Wert eine negative Gesamtentropie, die zwingend vom kontinuierlichen Anteil herrühren muss.
 
 \begin{figure}[htbp]
     \centering
@@ -324,13 +344,66 @@ Im Kontrast dazu weist der unmaskierte \ac{PPO}-Algorithmus (Grau) ein rapid ans
     \label{fig:entropy_loss}
 \end{figure}
 
-In komplexen Szenarien wie diesem könnte ein expliziter Entropie-Bonus entscheidend sein, um die beobachtete frühe Spezialisierung des kontinuierlichen Aktionskopfes zu verzögern und eine umfassendere Exploration beider Aktionsräume zu fördern. Dies wird im dritten Versuch (Abschnitt \ref{sec:versuch3}) durch eine entsprechende Anpassung der Hyperparameter adressiert.
+\subsubsection*{Beobachtung bei maskierten Varianten}
+Die Masking-Varianten zeigen einen charakteristischen Verlauf: Nach ca.~2,5 Millionen Schritten wird die Nulllinie überschritten, was bedeutet, dass die Gesamtentropie negativ wird. Dies ist ausschließlich durch eine sehr niedrige Varianz der kontinuierlichen Aktion erklärbar.
+
+\subsubsection*{Interpretation}
+Der kontinuierliche Aktionskopf spezialisiert sich früh auf spezifische Steuerungsaktionen. Da die differentielle Entropie unbegrenzt negativ werden kann ($h(X) \to -\infty$ für $\sigma \to 0$), lässt sich nicht sicher ableiten, ob die diskrete Exploration bereits abgeschlossen ist. Die Daten legen jedoch eine \emph{asymmetrische Exploration} nahe: Der kontinuierliche Kopf konvergiert, während die diskrete Aktionsebene (einschließlich der Noop-Option) weiterhin exploriert wird.
+
+\subsubsection*{Beobachtung beim unmaskierten \ac{PPO}}
+Der unmaskierte Algorithmus zeigt einen rapid ansteigenden, positiven Entropy Loss.
+
+\subsubsection*{Interpretation}
+Dies ist ein Artefakt der fehlerhaften Standardberechnung: Die kontinuierliche Aktion fließt auch während Noop-Phasen unmaskiert in die Berechnung ein, was die differentielle Entropie extrem ins Negative verzerrt. Der gemessene Wert ist daher nicht aussagekräftig. Die Masking-Varianten beheben dieses methodische Problem.
+
+\subsubsection*{Implikation}
+Die asymmetrische Exploration könnte problematisch sein, da sie zu einer unausgewogenen Policy führt: Der Agent verfügt über spezialisierte kontinuierliche Aktionsmuster, hat jedoch die diskrete Entscheidung (Noop vs. Aktion) nicht vollständig erlernt.
+
+\subsubsection{Verhaltensanalyse: Noop-Nutzung}
+\label{subsubsec:noop_behavior}
+
+Aufbauend auf der Entropie-Analyse kann nun das beobachtete Verhaltensmuster interpretiert werden. Abbildung \ref{fig:steering_behavior} zeigt die Nutzungshäufigkeit der Inaktivitäts-Aktion (Noop) über den Trainingsverlauf.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth, trim=0 4mm 0 0mm, clip]{chapters/bilder/secondTest/aggregetet-Stats/env_actions_noop.pdf}
+    \caption[Noop-Aktionen (Test 2)]{Entwicklung der durchschnittlichen Noop-Aktionen (geglätteter Mittelwert über alle Läufe). Der unmaskierte \ac{PPO}-Algorithmus (Grau) nutzt deutlich mehr Noop-Aktionen als die maskierten Varianten (Pink, Rot, Orange). Aufgrund eines Darstellungsfehlers bei großen Zahlen wurde die x-Achsenbeschriftung entfernt. Die dargestellten Zeitschritte reichen von 0 bis 6~Millionen.}
+    \label{fig:steering_behavior}
+\end{figure}
+
+\subsubsection*{Beobachtung}
+Der unmaskierte \ac{PPO}-Algorithmus nutzt signifikant mehr Noop-Aktionen (ca.~46 pro Episode) als die maskierten Varianten (ca.~22--25 pro Episode).
+
+\subsubsection*{Problemstellung}
+Dies widerspricht der ursprünglichen Zielsetzung: Da die Noop-Aktion erwünscht ist (\enquote{nur eingreifen, wenn nötig}), sollten die maskierten Varianten eigentlich mehr Noops nutzen, nicht weniger.
+
+\subsubsection*{Erklärung}
+Die in Abschnitt~\ref{subsubsec:exploration} identifizierte asymmetrische Exploration liefert die Ursache: Der kontinuierliche Aktionskopf der maskierten Varianten spezialisiert sich nach ca.~2,5 Millionen Schritten, während die diskrete Exploration (Noop vs. Aktion) noch nicht abgeschlossen ist. In Situationen mit Unsicherheit greift der Agent daher auf die bereits erlernten kontinuierlichen Steuerungsaktionen zurück, anstatt die Noop-Option zu wählen. Die suboptimalen Hyperparameter (siehe Abschnitt~\ref{subsubsec:training_quality}) verstärken diesen Effekt, da instabile Updates die Exploration zusätzlich erschweren.
+
+\subsubsection*{Validierung von Hypothese \ref{hyp:atc_functionality}}
+Trotz der suboptimalen Noop-Nutzung kann Hypothese \ref{hyp:atc_functionality} (\textbf{Funktionalität in komplexer Umgebung}) bestätigt werden: Der Gradient\hyp{}Masking\hyp{}Mechanismus ist auch in der hochdimensionalen ATC-Umgebung technisch anwendbar und führt zu operativ sinnvollen Policies. Die geringere Noop-Nutzung ist kein fundamentales Problem des Mechanismus, sondern eine Konsequenz der asymmetrischen Exploration, die durch einen gezielten Entropie-Bonus für die diskrete Aktionsebene adressiert werden kann.
 
 \subsubsection{Vergleich der Masking-Architekturen}
-Ein Blick auf die unterschiedlichen Masking-Architekturen adressiert schließlich Hypothese \ref{hyp:atc_architecture} (\textbf{Architektureffizienz}). Während die einfache \emph{Split Net}-Variante (IQM 201.58) nur eine geringfügige Verbesserung gegenüber dem Standard-Masking (IQM 197.41) zeigt, erzielt die komplexere \emph{Shared \& Split}-Architektur mit einem IQM von 216.82 den höchsten Wert aller untersuchten Modelle. Aufgrund der überlappenden Konfidenzintervalle (vgl.~Tabelle \ref{tab:atc_evaluation_results}) lassen sich hieraus zwar keine statistisch signifikanten oder eindeutigen Leistungssteigerungen ableiten, jedoch zeigen die erhöhten IQM-Werte eine erkennbare Tendenz. Diese deutet darauf hin, dass eine spezialisierte Verarbeitung von diskreten und kontinuierlichen Pfaden vorteilhaft sein könnte und im komplexen Flugverkehrsszenario ein gemeinsamer Feature-Extractor (Shared Layer) potenziell gewinnbringend ist, um Synergien in der Zustandsrepräsentation zu nutzen. Die Hypothese kann somit nicht abschließend bestätigt werden, die Ergebnisse stützen jedoch die Vermutung, dass spezialisierte Architekturen (insbesondere Shared \& Split) die Leistungsfähigkeit tendenziell steigern.
+\label{subsubsec:architecture_comparison}
 
-\subsubsection{Operatives Potential}
-Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), dass alle Algorithmus-Typen operativ sehr erfolgreich sind. Sie vermeiden effektiv Kollisionen, trotz der instabiltität und fehlenden Exploration. Alle Agenten weisen zum Trainingsende eine positive Tendenz auf, was nahelegt, dass eine Verlängerung der Trainingsdauer weitere Verbesserungen bringen würde.
+Hypothese \ref{hyp:atc_architecture} (\textbf{Archi\-tek\-tur\-effi\-zi\-enz}) postuliert, dass spezialisierte Netzwerkarchitekturen die Lernleistung steigern. Tabelle \ref{tab:atc_evaluation_results} erlaubt einen quantitativen Vergleich der drei maskierten Varianten.
+
+\subsubsection*{Beobachtung}
+Die \emph{Shared \& Split}-Architektur erzielt mit einem \ac{IQM} von 216.82 den höchsten Wert, gefolgt von \emph{Split Net} (201.58) und \emph{Standard-Masking} (197.41).
+
+\subsubsection*{Statistische Einordnung}
+Die Konfidenzintervalle überlappen (vgl.~Tabelle \ref{tab:atc_evaluation_results}), sodass keine statistische Signifikanz auf dem 95\%-Niveau vorliegt. Dennoch zeigt sich eine klare numerische Tendenz.
+
+\subsubsection*{Interpretation}
+Die Ergebnisse deuten darauf hin, dass eine spezialisierte Verarbeitung von diskreten und kontinuierlichen Pfaden vorteilhaft sein könnte. Die \emph{Shared \& Split}-Architektur kombiniert dabei zwei Vorteile: Der gemeinsame Feature-Extractor ermöglicht Synergien in der Zustandsrepräsentation, während die getrennten Köpfe eine spezialisierte Verarbeitung der jeweiligen Aktionstypen erlauben. Bemerkenswert ist zudem, dass die \emph{Shared \& Split}-Variante als einzige Konfiguration dem allgemeinen Muster des späten Leistungseinbruchs entgeht (Mean Eval 209.48, Last Eval 216.82).
+
+\subsubsection*{Schlussfolgerung}
+Hypothese \ref{hyp:atc_architecture} kann aufgrund der fehlenden statistischen Signifikanz nicht abschließend bestätigt werden. Die positiven Tendenzen rechtfertigen jedoch die Auswahl der \emph{Shared \& Split}-Architektur als Basis für die weiteren Untersuchungen in Versuch~\ref{sec:versuch3}.
+
+\subsubsection{Operative Validierung}
+\label{subsubsec:operational_validation}
+
+Abschließend ist zu prüfen, ob die Agenten trotz der identifizierten Hyperparameter\hyp{}Probleme operative Funktionalität zeigen. Die \emph{Success Rate} (Abbildung \ref{fig:success_rate}) misst den Anteil konfliktfreier Episoden.
 
 \begin{figure}[htbp]
     \centering
@@ -339,12 +412,33 @@ Abschließend zeigt die \emph{Success Rate} (Abbildung \ref{fig:success_rate}), 
     \label{fig:success_rate}
 \end{figure}
 
-\subsection{Zusammenfassung der Erkenntnisse}
-Dieser Versuch bestätigt die fundamentale Wirksamkeit und Notwendigkeit des Gradient-Masking-Mechanismus in komplexen, hochdimensionalen Umgebungen. Es konnte gezeigt werden, dass der Standard-\ac{PPO}-Algorithmus zwar kurzfristig hohe Belohnungen erzielt, langfristig jedoch unter einer \emph{Policy Degradation} leidet, die durch fehlerhafte Gradienten aus dem Noop-Aktionsraum verursacht wird. 
-\medskip
+\subsubsection*{Beobachtung}
+Alle Varianten erreichen eine Success Rate von über 90\% und zeigen zum Trainingsende eine positive Tendenz.
 
-Die Masking-Varianten hingegen, insbesondere die \emph{Shared \& Split}-Architektur, demonstrierten eine höhere Lernstabilität und Robustheit. Zwar zeigen sie eine frühe Spezialisierung des kontinuierlichen Aktionskopfes (erkennbar an der negativen Gesamtentropie), verhindern jedoch zuverlässig den Leistungseinbruch gegen Ende des Trainings.
-Für den operativen Einsatz in der Flugverkehrskontrolle ist diese Verlässlichkeit von kritischer Bedeutung, weshalb die \emph{Masked shared \& split\_net \ac{PPO}}-Architektur als präferierte Basis für die weiteren Untersuchungen ausgewählt wird.
+\subsubsection*{Interpretation}
+Dies bestätigt die grundsätzliche operative Funktionalität aller untersuchten Ansätze. Sowohl der unmaskierte \ac{PPO} als auch die Masking-Varianten sind in der Lage, kollisionsfreie Flugbahnen zu generieren. Die positive Tendenz am Trainingsende legt nahe, dass bei längerer Trainingsdauer und optimierten Hyperparametern weitere Verbesserungen erzielbar wären.
+
+\subsection{Zusammenfassung der Erkenntnisse}
+
+Dieser Versuch validiert die grundsätzliche Anwendbarkeit des Gradient-Masking-Mechanismus in hochdimensionalen Flugverkehrsszenarien, offenbart jedoch gleichzeitig methodische Herausforderungen, die in Versuch \ref{sec:versuch3} adressiert werden.
+
+\subsubsection*{Hyperparameter-Problematik}
+Die Analyse der Trainingsqualität (Abschnitt~\ref{subsubsec:training_quality}) zeigt, dass alle untersuchten Varianten unter suboptimalen Hyperparametern leiden. Die erhöhten Clip-Raten indizieren instabile Policy-Updates, was die Aussagekraft der quantitativen Ergebnisse einschränkt. Die identifizierten Probleme (zu kleine Batchsize, ungeeignete Lernrate) bilden die Grundlage für die Optimierungen in Versuch~\ref{sec:versuch3}.
+
+\subsubsection*{Asymmetrische Exploration}
+Die Entropie-Analyse (Abschnitt~\ref{subsubsec:exploration}) deckt ein fundamentales Problem auf: Die maskierten Varianten zeigen eine stark asymmetrische Exploration ihrer beiden Aktionsräume. Der kontinuierliche Aktionskopf spezialisiert sich bereits nach 2,5 Millionen Schritten (negative Gesamtentropie), während die diskrete Noop-Exploration unzureichend bleibt. Diese Imbalance erklärt die in Abschnitt~\ref{subsubsec:noop_behavior} beobachtete geringe Noop-Nutzung: Der Agent greift bei Unsicherheit auf die bereits erlernten kontinuierlichen Aktionsmuster zurück, anstatt inaktiv zu bleiben. Dies widerspricht der eigentlichen Zielsetzung (\enquote{nur eingreifen, wenn nötig}) und erfordert einen gezielten Entropie-Bonus für die diskrete Aktionsebene.
+
+\subsubsection*{Architekturvergleich}
+Der Vergleich der Masking-Varianten (Abschnitt~\ref{subsubsec:architecture_comparison}) zeigt eine klare numerische Tendenz zugunsten der \emph{Shared \& Split}-Architektur (\ac{IQM} 216.82). Obwohl statistische Signifikanz aufgrund überlappender Konfidenzintervalle nicht erreicht wird, ist diese Variante die einzige, die dem allgemeinen Muster des späten Leistungseinbruchs entgeht. Dies rechtfertigt deren Auswahl als Basis für die weiteren Untersuchungen.
+
+\subsubsection*{Operative Validierung}
+Trotz der identifizierten Probleme zeigen alle Varianten hohe Success Rates (>90\%), was die grundsätzliche operative Funktionalität bestätigt (Abschnitt~\ref{subsubsec:operational_validation}).
+
+\subsubsection*{Validierung der Hypothesen}
+Hypothese \ref{hyp:atc_functionality} (\textbf{Funktionalität}) wird bestätigt: Der Gradient\hyp{}Masking\hyp{}Mechanismus ist in der ATC-Umgebung anwendbar. Hypothese \ref{hyp:atc_performance} (\textbf{Performance-Gewinn}) kann weder bestätigt noch widerlegt werden. Hypothese \ref{hyp:atc_architecture} (\textbf{Archi\-tek\-tur\-effi\-zi\-enz}) zeigt positive Tendenzen ohne statistische Signifikanz.
+
+\subsubsection*{Implikationen für Versuch~\ref{sec:versuch3}}
+Die gewonnenen Erkenntnisse führen zu drei konkreten Maßnahmen: (1) Optimierung der Hyperparameter (größere Batchsize, angepasster Gamma-Wert), (2) Einführung eines Entropie-Bonus für die diskrete Aktionsebene, und (3) Verwendung der \emph{Shared \& Split}-Architektur. Diese Anpassungen zielen darauf ab, die asymmetrische Exploration zu korrigieren und die Noop-Nutzung zu verbessern.
 
 
 
@@ -353,12 +447,12 @@ Für den operativen Einsatz in der Flugverkehrskontrolle ist diese Verlässlichk
 \section{Versuch 3: Evaluation des Aktionsraum-Designs}
 \label{sec:versuch3}
 
-Nachdem im vorangegangenen Abschnitt die technische Validität des Gradient-Masking-Mechanismus empirisch belegt sowie die potenziellen Vorteile der \textit{Shared \& Split}-Architektur aufgezeigt wurden, fokussiert dieser letzte Teil der Evaluation die operative Kernfrage dieser Arbeit. Es ist zu prüfen, ob die erhöhte Komplexität des hybriden Aktionsraum-Designs zu einer quantifizierbaren Verbesserung führt.
+Nachdem im vorangegangenen Abschnitt die technische Validität des Gradient\hyp{}Masking\hyp{}Mechanismus empirisch belegt sowie die potenziellen Vorteile der \textit{Shared \& Split}-Architektur aufgezeigt wurden, fokussiert dieser letzte Teil der Evaluation die operative Kernfrage dieser Arbeit. Es ist zu prüfen, ob die erhöhte Komplexität des hybriden Aktionsraum-Designs zu einer quantifizierbaren Verbesserung führt.
 Zur Beantwortung der Forschungsfrage nach dem \textbf{Operativen Mehrwert} (vgl.~Abschnitt \ref{sec:intro:goal}) wird ein \textit{Masked Agent} gegen einen Agent mit diskreten Aktionsraum evaluiert. Besonderes Augenmerk liegt dabei auf der Konfliktrate, der Routeneffizienz sowie der Vermeidung unnötiger Interventionen.
 \medskip
 
-Als Repräsentant der \textit{Masked Agents} wurde die \textit{Shared \& Split}-Architektur gewählt, da diese in den vorangegangenen Tests (Tabelle \ref{tab:atc_evaluation_results}) die höchsten IQM-Werte erzielte und somit tendenziell die höchste Leistungsfähigkeit indiziert.
-Als Baseline dient ein \textit{Diskreter Agent} mit einem klassischen Aktionsraum. Dieser operiert mit einer fixierten Menge diskreter Kursänderungen (z.\,B. $\{-5^\circ, -1^\circ, 0^\circ, +1^\circ, +5^\circ\}$), wie sie in vergleichbaren Studien üblich sind.
+Als Repräsentant der \textit{Masked Agents} wurde die \textit{Shared \& Split}-Architektur gewählt, da diese in den vorangegangenen Tests (Tabelle \ref{tab:atc_evaluation_results}) die höchsten \ac{IQM}-Werte erzielte und somit tendenziell die höchste Leistungsfähigkeit indiziert.
+Als Baseline dient ein \textit{Diskreter Agent} mit einem klassischen Aktionsraum. Dieser operiert mit einer fixierten Menge diskreter Kursänderungen, wie sie in vergleichbaren Arbeiten üblich sind.
 
 \subsection{Versuchsaufbau und Hypothesen}
 Dieser letzte Versuch zielt darauf ab, die operative Überlegenheit des hybriden Aktionsraum-Designs zu belegen. Die zugrunde liegenden Hypothesen lauten:
@@ -372,18 +466,19 @@ Dieser letzte Versuch zielt darauf ab, die operative Überlegenheit des hybriden
 Um sicherzustellen, dass beide Ansätze ihr volles Potential entfalten können, wurde die Trainingsdauer für dieses finale Experiment auf 10 Millionen Zeitschritte verlängert. Dies berücksichtigt die Beobachtung aus Versuch 2, dass die komplexeren Modelle am Ende der ursprünglichen Trainingszeit noch Lernfortschritte zeigten.
 \medskip
 
-Parallel dazu wurden die Hyperparameter beider Modelle optimiert, um die Stabilität zu maximieren. Konkret wurde die Batchsize drastisch erhöht, was zu selteneren, aber statistisch fundierteren Updates führt, da die Gradienten auf einer größeren Stichprobe basieren und weniger anfällig für Ausreißer sind. Zusätzlich wurde der Gamma-Parameter angehoben, um die langfristige Belohnung stärker zu gewichten und nachhaltige Strategien zu fördern. Obwohl diese Anpassungen theoretisch bereits in früheren Phasen vorteilhaft gewesen wären, trat die Notwendigkeit für diese erhöhte Stabilität erst durch die Ergebnisse der Vorversuche klar zu Tage.
+Parallel dazu wurden die Hyperparameter beider Modelle optimiert, um die Stabilität zu maximieren. Konkret wurde die Batchsize drastisch erhöht, was zu selteneren, aber statistisch fundierteren Updates führt, da die Gradienten auf einer größeren Stichprobe basieren und weniger anfällig für Ausreißer sind. Zusätzlich wurde der Gamma-Parameter angehoben, um die langfristige Belohnung stärker zu gewichten und nachhaltige Strategien zu fördern.
 \medskip
 
-Eine besondere Herausforderung stellt der faire Vergleich der Hyperparameter dar, da sich die Aktionsräume strukturell unterscheiden. Während eine umfassende automatisierte Suche (z.\,B. mittels Optuna \cite{Optuna}) das methodische Optimum wäre, ist dies aufgrund der enormen Rechenkomplexität der Flugverkehrssimulation nicht realisierbar\footnote{Ein einzelner Trainingslauf über 10 Millionen Zeitschritte beanspruchte auf der verwendeten Hardware (Apple M3 MacBook Air) etwa 3,6 Stunden. Da zur statistischen Absicherung jede Hyperparameter-Kombination mit mehreren Seeds (hier: 8) evaluiert werden muss, würde eine automatisierte Suche mit beispielsweise 100 Kombinationen (Trials) bereits $100 \times 8 \times 3,6\text{ Stunden} = 2.880\text{ Stunden}$ (ca.~120 Tage) ununterbrochene Rechenzeit erfordern.}. Stattdessen wurden die Parameter basierend auf Erfahrungswerten gewählt und für den Masking-Ansatz spezifisch ergänzt: Um dessen beobachtete Tendenz zur verfrühten Konvergenz (siehe Versuch 2) entgegenzuwirken, wurde hier ein expliziter Entropie-Bonus eingeführt. Der Diskrete Agent benötigt diesen Eingriff nicht, da er inhärent eine höhere Entropie aufweist und sein Aktionsaum leichter zu explorieren ist. So wird ein fairer Vergleich unter jeweils \enquote{bestmöglichen} Bedingungen angestrebt, auch wenn ein globales Optimum nicht garantiert werden kann.
+Eine besondere Herausforderung stellt der faire Vergleich der Hyperparameter dar, da sich die Aktionsräume strukturell unterscheiden. Während eine umfassende automatisierte Suche (z.\,B. mittels Optuna \cite{Optuna}) das methodische Optimum wäre, ist dies aufgrund der enormen Rechenkomplexität der Flugverkehrssimulation nicht realisierbar\footnote{Ein einzelner Trainingslauf über 10 Millionen Zeitschritte beanspruchte auf der verwendeten Hardware (Apple M3 MacBook Air) etwa 3,6 Stunden. Da zur statistischen Absicherung jede Hyperparameter-Kombination mit mehreren Seeds (hier: 8) evaluiert werden muss, würde eine automatisierte Suche mit beispielsweise 100 Kombinationen (Trials) bereits $100 \times 8 \times 3,6\text{ Stunden} = 2.880\text{ Stunden}$ (ca.~120 Tage) ununterbrochene Rechenzeit erfordern.}. Stattdessen wurden die Parameter basierend auf Erfahrungswerten gewählt und für den Masking-Ansatz spezifisch ergänzt: Um dessen beobachtete Tendenz zur verfrühten Konvergenz (siehe Versuch 2) entgegenzuwirken, wurde hier ein expliziter Entropie-Bonus eingeführt. Der Diskrete Agent benötigt diesen Eingriff nicht, da sein Aktionsaum leichter zu explorieren ist. So wird ein fairer Vergleich unter jeweils \enquote{bestmöglichen} Bedingungen angestrebt, auch wenn ein globales Optimum nicht garantiert werden kann.
+\medskip
 
-Für die Durchführung dieses Versuchs wurden die beiden Agenten (Masked Agent und Diskreter Agent) unter den zuvor definierten, optimierten Hyperparametern in der BlueSky-Simulationsumgebung trainiert. Um statistisch belastbare Aussagen treffen zu können, wurde das Training für jede Konfiguration mit 8 unterschiedlichen Random-Seeds wiederholt. Die Auswertung der operativen Metriken erfolgte analog zu den vorherigen Versuchen mittels Percentile-Bootstrap über die gesammelten Evaluationsdaten.
+Für die Durchführung dieses Versuchs wurden die beiden Agenten (Masked Agent und Diskreter Agent) unter den zuvor definierten, optimierten Hyperparametern in der BlueSky-Simulationsumgebung trainiert. Um statistisch belastbare Aussagen treffen zu können, wurde das Training für jede Konfiguration mit 8 unterschiedlichen Seeds wiederholt. Die Auswertung der operativen Metriken erfolgte analog zu den vorherigen Versuchen mittels Percentile-Bootstrap über die gesammelten Evaluationsdaten.
 
 \subsection{Ergebnisse}
 
 \begin{table}[htbp]
     \centering
-    \caption{Vergleich der operativen Metriken (IQM mit 95\%\hyp{}Konfidenzintervall)}
+    \caption{Vergleich der operativen Metriken (\ac{IQM} mit 95\%\hyp{}Konfidenzintervall)}
     \label{tab:final_evaluation_results}
     \resizebox{\textwidth}{!}{%
     \renewcommand{\arraystretch}{1.2}
@@ -422,15 +517,15 @@ Für die Durchführung dieses Versuchs wurden die beiden Agenten (Masked Agent u
     }
 \end{table}
 
-Die in Tabelle \ref{tab:final_evaluation_results} und den nachfolgenden Abbildungen dargestellten Ergebnisse erlauben eine detaillierte Prüfung dieser Hypothesen.
-\medskip
+Die in Tabelle \ref{tab:final_evaluation_results} und den nachfolgenden Abbildungen dargestellten Ergebnisse erlauben eine differenzierte Prüfung der drei aufgestellten Hypothesen.
 
-Ein erster Blick auf die allgemeinen Leistungsmetriken offenbart dabei eine interessante Dynamik: Während sich die finale Leistung beider Agenten kaum unterscheidet (Last Eval Reward), erzielt der \textit{Masked Agent} einen signifikant höheren durchschnittlichen Ertrag über das gesamte Training hinweg (\emph{Mean Eval Reward}). Die Differenz der Mittelwerte liegt mit einem 95\%-Konfidenzintervall von $[7.34, 12.73]$ deutlich im positiven Bereich.
-Dies deutet auf eine wesentlich schnellere Konvergenz hin, da der masked Agent früher ein hohes Leistungsniveau erreicht als sein diskretes Gegenstück.
-\medskip
+\subsubsection{Trainingseffizienz und Konvergenzverhalten}
 
-Dieses Ergebnis ist bemerkenswert, da diskrete Aktionsräume aufgrund ihrer geringeren Komplexität üblicherweise als leichter zu erlernen gelten \cite[Kapitel 13.1]{sutton2018rl}. Im vorliegenden Fall scheint jedoch der in Abschnitt \ref{sc:action_extraction} beschriebene \textit{Fluch der Dimensionalität} \cite{lillicrap2015continuous} den Diskreten Agenten auszubremsen. Um eine hinreichend feine Steuerung zu gewährleisten, umfasst der hier verwendete diskrete Aktionsraum bereits 37 verschiedene Einzelaktionen. Viele dieser Aktionen liefern jedoch sehr ähnliche Belohnungen, was die Differenzierung für den Agenten erschwert. Der kontinuierliche Pfad des Masked Agents umgeht dieses Problem durch die direkte Ausgabe von Gleitkommazahlen und ermöglicht so einen effizienteren Lernprozess.
-\medskip
+\subsubsection*{Beobachtung}
+Während sich die finale Leistung beider Agenten kaum unterscheidet (Last Eval Reward), erzielt der Masked Agent einen signifikant höheren durchschnittlichen Ertrag über das gesamte Training hinweg (Mean Eval Reward). Die Differenz der Mittelwerte liegt mit einem 95\%-Konfidenzintervall von $[7.34, 12.73]$ deutlich im positiven Bereich.
+
+\subsubsection*{Interpretation}
+Dies deutet auf eine wesentlich schnellere Konvergenz hin: Der Masked Agent erreicht früher ein hohes Leistungsniveau als sein diskretes Gegenstück. Dieses Ergebnis ist bemerkenswert, da diskrete Aktionsräume aufgrund ihrer geringeren Komplexität üblicherweise als leichter zu erlernen gelten \cite[Kapitel 13.1]{sutton2018rl}. Im vorliegenden Fall scheint jedoch der \textit{Fluch der Dimensionalität} \cite{lillicrap2015continuous} den diskreten Agenten auszubremsen: Bei 37 verschiedenen Einzelaktionen liefern viele ähnliche Belohnungen, was die Differenzierung erschwert. Der kontinuierliche Pfad des Masked Agents umgeht dieses Problem durch direkte Gleitkommazahlen-Ausgabe.
 
 \begin{figure}[htbp]
     \centering
@@ -448,9 +543,16 @@ Dieses Ergebnis ist bemerkenswert, da diskrete Aktionsräume aufgrund ihrer geri
     \label{fig:perf_profile_final_combined}
 \end{figure}
 
-Hinsichtlich der \textbf{Konfliktrate} (Hypothese 1) zeigen die Daten, dass beide Agenten auf einem extrem hohen Sicherheitsniveau operieren. Die \emph{Success Rate} liegt sowohl für den Diskreten Agenten (IQM 0.97) als auch für den Masked Agenten (IQM 0.98) im nahezu perfekten Bereich. Da die Differenz statistisch nicht signifikant ist (Konfidenzintervall $[-0.02, 0.03]$), muss die Hypothese abgelehnt werden. Der diskrete Basis-Agent löst das Problem bereits so zuverlässig, dass der hybride Ansatz keinen messbaren Sicherheitsgewinn erzielen kann.
-Positiv hervorzuheben ist jedoch die deutlich geringere Varianz des hybriden Agenten: Während das 95\%-Konfidenzintervall des \ac{PPO}-Agenten eine Spanne von $[0.95, 1.00]$ aufweist, liegt das Intervall des Shared \& Split-Agenten extrem eng bei $[0.97, 0.98]$. Dies indiziert eine wesentlich konsistentere Strategie und höhere Verlässlichkeit, da die Leistung weniger stark zwischen den einzelnen Trainingsläufen schwankt.
-\medskip
+\subsubsection{Hypothese 1: Konfliktrate}
+
+\subsubsection*{Beobachtung}
+Beide Agenten operieren auf einem extrem hohen Sicherheitsniveau. Die Success Rate liegt sowohl für den diskreten Agenten (\ac{IQM} 0.97) als auch für den Masked Agenten (\ac{IQM} 0.98) im nahezu perfekten Bereich. Die Differenz ist statistisch nicht signifikant (Konfidenzintervall $[-0.02, 0.03]$).
+
+\subsubsection*{Interpretation}
+Der diskrete Basis-Agent löst das Sicherheitsproblem bereits so zuverlässig, dass der hybride Ansatz keinen messbaren Gewinn erzielen kann. Positiv hervorzuheben ist jedoch die geringere Varianz des hybriden Agenten: Während das 95\%-Konfidenzintervall des diskreten Agenten eine Spanne von $[0.95, 1.00]$ aufweist, liegt das Intervall des Masked Agenten extrem eng bei $[0.97, 0.98]$. Dies indiziert eine wesentlich konsistentere Strategie und höhere Verlässlichkeit.
+
+\subsubsection*{Bewertung}
+Hypothese 1 muss abgelehnt werden: Der hybride Ansatz erzielt keine signifikant niedrigere Konfliktrate. Die höhere Konsistenz ist jedoch ein positives Nebenresultat.
 
 \begin{figure}[htbp]
     \centering
@@ -459,8 +561,16 @@ Positiv hervorzuheben ist jedoch die deutlich geringere Varianz des hybriden Age
     \label{fig:third_success_rate}
 \end{figure}
 
-Auch die Hypothese zur \textbf{Routeneffizienz} (Hypothese 2) bestätigt sich nicht. Entgegen der Annahme führt die präzisere Steuerung nicht zu effizienteren Pfaden. Stattdessen ist die durchschnittliche Episodenlänge beim hybriden Agenten signifikant höher (+5.18 Zeitschritte). Dies legt nahe, dass der Agent zwar Konflikte löst, dafür aber weiträumigere oder zeitintensivere Manöver wählt, anstatt die direkte Route zu optimieren.
-\medskip
+\subsubsection{Hypothese 2: Routeneffizienz}
+
+\subsubsection*{Beobachtung}
+Entgegen der Erwartung ist die durchschnittliche Episodenlänge beim hybriden Agenten signifikant höher (+5.18 Zeitschritte, Konfidenzintervall $[1.68, 7.33]$).
+
+\subsubsection*{Interpretation}
+Die präzisere Steuerung führt nicht zu effizienteren Pfaden. Stattdessen wählt der Agent weiträumigere oder zeitintensivere Manöver zur Konfliktvermeidung, anstatt die direkteste Route zu optimieren. Dies könnte auf die Reward-Struktur zurückzuführen sein, die Kollisionsvermeidung stärker gewichtet als Routeneffizienz.
+
+\subsubsection*{Bewertung}
+Hypothese 2 muss abgelehnt werden: Der hybride Ansatz führt zu längeren Flugzeiten.
 
 \begin{figure}[htbp]
     \centering
@@ -469,10 +579,16 @@ Auch die Hypothese zur \textbf{Routeneffizienz} (Hypothese 2) bestätigt sich ni
     \label{fig:third_ep_length}
 \end{figure}
 
-Bezüglich der \textbf{Interventionsrate} (Hypothese 3) liefert der Versuch ein positives Ergebnis. Das primäre Ziel, die Eingriffshäufigkeit zu minimieren und somit die Phasen der Inaktivität (\emph{Noops}) zu maximieren, wurde eindeutig erreicht.
-Der Shared \& Split-Agent wählt signifikant häufiger die \emph{Noop}-Aktion (IQM 32.56) als der diskrete Referenz-Agent (IQM 9.73).
-Dies belegt, dass der hybride Ansatz in der Lage ist, Konflikte effizienter zu antizipieren und mit weniger Eingriffen über längere Zeiträume stabil zu fliegen, was dem gewünschten menschlichen Verhalten eines Lotsen (\enquote{Eingreifen nur wenn nötig}) deutlich näher kommt.
-\medskip
+\subsubsection{Hypothese 3: Interventionsrate}
+
+\subsubsection*{Beobachtung}
+Der Shared \& Split-Agent wählt signifikant häufiger die Noop-Aktion (\ac{IQM} 32.56) als der diskrete Referenz-Agent (\ac{IQM} 9.73). Die Differenz beträgt 22.80 Noops pro Episode mit einem Konfidenzintervall von $[20.65, 24.87]$.
+
+\subsubsection*{Interpretation}
+Das primäre Ziel, die Eingriffshäufigkeit zu minimieren und Phasen der Inaktivität zu maximieren, wurde eindeutig erreicht. Der hybride Ansatz ist in der Lage, Konflikte effizienter zu antizipieren und mit weniger Eingriffen über längere Zeiträume stabil zu fliegen. Dies kommt dem gewünschten menschlichen Verhalten eines Lotsen (\enquote{Eingreifen nur wenn nötig}) deutlich näher.
+
+\subsubsection*{Bewertung}
+Hypothese 3 wird bestätigt: Der Masked Agent führt signifikant weniger überflüssige Interventionen durch. Die Reduktion um Faktor 3,3 ist für die Akzeptanz in der Mensch-Maschine-Interaktion essenziell.
 
 \begin{figure}[htbp]
     \centering
@@ -481,7 +597,25 @@ Dies belegt, dass der hybride Ansatz in der Lage ist, Konflikte effizienter zu a
     \label{fig:third_noop_actions}
 \end{figure}
 
-\subsection{Zusammenfassende Bewertung}
-Der operative Vergleich offenbart, dass der kontinuierliche Aktionsraum zwar zu einer etwas längeren Flugzeit führt, aber das Kernziel der Arbeit hervorragend erfüllt: Die massive Reduktion von überflüssigen Eingriffen.
-Während der diskrete Agent häufiger korrigieren muss, nutzt der hybride Agent die \emph{Noop}-Strategie effektiv. Er beweist damit eine höhere operative \enquote{Gelassenheit}, die für die Akzeptanz in der Mensch-Maschine-Interaktion essenziell ist. Die Hypothese der reduzierten Interventionsrate kann somit als bestätigt angesehen werden.
+\subsection{Zusammenfassung der Erkenntnisse}
+
+Dieser finale Versuch beantwortet die zentrale Forschungsfrage nach dem \textbf{Operativen Mehrwert} des hybriden Aktionsraum-Designs im direkten Vergleich mit einem klassischen diskreten Ansatz.
+
+\subsubsection*{Schnellere Konvergenz}
+Der hybride Agent erreicht signifikant schneller ein hohes Leistungsniveau (Mean Eval Reward: +10.45). Dies überrascht, da diskrete Aktionsräume üblicherweise als einfacher zu erlernen gelten. Der \textit{Fluch der Dimensionalität} bei 37 diskreten Aktionen erschwert jedoch die Differenzierung ähnlicher Belohnungen. Der kontinuierliche Pfad ermöglicht hier einen effizienteren Lernprozess.
+
+\subsubsection*{Konfliktrate}
+Beide Agenten operieren auf nahezu perfektem Sicherheitsniveau (Success Rate >97\%). Die Hypothese einer signifikant niedrigeren Konfliktrate durch den hybriden Ansatz muss abgelehnt werden. Positiv hervorzuheben ist jedoch die deutlich geringere Varianz des hybriden Agenten, was auf eine konsistentere Strategie hinweist.
+
+\subsubsection*{Routeneffizienz}
+Entgegen der Erwartung führt der hybride Ansatz zu einer signifikant höheren Episodenlänge (+5.18 Zeitschritte). Der Agent wählt weiträumigere Manöver zur Konfliktvermeidung, anstatt die direkteste Route zu optimieren. Die Hypothese höherer Routeneffizienz wird abgelehnt.
+
+\subsubsection*{Interventionsrate}
+Das Kernziel der Arbeit wird hervorragend erfüllt: Der hybride Agent nutzt signifikant mehr Noop-Aktionen (\ac{IQM} 32.56 vs. 9.73). Dies belegt die massive Reduktion überflüssiger Eingriffe und eine höhere operative \enquote{Gelassenheit}, die dem gewünschten menschlichen Lotsenverhalten (\enquote{Eingreifen nur wenn nötig}) deutlich näher kommt. Die Hypothese reduzierter Interventionsrate wird bestätigt.
+
+\subsubsection*{Validierung der Hypothesen}
+Hypothese 1 (\textbf{Kon\-flikt\-rate}) wird abgelehnt: Kein messbarer Sicherheitsgewinn durch den hybriden Ansatz. Hypothese 2 (\textbf{Rou\-ten\-effi\-zienz}) wird abgelehnt: Längere Flugzeiten beim hybriden Agenten. Hypothese 3 (\textbf{In\-ter\-ven\-tions\-rate}) wird bestätigt: Signifikant weniger Eingriffe durch verbesserte Noop-Nutzung.
+
+\subsubsection*{Gesamtbewertung}
+Der operative Vergleich zeigt: Der hybride Aktionsraum bietet keinen Vorteil bei Sicherheit oder Effizienz, erfüllt aber das zentrale Ziel dieser Arbeit exzellent. Die Reduktion unnötiger Interventionen um Faktor 3,3 ist für die Akzeptanz in der Mensch-Maschine-Interaktion essenziell und rechtfertigt die erhöhte Komplexität des Ansatzes.
 
