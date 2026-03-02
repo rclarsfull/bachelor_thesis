@@ -139,7 +139,7 @@ $A_t$             & Advantage & Vorteil einer Aktion gegen\-über dem Durch\-sch
 $\pi_{\text{old}}$ & Alte Policy & Policy, die während des Rollouts verwendet wurde und zur Berechnung des Probability Ratio dient \\
 \hline
 \end{tabular}
-\caption{Grundlegende Komponenten und Parameter im \ac{PPO}\hyp{}Algorithmus (Teil 1)}
+\caption{Grundlegende Komponenten und Parameter im \ac{PPO}\hyp{}Algorithmus}
 \label{tab:ppo_vars_part1}
 \end{table}
 
@@ -158,7 +158,7 @@ $c_1, c_2$        & Ge\-wich\-tungs\-ko\-ef\-fi\-zi\-en\-ten & Steuern den Ein\-
 $\epsilon$         & Clipping\hyp{}Parameter & Bestimmt die Grenze für das Clipping im Surrogate Objective \\
 \hline
 \end{tabular}
-\caption{Verlustfunktionen und Optimierungsparameter im \ac{PPO}\hyp{}Algorithmus (Teil 2)}
+\caption{Verlustfunktionen und Optimierungsparameter im \ac{PPO}\hyp{}Algorithmus}
 \label{tab:ppo_vars_part2}
 \end{table}
 
@@ -405,6 +405,7 @@ Folgende Metriken \cite{LogExplanation} sind besonders relevant:
     \item \textbf{Approx KL:} Diese Metrik approximiert die Kullback\hyp{}Leibler\hyp{}Divergenz zwischen der alten und neuen Policy. Sie dient als Maß für die Änderung 
     der Policy während des Lernprozesses. Ein hoher Approx KL\hyp{}Wert signalisiert eine signifikante Policy\hyp{}Änderung, was auf zu aggressive Aktualisierungsschritte schließen lässt.
 \end{itemize}
+\pagebreak
 
 Diese Metriken bieten wertvolle Einblicke in den Lernprozess und helfen dabei, die Leistung des \ac{RL}\hyp{}Agenten zu bewerten und zu optimieren.
 Metriken wie Explained Variance, Policy Loss, Value Loss und Entropy Loss sind entscheidend, um den Trainingsfortschritt zu überwachen und sicherzustellen, dass der Agent effektiv lernt. Approx KL und Clip Fraction geben zusätzlich Hinweise auf die Stabilität der Policy\hyp{}Updates. Sprünge oder ungewöhnliche Muster in diesen Metriken können auf Probleme im Lernprozess hinweisen, die eine Anpassung der Hyperparameter oder der Algorithmus\hyp{}Architektur erfordern.
